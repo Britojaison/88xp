@@ -19,7 +19,7 @@ interface Employee {
   id: string;
   email: string;
   name: string;
-  rank: number | null;
+  rank: number | null; // null for admin
   is_admin: boolean;
   created_at: string;
 }
@@ -105,8 +105,8 @@ export function getMonthlyScores() {
     .sort((a, b) => b.total_points - a.total_points);
 }
 
-export function addEmployee(emp: { email: string; name: string; rank: number }) {
-  const newEmp: Employee = {
+export function addEmployee(emp: { email: string; name: string; rank: number; is_admin?: boolean }) {
+  const newEmp = {
     id: `${Date.now()}`,
     ...emp,
     is_admin: false,
