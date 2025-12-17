@@ -35,12 +35,12 @@ export default function LoginPage() {
         <div className="mb-4 p-3 bg-blue-50 rounded-lg text-sm">
           <p className="font-medium text-blue-800 mb-2">Mock Login Credentials:</p>
           <ul className="text-blue-700 space-y-1">
-            <li>admin@test.com (Admin, Rank 1)</li>
-            <li>john@test.com (Rank 2)</li>
-            <li>jane@test.com (Rank 3)</li>
-            <li>bob@test.com (Rank 4)</li>
+            <li><strong>admin@test.com</strong> - Admin (manages users)</li>
+            <li><strong>john@test.com</strong> - Employee (Rank 1)</li>
+            <li><strong>jane@test.com</strong> - Employee (Rank 2)</li>
+            <li><strong>bob@test.com</strong> - Employee (Rank 3)</li>
           </ul>
-          <p className="mt-2 text-blue-600">Password: password</p>
+          <p className="mt-2 text-blue-600">Password for all: <strong>password</strong></p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">

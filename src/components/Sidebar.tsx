@@ -4,12 +4,6 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { mockLogout } from '@/lib/mock-auth';
 
-const navItems = [
-  { href: '/home', label: 'Home', icon: '🏠' },
-  { href: '/projects', label: 'Projects', icon: '📁' },
-  { href: '/profile', label: 'Profile', icon: '👤' },
-];
-
 export default function Sidebar({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -19,9 +13,20 @@ export default function Sidebar({ isAdmin }: { isAdmin: boolean }) {
     router.push('/login');
   };
 
+  // Admin only sees Home and Admin panel (no Projects or Profile)
+  const navItems = isAdmin
+    ? [{ href: '/home', label: 'Home', icon: '🏠' }]
+    : [
+        { href: '/home', label: 'Home', icon: '🏠' },
+        { href: '/projects', label: 'Projects', icon: '📁' },
+        { href: '/profile', label: 'Profile', icon: '👤' },
+      ];
+
   return (
     <aside className="w-64 bg-gray-900 text-white min-h-screen p-4">
-      <h2 className="text-xl font-bold mb-8 px-4">Dashboard</h2>
+      <h2 className="text-xl font-bold mb-8 px-4">
+        {isAdmin ? 'Admin Panel' : 'Dashboard'}
+      </h2>
       <nav className="space-y-2">
         {navItems.map((item) => (
           <Link
@@ -42,8 +47,8 @@ export default function Sidebar({ isAdmin }: { isAdmin: boolean }) {
               pathname.startsWith('/admin') ? 'bg-blue-600' : 'hover:bg-gray-800'
             }`}
           >
-            <span>⚙️</span>
-            <span>Admin</span>
+            <span>👥</span>
+            <span>Manage Users</span>
           </Link>
         )}
       </nav>

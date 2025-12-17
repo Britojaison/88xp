@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { getEmployees, addEmployee, updateEmployee, deleteEmployee } from '@/lib/mock-store';
+import { mockUsers } from '@/lib/mock-data';
 
 interface Employee {
   id: string;
   email: string;
   name: string;
-  rank: number;
+  rank: number | null;
   is_admin: boolean;
   created_at: string;
 }
@@ -24,7 +25,9 @@ export default function AdminPage() {
 
   const fetchEmployees = () => {
     const data = getEmployees();
-    setEmployees(data.sort((a, b) => a.rank - b.rank));
+    // Only show non-admin employees (ranked users)
+    const rankedEmployees = data.filter(e => !e.is_admin);
+    setEmployees(rankedEmployees.sort((a, b) => (a.rank || 0) - (b.rank || 0)));
     setLoading(false);
   };
 
@@ -39,7 +42,7 @@ export default function AdminPage() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Admin - Manage Employees</h1>
+        <h1 className="text-2xl font-bold">Manage Employees</h1>
         <button
           onClick={() => { setEditingEmployee(null); setShowModal(true); }}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
@@ -55,39 +58,43 @@ export default function AdminPage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rank</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Admin</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {employees.map((emp) => (
-              <tr key={emp.id}>
-                <td className="px-6 py-4">{emp.name}</td>
-                <td className="px-6 py-4 text-gray-500">{emp.email}</td>
-                <td className="px-6 py-4">#{emp.rank}</td>
-                <td className="px-6 py-4">
-                  {emp.is_admin ? (
-                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Yes</span>
-                  ) : (
-                    <span className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">No</span>
-                  )}
-                </td>
-                <td className="px-6 py-4">
-                  <button
-                    onClick={() => { setEditingEmployee(emp); setShowModal(true); }}
-                    className="text-blue-600 hover:underline mr-3"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(emp.id)}
-                    className="text-red-600 hover:underline"
-                  >
-                    Delete
-                  </button>
+            {employees.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                  No employees yet. Click "Add Employee" to create one.
                 </td>
               </tr>
-            ))}
+            ) : (
+              employees.map((emp) => (
+                <tr key={emp.id}>
+                  <td className="px-6 py-4 font-medium">{emp.name}</td>
+                  <td className="px-6 py-4 text-gray-500">{emp.email}</td>
+                  <td className="px-6 py-4">
+                    <span className="bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded">
+                      Rank {emp.rank}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <button
+                      onClick={() => { setEditingEmployee(emp); setShowModal(true); }}
+                      className="text-blue-600 hover:underline mr-3"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(emp.id)}
+                      className="text-red-600 hover:underline"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -114,18 +121,32 @@ function EmployeeModal({
 }) {
   const [name, setName] = useState(employee?.name || '');
   const [email, setEmail] = useState(employee?.email || '');
+  const [password, setPassword] = useState('');
   const [rank, setRank] = useState(employee?.rank || 1);
-  const [isAdmin, setIsAdmin] = useState(employee?.is_admin || false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
 
     if (employee) {
-      updateEmployee(employee.id, { name, rank, is_admin: isAdmin });
+      // Update existing employee
+      updateEmployee(employee.id, { name, rank });
     } else {
-      addEmployee({ email, name, rank, is_admin: isAdmin });
+      // Check if email already exists
+      if (mockUsers[email]) {
+        setError('Email already exists');
+        setLoading(false);
+        return;
+      }
+      
+      // Create new employee
+      const newEmp = addEmployee({ email, name, rank });
+      
+      // Add to mock users for login (in real app, this would be Supabase Auth)
+      mockUsers[email] = { password, employeeId: newEmp.id };
     }
 
     setLoading(false);
@@ -151,16 +172,29 @@ function EmployeeModal({
             />
           </div>
           {!employee && (
-            <div>
-              <label className="block text-sm font-medium mb-1">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2"
-                required
-              />
-            </div>
+            <>
+              <div>
+                <label className="block text-sm font-medium mb-1">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full border rounded-lg px-3 py-2"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full border rounded-lg px-3 py-2"
+                  required
+                  minLength={6}
+                />
+              </div>
+            </>
           )}
           <div>
             <label className="block text-sm font-medium mb-1">Rank</label>
@@ -172,17 +206,11 @@ function EmployeeModal({
               min={1}
               required
             />
+            <p className="text-xs text-gray-500 mt-1">
+              Lower number = higher authority (Rank 1 can approve Rank 2, 3, etc.)
+            </p>
           </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="isAdmin"
-              checked={isAdmin}
-              onChange={(e) => setIsAdmin(e.target.checked)}
-              className="rounded"
-            />
-            <label htmlFor="isAdmin" className="text-sm">Is Admin</label>
-          </div>
+          {error && <p className="text-red-500 text-sm">{error}</p>}
           <div className="flex gap-3 justify-end">
             <button
               type="button"

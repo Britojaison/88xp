@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { getCurrentUser } from '@/lib/mock-auth';
 import { getProjects, getProjectTypes } from '@/lib/mock-store';
 
@@ -9,15 +10,23 @@ export default function ProfilePage() {
     id: string;
     name: string;
     email: string;
-    rank: number;
+    rank: number | null;
+    is_admin: boolean;
     created_at: string;
   } | null>(null);
   const [totalPoints, setTotalPoints] = useState(0);
   const [completedCount, setCompletedCount] = useState(0);
+  const router = useRouter();
 
   useEffect(() => {
     const user = getCurrentUser();
     if (!user) return;
+
+    // Admin doesn't have a profile page
+    if (user.is_admin) {
+      router.push('/home');
+      return;
+    }
 
     setEmployee(user);
 
@@ -35,7 +44,7 @@ export default function ProfilePage() {
 
     setTotalPoints(points);
     setCompletedCount(approved.length);
-  }, []);
+  }, [router]);
 
   if (!employee) return <div>Loading...</div>;
 

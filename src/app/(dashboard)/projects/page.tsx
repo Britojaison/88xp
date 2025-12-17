@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { getCurrentUser } from '@/lib/mock-auth';
 import { getProjects } from '@/lib/mock-store';
 import CreateProjectModal from '@/components/CreateProjectModal';
@@ -15,8 +16,8 @@ interface Project {
   created_by: string;
   assigned_to: string;
   type: { id: string; name: string; points: number } | null;
-  creator: { id: string; name: string; rank: number } | null;
-  assignee: { id: string; name: string; rank: number } | null;
+  creator: { id: string; name: string; rank: number | null } | null;
+  assignee: { id: string; name: string; rank: number | null } | null;
 }
 
 export default function ProjectsPage() {
@@ -25,6 +26,7 @@ export default function ProjectsPage() {
   const [showModal, setShowModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<{ id: string; rank: number } | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     fetchData();
@@ -34,12 +36,18 @@ export default function ProjectsPage() {
     const user = getCurrentUser();
     if (!user) return;
 
-    setCurrentUser({ id: user.id, rank: user.rank });
+    // Admin cannot access projects page
+    if (user.is_admin) {
+      router.push('/home');
+      return;
+    }
+
+    setCurrentUser({ id: user.id, rank: user.rank ?? 999 });
 
     const allProjects = getProjects();
     
-    const created = allProjects.filter(p => p.created_by === user.id);
-    const assigned = allProjects.filter(p => p.assigned_to === user.id && p.created_by !== user.id);
+    const created = allProjects.filter(p => p.created_by === user.id) as Project[];
+    const assigned = allProjects.filter(p => p.assigned_to === user.id && p.created_by !== user.id) as Project[];
 
     setMyProjects(created);
     setAssignedProjects(assigned);

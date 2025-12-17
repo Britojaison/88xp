@@ -12,8 +12,8 @@ interface Project {
   created_by: string;
   assigned_to: string;
   type: { id: string; name: string; points: number } | null;
-  creator: { id: string; name: string; rank: number } | null;
-  assignee: { id: string; name: string; rank: number } | null;
+  creator: { id: string; name: string; rank: number | null } | null;
+  assignee: { id: string; name: string; rank: number | null } | null;
 }
 
 interface Props {
@@ -34,8 +34,9 @@ export default function ProjectCard({ project, currentUserRank, onUpdate, isOwne
   const [editingPoints, setEditingPoints] = useState(false);
   const [newPoints, setNewPoints] = useState(project.points_override || project.type?.points || 0);
 
-  const canApprove = currentUserRank < (project.assignee?.rank || 999) && project.status === 'completed';
-  const canEditPoints = currentUserRank < (project.assignee?.rank || 999);
+  const assigneeRank = project.assignee?.rank ?? 999;
+  const canApprove = currentUserRank < assigneeRank && project.status === 'completed';
+  const canEditPoints = currentUserRank < assigneeRank;
   const isAssignee = getCurrentUser()?.id === project.assigned_to;
   const canMarkComplete = isAssignee && project.status !== 'approved';
 

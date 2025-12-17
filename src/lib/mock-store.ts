@@ -19,7 +19,7 @@ interface Employee {
   id: string;
   email: string;
   name: string;
-  rank: number;
+  rank: number | null;
   is_admin: boolean;
   created_at: string;
 }
@@ -44,6 +44,11 @@ export function getProjectTypes() {
 
 export function getEmployees() {
   return employees;
+}
+
+// Get only non-admin employees (for project assignment)
+export function getRankedEmployees() {
+  return employees.filter(e => !e.is_admin && e.rank !== null);
 }
 
 export function getEmployee(id: string) {
@@ -100,10 +105,11 @@ export function getMonthlyScores() {
     .sort((a, b) => b.total_points - a.total_points);
 }
 
-export function addEmployee(emp: { email: string; name: string; rank: number; is_admin: boolean }) {
-  const newEmp = {
+export function addEmployee(emp: { email: string; name: string; rank: number }) {
+  const newEmp: Employee = {
     id: `${Date.now()}`,
     ...emp,
+    is_admin: false,
     created_at: new Date().toISOString(),
   };
   employees = [...employees, newEmp];

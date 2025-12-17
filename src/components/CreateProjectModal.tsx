@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getCurrentUser } from '@/lib/mock-auth';
-import { getProjectTypes, getEmployees, addProject } from '@/lib/mock-store';
+import { getProjectTypes, getRankedEmployees, addProject } from '@/lib/mock-store';
 
 interface ProjectType {
   id: string;
@@ -33,13 +33,14 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserRank
   useEffect(() => {
     const user = getCurrentUser();
     const allTypes = getProjectTypes();
-    const allEmployees = getEmployees();
+    // Only get ranked employees (not admin)
+    const rankedEmployees = getRankedEmployees();
 
     setTypes(allTypes);
-    // Can only assign to lower rank employees or self
-    const assignable = allEmployees.filter(
-      (e) => e.rank > currentUserRank || e.id === user?.id
-    );
+    // Can only assign to lower rank employees (higher rank number) or self
+    const assignable = rankedEmployees.filter(
+      (e) => (e.rank !== null && e.rank >= currentUserRank) || e.id === user?.id
+    ) as Employee[];
     setEmployees(assignable);
 
     if (allTypes.length) setTypeId(allTypes[0].id);
