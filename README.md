@@ -1,16 +1,20 @@
-# Employee Dashboard
+# 88XP Employee Dashboard
 
-A Next.js + Supabase employee dashboard with project management and scoreboard.
+A Next.js + Supabase employee dashboard with project management and comprehensive points tracking.
 
 ## Features
 
-- **Scoreboard**: Monthly points leaderboard based on completed projects
+- **Monthly Scoreboard**: Leaderboard based on completed projects with month/year filtering
+- **Yearly Scoreboard**: Annual points aggregation and leaderboard
+- **Points Breakdown**: Detailed view of each project's points, who assigned it, and any overrides
 - **Active Projects**: View all ongoing projects
 - **Project Management**: Create, assign, complete, and approve projects
-- **Rank System**: Higher rank employees can assign projects to lower ranks and approve their work
+- **Rank System**: Higher rank employees can assign projects to lower ranks and optionally override points
 - **Admin Panel**: Manage employees, set ranks, and admin privileges
 
-## Project Types & Points
+## Points System
+
+### Project Types & Default Points
 
 | Type | Points |
 |------|--------|
@@ -20,15 +24,49 @@ A Next.js + Supabase employee dashboard with project management and scoreboard.
 | Video | 40 |
 | Animation | 50 |
 
+### Points Flow
+
+1. **Project Created**: Employee creates a project and assigns it to themselves or a lower-ranked employee
+2. **Project Completed**: Assignee marks the project as complete
+3. **Points Awarded Instantly**: Database trigger automatically awards points on completion:
+   - Uses `points_override` if set by a Rank 1 user, otherwise uses project type's default points
+   - Updates `monthly_scores` table for the assignee
+   - Updates `yearly_scores` table for the assignee
+
+**Note**: Points are awarded immediately upon completion. Approval is optional and not required for points.
+
+### Points Override (Optional)
+
+Rank 1 employees (highest rank) can optionally override the default points for any project. This is useful for:
+- Extra complexity in a project
+- Bonus points for exceptional work
+- Adjusted points based on effort
+
+If no override is set, the standard points from the project type are used.
+
+### Aggregation
+
+- **Monthly**: Points are aggregated per employee per month
+- **Yearly**: Monthly points are automatically summed into yearly totals
+- All aggregation happens via database triggers for reliability
+
 ## Setup
 
 ### 1. Create Supabase Project
 
 Go to [supabase.com](https://supabase.com) and create a new project.
 
-### 2. Run Database Migration
+### 2. Run Database Migrations
 
-Copy the SQL from `supabase/migrations/001_initial_schema.sql` and run it in your Supabase SQL Editor.
+Run the following migrations in your Supabase SQL Editor **in order**:
+
+1. `supabase/migrations/002_points_system.sql` - Points tracking system with triggers
+
+This migration creates:
+- `monthly_scores` table with automatic updates
+- `yearly_scores` table with automatic updates
+- Database triggers that fire when projects are completed (points awarded instantly)
+- Helper functions for points calculation
 
 ### 3. Configure Environment
 
@@ -82,10 +120,23 @@ npm run dev
 
 ## Rank System
 
-- Rank 1 is highest (admin/manager)
-- Higher numbers = lower rank
-- Users can only assign projects to employees with higher rank numbers (lower rank)
-- Only higher-ranked employees can approve projects
+**Important**: Admin and Rank are separate concepts!
+
+### Admin
+- Has access to the Admin Panel (`/admin`)
+- Can add, edit, and delete employees
+- Manages the organization but may or may not be Rank 1
+
+### Ranks
+- **Rank 1** = Highest authority (there can be multiple Rank 1 users)
+- **Rank 2, 3, 4...** = Progressively lower authority
+- Higher rank (lower number) can override points for lower ranks
+- Users can assign projects to employees with equal or higher rank numbers
+
+### Points Override
+- Rank 1 can override points for Rank 2, 3, 4...
+- Rank 2 can override points for Rank 3, 4...
+- And so on (flexible hierarchy)
 
 ## Pages
 

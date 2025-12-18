@@ -201,11 +201,12 @@ function EditEmployeeModal({
               value={rank}
               onChange={(e) => setRank(Number(e.target.value))}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              min={2}
+              min={1}
+              max={10}
               required
             />
             <p className="text-xs text-gray-500 mt-1">
-              Lower number = higher authority. Staff ranks typically start at 2.
+              Rank 1 = Highest authority (can override points for all). Lower number = higher authority.
             </p>
           </div>
           {error && (

@@ -17,7 +17,7 @@ export default async function AdminLayout({
   const { data: employee } = await supabase
     .from('employees')
     .select('is_admin')
-    .eq('id', user.id)
+    .ilike('email', user.email!)
     .single();
 
   if (!employee?.is_admin) {
@@ -25,9 +25,9 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100">
       <Sidebar isAdmin={true} />
-      <main className="flex-1 p-8">{children}</main>
+      <main className="flex-1 p-8 overflow-auto">{children}</main>
     </div>
   );
 }

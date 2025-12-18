@@ -23,101 +23,173 @@ interface Props {
   isOwner?: boolean;
 }
 
-const statusColors: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  in_progress: 'bg-blue-100 text-blue-800',
-  completed: 'bg-green-100 text-green-800',
-  approved: 'bg-purple-100 text-purple-800',
+const statusConfig: Record<string, { bg: string; text: string; border: string }> = {
+  pending: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
+  in_progress: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
+  completed: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
+  approved: { bg: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200' },
 };
 
 export default function ProjectCard({ project, currentUserRank, currentUserId, onUpdate, isOwner }: Props) {
   const [editingPoints, setEditingPoints] = useState(false);
   const [newPoints, setNewPoints] = useState(project.points_override || project.type?.points || 0);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
 
-  const canApprove = currentUserRank < (project.assignee?.rank || 999) && project.status === 'completed';
-  const canEditPoints = currentUserRank < (project.assignee?.rank || 999);
+  const assigneeRank = project.assignee?.rank || 999;
   const isAssignee = currentUserId === project.assigned_to;
-  const canMarkComplete = isAssignee && project.status !== 'approved';
+  
+  // Higher rank (lower number) can override points for lower ranks
+  const canEditPoints = currentUserRank < assigneeRank;
+  
+  // Only the assignee can mark their own project as complete
+  const canMarkComplete = isAssignee && project.status !== 'approved' && project.status !== 'completed';
 
   const handleStatusChange = async (newStatus: string) => {
+    setSaving(true);
+    setError(null);
     const updates: Record<string, unknown> = { status: newStatus };
     if (newStatus === 'completed') {
       updates.completed_at = new Date().toISOString();
     }
-    await supabase.from('projects').update(updates).eq('id', project.id);
-    onUpdate();
-  };
-
-  const handleApprove = async () => {
-    await supabase.from('projects').update({
-      status: 'approved',
-      approved_by: currentUserId,
-    }).eq('id', project.id);
+    const { error: updateError } = await supabase.from('projects').update(updates).eq('id', project.id);
+    setSaving(false);
+    if (updateError) {
+      setError('Failed to update status');
+      console.error('Status update error:', updateError);
+      return;
+    }
     onUpdate();
   };
 
   const handlePointsUpdate = async () => {
-    await supabase.from('projects').update({ points_override: newPoints }).eq('id', project.id);
+    setSaving(true);
+    setError(null);
+    
+    const { error: updateError } = await supabase
+      .from('projects')
+      .update({ points_override: newPoints })
+      .eq('id', project.id);
+    
+    setSaving(false);
+    
+    if (updateError) {
+      setError('Failed to update points. Check permissions.');
+      console.error('Points update error:', updateError);
+      return;
+    }
+    
     setEditingPoints(false);
     onUpdate();
   };
 
-  const points = project.points_override || project.type?.points || 0;
+  const basePoints = project.type?.points || 0;
+  const currentPoints = project.points_override ?? basePoints;
+  const hasOverride = project.points_override !== null;
+  const statusStyle = statusConfig[project.status] || statusConfig.pending;
 
   return (
-    <div className="bg-white rounded-lg shadow p-4">
-      <div className="flex justify-between items-start mb-3">
-        <div>
-          <h3 className="font-semibold">{project.name}</h3>
-          <p className="text-sm text-gray-500">
-            {isOwner ? `Assigned to: ${project.assignee?.name}` : `Created by: ${project.creator?.name}`}
-          </p>
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow">
+      {/* Header */}
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex-1">
+          <h3 className="font-semibold text-gray-900 text-lg">{project.name}</h3>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-sm text-gray-500">
+              {isOwner ? 'Assigned to' : 'Created by'}:
+            </span>
+            <span className="text-sm font-medium text-gray-700">
+              {isOwner ? project.assignee?.name : project.creator?.name}
+            </span>
+            {project.assignee?.rank && (
+              <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                Rank {project.assignee.rank}
+              </span>
+            )}
+          </div>
         </div>
-        <span className={`text-xs px-2 py-1 rounded ${statusColors[project.status]}`}>
-          {project.status.replace('_', ' ')}
+        <span className={`text-xs font-medium px-3 py-1.5 rounded-full border ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border}`}>
+          {project.status.replace('_', ' ').toUpperCase()}
         </span>
       </div>
 
-      <div className="flex items-center justify-between text-sm">
-        <div className="flex items-center gap-2">
-          <span className="bg-gray-100 px-2 py-1 rounded">{project.type?.name}</span>
+      {/* Error message */}
+      {error && (
+        <div className="mb-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+          {error}
+        </div>
+      )}
+
+      {/* Project details */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {/* Project type badge */}
+          <span className="bg-indigo-100 text-indigo-700 text-sm font-medium px-3 py-1 rounded-lg">
+            {project.type?.name || 'Unknown'}
+          </span>
+          
+          {/* Points section */}
           {editingPoints ? (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-1.5">
               <input
                 type="number"
                 value={newPoints}
                 onChange={(e) => setNewPoints(Number(e.target.value))}
-                className="w-16 border rounded px-2 py-1"
+                className="w-20 border border-gray-300 rounded-lg px-2 py-1 text-center font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                min={0}
+                autoFocus
               />
-              <button onClick={handlePointsUpdate} className="text-green-600">✓</button>
-              <button onClick={() => setEditingPoints(false)} className="text-red-600">✗</button>
+              <span className="text-gray-500 text-sm">pts</span>
+              <button 
+                onClick={handlePointsUpdate} 
+                disabled={saving}
+                className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg px-3 py-1 text-sm font-medium transition-colors disabled:opacity-50"
+              >
+                {saving ? '...' : 'Save'}
+              </button>
+              <button 
+                onClick={() => { setEditingPoints(false); setNewPoints(currentPoints); setError(null); }}
+                className="bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg px-3 py-1 text-sm font-medium transition-colors"
+              >
+                Cancel
+              </button>
             </div>
           ) : (
-            <span className="font-medium">{points} pts</span>
-          )}
-          {canEditPoints && !editingPoints && (
-            <button onClick={() => setEditingPoints(true)} className="text-blue-600 text-xs">
-              Edit
-            </button>
+            <div className="flex items-center gap-2">
+              <div className={`flex items-center gap-1 px-3 py-1.5 rounded-lg ${hasOverride ? 'bg-orange-50 border border-orange-200' : 'bg-gray-50'}`}>
+                <span className={`font-bold text-lg ${hasOverride ? 'text-orange-600' : 'text-gray-800'}`}>
+                  {currentPoints}
+                </span>
+                <span className="text-gray-500 text-sm">pts</span>
+                {hasOverride && (
+                  <span className="text-orange-500 ml-1" title={`Overridden from ${basePoints} pts`}>
+                    ✎
+                  </span>
+                )}
+              </div>
+              
+              {canEditPoints && (
+                <button 
+                  onClick={() => { setNewPoints(currentPoints); setEditingPoints(true); setError(null); }}
+                  className="bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  Override Points
+                </button>
+              )}
+            </div>
           )}
         </div>
 
+        {/* Actions */}
         <div className="flex gap-2">
-          {canMarkComplete && project.status !== 'completed' && project.status !== 'approved' && (
+          {canMarkComplete && (
             <button
               onClick={() => handleStatusChange('completed')}
-              className="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+              disabled={saving}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
             >
-              Mark Complete
-            </button>
-          )}
-          {canApprove && (
-            <button
-              onClick={handleApprove}
-              className="text-xs bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700"
-            >
-              Approve
+              {saving ? 'Saving...' : '✓ Mark Complete'}
             </button>
           )}
         </div>

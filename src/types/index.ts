@@ -37,3 +37,39 @@ export interface ScoreboardEntry {
   month: number;
   year: number;
 }
+
+export interface MonthlyScore {
+  id: string;
+  employee_id: string;
+  employee_name: string;
+  total_points: number;
+  project_count: number;
+  month: number;
+  year: number;
+  updated_at: string;
+}
+
+export interface YearlyScore {
+  id: string;
+  employee_id: string;
+  employee_name: string;
+  total_points: number;
+  project_count: number;
+  year: number;
+  updated_at: string;
+}
+
+export interface PointsBreakdownEntry {
+  id: string;
+  project_name: string;
+  project_type: string;
+  base_points: number;
+  points_override: number | null;
+  final_points: number;
+  assigned_by_id: string;
+  assigned_by_name: string;
+  completed_by_id: string;
+  completed_by_name: string;
+  completed_at: string;
+  status: string;
+}
