@@ -21,8 +21,7 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
 
   const navItems = isAdmin
     ? [
-        { href: '/admin', label: 'Dashboard', icon: '📊' },
-        { href: '/admin/users', label: 'Manage Users', icon: '👥' },
+        { href: '/admin', label: 'Manage Employees', icon: '👥' },
       ]
     : [
         { href: '/home', label: 'Home', icon: '🏠' },

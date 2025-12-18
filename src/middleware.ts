@@ -32,10 +32,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect authenticated users away from login
+  // Redirect authenticated users away from login based on role
   if (user && request.nextUrl.pathname.startsWith('/login')) {
+    const { data: employee } = await supabase
+      .from('employees')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single();
+
     const url = request.nextUrl.clone();
-    url.pathname = '/home';
+    url.pathname = employee?.is_admin ? '/admin' : '/home';
     return NextResponse.redirect(url);
   }
 

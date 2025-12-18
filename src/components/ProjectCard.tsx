@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { getCurrentUser } from '@/lib/mock-auth';
-import { updateProject } from '@/lib/mock-store';
+import { createClient } from '@/lib/supabase/client';
 
 interface Project {
   id: string;
@@ -12,13 +11,14 @@ interface Project {
   created_by: string;
   assigned_to: string;
   type: { id: string; name: string; points: number } | null;
-  creator: { id: string; name: string; rank: number | null } null;
-  assignee: { id: string; name: string; rank: number | null } ;
+  creator: { id: string; name: string; rank: number | null } | null;
+  assignee: { id: string; name: string; rank: number | null } | null;
 }
 
 interface Props {
   project: Project;
   currentUserRank: number;
+  currentUserId?: string;
   onUpdate: () => void;
   isOwner?: boolean;
 }
@@ -30,35 +30,35 @@ const statusColors: Record<string, string> = {
   approved: 'bg-purple-100 text-purple-800',
 };
 
-export default function ProjectCard({ project, currentUserRank, onUpdate, isOwner }: Props) {
+export default function ProjectCard({ project, currentUserRank, currentUserId, onUpdate, isOwner }: Props) {
   const [editingPoints, setEditingPoints] = useState(false);
   const [newPoints, setNewPoints] = useState(project.points_override || project.type?.points || 0);
+  const supabase = createClient();
 
   const canApprove = currentUserRank < (project.assignee?.rank || 999) && project.status === 'completed';
   const canEditPoints = currentUserRank < (project.assignee?.rank || 999);
-  const isAssignee = getCurrentUser()?.id === project.assigned_to;
+  const isAssignee = currentUserId === project.assigned_to;
   const canMarkComplete = isAssignee && project.status !== 'approved';
 
-  const handleStatusChange = (newStatus: string) => {
+  const handleStatusChange = async (newStatus: string) => {
     const updates: Record<string, unknown> = { status: newStatus };
     if (newStatus === 'completed') {
       updates.completed_at = new Date().toISOString();
     }
-    updateProject(project.id, updates);
+    await supabase.from('projects').update(updates).eq('id', project.id);
     onUpdate();
   };
 
-  const handleApprove = () => {
-    const user = getCurrentUser();
-    updateProject(project.id, {
+  const handleApprove = async () => {
+    await supabase.from('projects').update({
       status: 'approved',
-      approved_by: user?.id,
-    });
+      approved_by: currentUserId,
+    }).eq('id', project.id);
     onUpdate();
   };
 
-  const handlePointsUpdate = () => {
-    updateProject(project.id, { points_override: newPoints });
+  const handlePointsUpdate = async () => {
+    await supabase.from('projects').update({ points_override: newPoints }).eq('id', project.id);
     setEditingPoints(false);
     onUpdate();
   };

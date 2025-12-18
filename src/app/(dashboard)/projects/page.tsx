@@ -101,6 +101,7 @@ export default function ProjectsPage() {
                   key={project.id}
                   project={project}
                   currentUserRank={currentUser?.rank ?? 999}
+                  currentUserId={currentUser?.id}
                   onUpdate={fetchData}
                   isOwner
                 />
@@ -120,6 +121,7 @@ export default function ProjectsPage() {
                   key={project.id}
                   project={project}
                   currentUserRank={currentUser?.rank ?? 999}
+                  currentUserId={currentUser?.id}
                   onUpdate={fetchData}
                 />
               ))}

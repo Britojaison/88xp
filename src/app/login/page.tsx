@@ -17,22 +17,38 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error: authError } = await supabase.auth.signInWithPassword({ 
+      email, 
+      password 
+    });
 
-    if (error) {
-      setError(error.message);
+    if (authError) {
+      setError(authError.message);
       setLoading(false);
       return;
     }
 
-    router.push('/home');
+    // Check if user is admin
+    const { data: employee, error: empError } = await supabase
+      .from('employees')
+      .select('is_admin')
+      .eq('id', data.user?.id)
+      .single();
+
+    console.log('Employee lookup:', { employee, empError, userId: data.user?.id });
+
+    if (employee?.is_admin === true) {
+      router.push('/admin');
+    } else {
+      router.push('/home');
+    }
     router.refresh();
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold text-center mb-6">Employee Dashboard</h1>
+        <h1 className="text-2xl font-bold text-center mb-6">88XP Dashboard</h1>
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>

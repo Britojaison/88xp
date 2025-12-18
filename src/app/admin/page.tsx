@@ -35,7 +35,21 @@ export default function AdminPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this employee?')) return;
-    await supabase.from('employees').delete().eq('id', id);
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    await fetch(
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/delete-employee`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ employeeId: id }),
+      }
+    );
+    
     fetchEmployees();
   };
 
@@ -138,33 +152,27 @@ function EmployeeModal({
       // Update existing employee
       await supabase.from('employees').update({ name, rank }).eq('id', employee.id);
     } else {
-      // Create new user via Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
+      // Create new user via Edge Function (uses admin API)
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create-employee`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({ email, password, name, rank }),
+        }
+      );
 
-      if (authError) {
-        setError(authError.message);
+      const result = await response.json();
+      
+      if (!response.ok) {
+        setError(result.error || 'Failed to create employee');
         setLoading(false);
         return;
-      }
-
-      if (authData.user) {
-        // Create employee record
-        const { error: insertError } = await supabase.from('employees').insert({
-          id: authData.user.id,
-          email,
-          name,
-          rank,
-          is_admin: false,
-        });
-
-        if (insertError) {
-          setError(insertError.message);
-          setLoading(false);
-          return;
-        }
       }
     }
 
