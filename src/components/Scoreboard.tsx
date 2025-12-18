@@ -22,7 +22,7 @@ export default function Scoreboard() {
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      <h3 className="text-lg font-semibold mb-4">🏆 Monthly Scoreboard</h3>
+      <h3 className="text-xl font-bold mb-4 text-gray-900">🏆 Monthly Scoreboard</h3>
       {scores.length === 0 ? (
         <p className="text-gray-500 text-center py-4">No scores yet this month</p>
       ) : (

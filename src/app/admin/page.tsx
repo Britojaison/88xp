@@ -42,7 +42,7 @@ export default function AdminPage() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Manage Employees</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Manage Employees</h1>
         <button
           onClick={() => { setEditingEmployee(null); setShowModal(true); }}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
@@ -71,7 +71,7 @@ export default function AdminPage() {
             ) : (
               employees.map((emp) => (
                 <tr key={emp.id}>
-                  <td className="px-6 py-4 font-medium">{emp.name}</td>
+                  <td className="px-6 py-4 font-medium text-gray-900">{emp.name}</td>
                   <td className="px-6 py-4 text-gray-500">{emp.email}</td>
                   <td className="px-6 py-4">
                     <span className="bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded">

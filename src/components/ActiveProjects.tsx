@@ -27,7 +27,7 @@ export default function ActiveProjects() {
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      <h3 className="text-lg font-semibold mb-4">📋 Active Projects</h3>
+      <h3 className="text-xl font-bold mb-4 text-gray-900">📋 Active Projects</h3>
       {projects.length === 0 ? (
         <p className="text-gray-500 text-center py-4">No active projects</p>
       ) : (
@@ -36,8 +36,8 @@ export default function ActiveProjects() {
             <div key={project.id} className="p-3 bg-gray-50 rounded-lg">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="font-medium">{project.name}</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="font-medium text-gray-900">{project.name}</p>
+                  <p className="text-sm text-gray-600">
                     {project.assignee?.name || 'Unassigned'}
                   </p>
                 </div>
