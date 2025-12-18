@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getEmployees, addEmployee, updateEmployee, deleteEmployee } from '@/lib/mock-store';
-import { mockUsers } from '@/lib/mock-data';
+import { createClient } from '@/lib/supabase/client';
 
 interface Employee {
   id: string;
@@ -18,22 +17,25 @@ export default function AdminPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
+  const supabase = createClient();
 
   useEffect(() => {
     fetchEmployees();
   }, []);
 
-  const fetchEmployees = () => {
-    const data = getEmployees();
-    // Only show non-admin employees (ranked users)
-    const rankedEmployees = data.filter(e => !e.is_admin);
-    setEmployees(rankedEmployees.sort((a, b) => (a.rank || 0) - (b.rank || 0)));
+  const fetchEmployees = async () => {
+    const { data } = await supabase
+      .from('employees')
+      .select('*')
+      .eq('is_admin', false)
+      .order('rank');
+    setEmployees(data || []);
     setLoading(false);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this employee?')) return;
-    deleteEmployee(id);
+    await supabase.from('employees').delete().eq('id', id);
     fetchEmployees();
   };
 
@@ -42,7 +44,7 @@ export default function AdminPage() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Manage Employees</h1>
+        <h1 className="text-2xl font-bold">Manage Employees</h1>
         <button
           onClick={() => { setEditingEmployee(null); setShowModal(true); }}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
@@ -71,7 +73,7 @@ export default function AdminPage() {
             ) : (
               employees.map((emp) => (
                 <tr key={emp.id}>
-                  <td className="px-6 py-4 font-medium text-gray-900">{emp.name}</td>
+                  <td className="px-6 py-4 font-medium">{emp.name}</td>
                   <td className="px-6 py-4 text-gray-500">{emp.email}</td>
                   <td className="px-6 py-4">
                     <span className="bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded">
@@ -125,28 +127,45 @@ function EmployeeModal({
   const [rank, setRank] = useState(employee?.rank || 1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const supabase = createClient();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     if (employee) {
       // Update existing employee
-      updateEmployee(employee.id, { name, rank });
+      await supabase.from('employees').update({ name, rank }).eq('id', employee.id);
     } else {
-      // Check if email already exists
-      if (mockUsers[email]) {
-        setError('Email already exists');
+      // Create new user via Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (authError) {
+        setError(authError.message);
         setLoading(false);
         return;
       }
-      
-      // Create new employee
-      const newEmp = addEmployee({ email, name, rank });
-      
-      // Add to mock users for login (in real app, this would be Supabase Auth)
-      mockUsers[email] = { password, employeeId: newEmp.id };
+
+      if (authData.user) {
+        // Create employee record
+        const { error: insertError } = await supabase.from('employees').insert({
+          id: authData.user.id,
+          email,
+          name,
+          rank,
+          is_admin: false,
+        });
+
+        if (insertError) {
+          setError(insertError.message);
+          setLoading(false);
+          return;
+        }
+      }
     }
 
     setLoading(false);

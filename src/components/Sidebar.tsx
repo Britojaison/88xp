@@ -2,18 +2,20 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { mockLogout } from '@/lib/mock-auth';
+import { createClient } from '@/lib/supabase/client';
 
 export default function Sidebar({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
+  const supabase = createClient();
 
-  const handleLogout = () => {
-    mockLogout();
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     router.push('/login');
+    router.refresh();
   };
 
-  // Admin only sees Home and Admin panel (no Projects or Profile)
+  // Admin only sees Home and Admin panel
   const navItems = isAdmin
     ? [{ href: '/home', label: 'Home', icon: '🏠' }]
     : [

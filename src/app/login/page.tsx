@@ -2,46 +2,37 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { mockLogin } from '@/lib/mock-auth';
+import { createClient } from '@/lib/supabase/client';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('admin@test.com');
-  const [password, setPassword] = useState('password');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const supabase = createClient();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    const result = mockLogin(email, password);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (!result.success) {
-      setError(result.error || 'Login failed');
+    if (error) {
+      setError(error.message);
       setLoading(false);
       return;
     }
 
     router.push('/home');
+    router.refresh();
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
         <h1 className="text-2xl font-bold text-center mb-6">Employee Dashboard</h1>
-        
-        <div className="mb-4 p-3 bg-blue-50 rounded-lg text-sm">
-          <p className="font-medium text-blue-800 mb-2">Mock Login Credentials:</p>
-          <ul className="text-blue-700 space-y-1">
-            <li><strong>admin@test.com</strong> - Admin (manages users)</li>
-            <li><strong>john@test.com</strong> - Employee (Rank 1)</li>
-            <li><strong>jane@test.com</strong> - Employee (Rank 2)</li>
-            <li><strong>bob@test.com</strong> - Employee (Rank 3)</li>
-          </ul>
-          <p className="mt-2 text-blue-600">Password for all: <strong>password</strong></p>
-        </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>

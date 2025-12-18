@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getMonthlyScores } from '@/lib/mock-store';
+import { createClient } from '@/lib/supabase/client';
 
 interface ScoreEntry {
   employee_id: string;
@@ -12,17 +12,33 @@ interface ScoreEntry {
 export default function Scoreboard() {
   const [scores, setScores] = useState<ScoreEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const supabase = createClient();
 
   useEffect(() => {
-    setScores(getMonthlyScores());
-    setLoading(false);
+    fetchScores();
   }, []);
+
+  const fetchScores = async () => {
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
+
+    const { data } = await supabase
+      .from('monthly_scores')
+      .select('*')
+      .eq('month', month)
+      .eq('year', year)
+      .order('total_points', { ascending: false });
+
+    setScores(data || []);
+    setLoading(false);
+  };
 
   if (loading) return <div className="animate-pulse bg-gray-200 h-64 rounded-lg"></div>;
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      <h3 className="text-xl font-bold mb-4 text-gray-900">🏆 Monthly Scoreboard</h3>
+      <h3 className="text-lg font-semibold mb-4">🏆 Monthly Scoreboard</h3>
       {scores.length === 0 ? (
         <p className="text-gray-500 text-center py-4">No scores yet this month</p>
       ) : (

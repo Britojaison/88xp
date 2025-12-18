@@ -1,33 +1,27 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
-import { getCurrentUser } from '@/lib/mock-auth';
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  useEffect(() => {
-    const user = getCurrentUser();
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-    if (!user.is_admin) {
-      router.push('/home');
-      return;
-    }
-    setLoading(false);
-  }, [router]);
+  if (!user) {
+    redirect('/login');
+  }
 
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  const { data: employee } = await supabase
+    .from('employees')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single();
+
+  if (!employee?.is_admin) {
+    redirect('/home');
   }
 
   return (

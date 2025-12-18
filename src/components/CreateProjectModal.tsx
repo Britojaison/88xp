@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getCurrentUser } from '@/lib/mock-auth';
-import { getProjectTypes, getRankedEmployees, addProject } from '@/lib/mock-store';
+import { createClient } from '@/lib/supabase/client';
 
 interface ProjectType {
   id: string;
@@ -19,46 +18,51 @@ interface Employee {
 interface Props {
   onClose: () => void;
   onCreated: () => void;
+  currentUserId: string;
   currentUserRank: number;
 }
 
-export default function CreateProjectModal({ onClose, onCreated, currentUserRank }: Props) {
+export default function CreateProjectModal({ onClose, onCreated, currentUserId, currentUserRank }: Props) {
   const [name, setName] = useState('');
   const [typeId, setTypeId] = useState('');
   const [assignTo, setAssignTo] = useState('');
   const [types, setTypes] = useState<ProjectType[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
+  const supabase = createClient();
 
   useEffect(() => {
-    const user = getCurrentUser();
-    const allTypes = getProjectTypes();
-    // Only get ranked employees (not admin)
-    const rankedEmployees = getRankedEmployees();
+    fetchData();
+  }, []);
 
-    setTypes(allTypes);
-    // Can only assign to lower rank employees (higher rank number) or self
-    const assignable = rankedEmployees.filter(
-      (e) => (e.rank !== null && e.rank >= currentUserRank) || e.id === user?.id
-    ) as Employee[];
+  const fetchData = async () => {
+    const [typesRes, employeesRes] = await Promise.all([
+      supabase.from('project_types').select('*').order('points'),
+      supabase.from('employees').select('id, name, rank').eq('is_admin', false).order('rank'),
+    ]);
+
+    setTypes(typesRes.data || []);
+    
+    // Can only assign to same or lower rank (higher rank number) or self
+    const assignable = (employeesRes.data || []).filter(
+      (e) => e.rank >= currentUserRank || e.id === currentUserId
+    );
     setEmployees(assignable);
 
-    if (allTypes.length) setTypeId(allTypes[0].id);
-    if (user) setAssignTo(user.id);
-  }, [currentUserRank]);
+    if (typesRes.data?.length) setTypeId(typesRes.data[0].id);
+    setAssignTo(currentUserId);
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    const user = getCurrentUser();
-    if (!user) return;
-
-    addProject({
+    await supabase.from('projects').insert({
       name,
       type_id: typeId,
-      created_by: user.id,
-      assigned_to: assignTo || user.id,
+      created_by: currentUserId,
+      assigned_to: assignTo || currentUserId,
+      status: 'pending',
     });
 
     setLoading(false);

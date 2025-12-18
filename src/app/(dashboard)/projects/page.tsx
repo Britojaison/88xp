@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCurrentUser } from '@/lib/mock-auth';
-import { getProjects } from '@/lib/mock-store';
+import { createClient } from '@/lib/supabase/client';
 import CreateProjectModal from '@/components/CreateProjectModal';
 import ProjectCard from '@/components/ProjectCard';
 
@@ -24,33 +23,55 @@ export default function ProjectsPage() {
   const [myProjects, setMyProjects] = useState<Project[]>([]);
   const [assignedProjects, setAssignedProjects] = useState<Project[]>([]);
   const [showModal, setShowModal] = useState(false);
-  const [currentUser, setCurrentUser] = useState<{ id: string; rank: number } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ id: string; rank: number | null; is_admin: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const supabase = createClient();
 
   useEffect(() => {
     fetchData();
   }, []);
 
-  const fetchData = () => {
-    const user = getCurrentUser();
+  const fetchData = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    // Admin cannot access projects page
-    if (user.is_admin) {
+    const { data: employee } = await supabase
+      .from('employees')
+      .select('id, rank, is_admin')
+      .eq('id', user.id)
+      .single();
+
+    if (employee?.is_admin) {
       router.push('/home');
       return;
     }
 
-    setCurrentUser({ id: user.id, rank: user.rank ?? 999 });
+    setCurrentUser(employee);
 
-    const allProjects = getProjects();
-    
-    const created = allProjects.filter(p => p.created_by === user.id) as Project[];
-    const assigned = allProjects.filter(p => p.assigned_to === user.id && p.created_by !== user.id) as Project[];
+    const { data: created } = await supabase
+      .from('projects')
+      .select('*, type:project_types(*), creator:employees!created_by(*), assignee:employees!assigned_to(*)')
+      .eq('created_by', user.id)
+      .order('created_at', { ascending: false });
 
-    setMyProjects(created);
-    setAssignedProjects(assigned);
+    const { data: assigned } = await supabase
+      .from('projects')
+      .select('*, type:project_types(*), creator:employees!created_by(*), assignee:employees!assigned_to(*)')
+      .eq('assigned_to', user.id)
+      .neq('created_by', user.id)
+      .order('created_at', { ascending: false });
+
+    // Transform joins
+    const transform = (p: Record<string, unknown>) => ({
+      ...p,
+      type: Array.isArray(p.type) ? p.type[0] : p.type,
+      creator: Array.isArray(p.creator) ? p.creator[0] : p.creator,
+      assignee: Array.isArray(p.assignee) ? p.assignee[0] : p.assignee,
+    });
+
+    setMyProjects((created || []).map(transform) as Project[]);
+    setAssignedProjects((assigned || []).map(transform) as Project[]);
     setLoading(false);
   };
 
@@ -79,7 +100,7 @@ export default function ProjectsPage() {
                 <ProjectCard
                   key={project.id}
                   project={project}
-                  currentUserRank={currentUser?.rank || 999}
+                  currentUserRank={currentUser?.rank ?? 999}
                   onUpdate={fetchData}
                   isOwner
                 />
@@ -98,7 +119,7 @@ export default function ProjectsPage() {
                 <ProjectCard
                   key={project.id}
                   project={project}
-                  currentUserRank={currentUser?.rank || 999}
+                  currentUserRank={currentUser?.rank ?? 999}
                   onUpdate={fetchData}
                 />
               ))}
@@ -107,11 +128,12 @@ export default function ProjectsPage() {
         </section>
       </div>
 
-      {showModal && (
+      {showModal && currentUser && (
         <CreateProjectModal
           onClose={() => setShowModal(false)}
           onCreated={fetchData}
-          currentUserRank={currentUser?.rank || 999}
+          currentUserId={currentUser.id}
+          currentUserRank={currentUser.rank ?? 999}
         />
       )}
     </div>

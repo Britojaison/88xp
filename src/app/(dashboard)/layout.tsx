@@ -1,36 +1,28 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
-import { getCurrentUser } from '@/lib/mock-auth';
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  useEffect(() => {
-    const user = getCurrentUser();
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-    setIsAdmin(user.is_admin);
-    setLoading(false);
-  }, [router]);
-
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  if (!user) {
+    redirect('/login');
   }
+
+  const { data: employee } = await supabase
+    .from('employees')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single();
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      <Sidebar isAdmin={isAdmin} />
+      <Sidebar isAdmin={employee?.is_admin || false} />
       <main className="flex-1 p-8">{children}</main>
     </div>
   );
