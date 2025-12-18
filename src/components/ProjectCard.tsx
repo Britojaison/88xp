@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { getCurrentUser } from '@/lib/mock-auth';
+import { updateProject } from '@/lib/mock-store';
 
 interface Project {
   id: string;
@@ -11,8 +12,8 @@ interface Project {
   created_by: string;
   assigned_to: string;
   type: { id: string; name: string; points: number } | null;
-  creator: { id: string; name: string; rank: number | null } | null;
-  assignee: { id: string; name: string; rank: number | null } | null;
+  creator: { id: string; name: string; rank: number | null } null;
+  assignee: { id: string; name: string; rank: number | null } ;
 }
 
 interface Props {
@@ -32,32 +33,32 @@ const statusColors: Record<string, string> = {
 export default function ProjectCard({ project, currentUserRank, onUpdate, isOwner }: Props) {
   const [editingPoints, setEditingPoints] = useState(false);
   const [newPoints, setNewPoints] = useState(project.points_override || project.type?.points || 0);
-  const supabase = createClient();
 
-  const assigneeRank = project.assignee?.rank ?? 999;
-  const canApprove = currentUserRank < assigneeRank && project.status === 'completed';
-  const canEditPoints = currentUserRank < assigneeRank;
+  const canApprove = currentUserRank < (project.assignee?.rank || 999) && project.status === 'completed';
+  const canEditPoints = currentUserRank < (project.assignee?.rank || 999);
+  const isAssignee = getCurrentUser()?.id === project.assigned_to;
+  const canMarkComplete = isAssignee && project.status !== 'approved';
 
-  const handleStatusChange = async (newStatus: string) => {
+  const handleStatusChange = (newStatus: string) => {
     const updates: Record<string, unknown> = { status: newStatus };
     if (newStatus === 'completed') {
       updates.completed_at = new Date().toISOString();
     }
-    await supabase.from('projects').update(updates).eq('id', project.id);
+    updateProject(project.id, updates);
     onUpdate();
   };
 
-  const handleApprove = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from('projects').update({
+  const handleApprove = () => {
+    const user = getCurrentUser();
+    updateProject(project.id, {
       status: 'approved',
       approved_by: user?.id,
-    }).eq('id', project.id);
+    });
     onUpdate();
   };
 
-  const handlePointsUpdate = async () => {
-    await supabase.from('projects').update({ points_override: newPoints }).eq('id', project.id);
+  const handlePointsUpdate = () => {
+    updateProject(project.id, { points_override: newPoints });
     setEditingPoints(false);
     onUpdate();
   };
@@ -103,7 +104,7 @@ export default function ProjectCard({ project, currentUserRank, onUpdate, isOwne
         </div>
 
         <div className="flex gap-2">
-          {project.status !== 'completed' && project.status !== 'approved' && (
+          {canMarkComplete && project.status !== 'completed' && project.status !== 'approved' && (
             <button
               onClick={() => handleStatusChange('completed')}
               className="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
