@@ -20,9 +20,14 @@ export default async function DashboardLayout({
     .eq('id', user.id)
     .single();
 
+  // Redirect admins to their own dashboard
+  if (employee?.is_admin) {
+    redirect('/admin');
+  }
+
   return (
     <div className="flex min-h-screen bg-gray-100">
-      <Sidebar isAdmin={employee?.is_admin || false} />
+      <Sidebar isAdmin={false} />
       <main className="flex-1 p-8">{children}</main>
     </div>
   );

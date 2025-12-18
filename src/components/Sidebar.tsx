@@ -21,7 +21,9 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
 
   const navItems = isAdmin
     ? [
-        { href: '/admin', label: 'Manage Employees', icon: '👥' },
+        { href: '/admin', label: 'Home', icon: '🏠' },
+        { href: '/admin/add-user', label: 'Add User', icon: '➕' },
+        { href: '/admin/profile', label: 'Profile', icon: '👤' },
       ]
     : [
         { href: '/home', label: 'Home', icon: '🏠' },
@@ -49,14 +51,14 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
             <span>{item.label}</span>
           </Link>
         ))}
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-left"
+        >
+          <span>🚪</span>
+          <span>Logout</span>
+        </button>
       </nav>
-      <button
-        onClick={handleLogout}
-        className="mt-8 w-full flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
-      >
-        <span>🚪</span>
-        <span>Logout</span>
-      </button>
     </aside>
   );
 }

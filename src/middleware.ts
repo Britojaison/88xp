@@ -45,6 +45,32 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Check role-based access
+  if (user) {
+    const { data: employee } = await supabase
+      .from('employees')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single();
+
+    // Admins cannot access staff routes
+    if (employee?.is_admin) {
+      const staffRoutes = ['/home', '/projects', '/profile'];
+      if (staffRoutes.some(route => request.nextUrl.pathname.startsWith(route))) {
+        const url = request.nextUrl.clone();
+        url.pathname = '/admin';
+        return NextResponse.redirect(url);
+      }
+    }
+
+    // Staff cannot access admin routes
+    if (!employee?.is_admin && request.nextUrl.pathname.startsWith('/admin')) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/home';
+      return NextResponse.redirect(url);
+    }
+  }
+
   return supabaseResponse;
 }
 

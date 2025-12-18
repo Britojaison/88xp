@@ -50,7 +50,31 @@ INSERT INTO employees (id, email, name, rank, is_admin)
 VALUES ('user-uuid-here', 'admin@example.com', 'Admin', 1, true);
 ```
 
-### 5. Run Development Server
+### 5. Deploy Edge Functions
+
+Deploy the admin functions to Supabase:
+
+```bash
+# Install Supabase CLI globally
+npm install -g supabase
+
+# Login to Supabase
+supabase login
+
+# Link your project
+supabase link --project-ref your-project-ref
+
+# Deploy functions
+supabase functions deploy
+
+# Set required secrets
+supabase secrets set SUPABASE_URL=https://your-project.supabase.co
+supabase secrets set SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
+See `supabase/functions/README.md` for detailed deployment instructions.
+
+### 6. Run Development Server
 
 ```bash
 npm run dev
@@ -65,8 +89,15 @@ npm run dev
 
 ## Pages
 
-- `/login` - Authentication
+### Admin Routes (Admin Only)
+- `/admin` - Employee management dashboard
+- `/admin/add-user` - Create new staff members
+- `/admin/profile` - Admin profile view
+
+### Staff Routes (Staff Only)
 - `/home` - Dashboard with scoreboard and active projects
 - `/projects` - Manage your projects
 - `/profile` - View your profile and stats
-- `/admin` - Employee management (admin only)
+
+### Public Routes
+- `/login` - Authentication

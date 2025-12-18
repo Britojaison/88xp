@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
 interface Employee {
@@ -14,9 +15,10 @@ interface Employee {
 
 export default function AdminPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
   const supabase = createClient();
 
   useEffect(() => {
@@ -58,10 +60,10 @@ export default function AdminPage() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Manage Employees</h1>
+        <h1 className="text-2xl font-bold">Employee Management</h1>
         <button
-          onClick={() => { setEditingEmployee(null); setShowModal(true); }}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          onClick={() => router.push('/admin/add-user')}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
         >
           + Add Employee
         </button>
@@ -96,7 +98,7 @@ export default function AdminPage() {
                   </td>
                   <td className="px-6 py-4">
                     <button
-                      onClick={() => { setEditingEmployee(emp); setShowModal(true); }}
+                      onClick={() => { setEditingEmployee(emp); setShowEditModal(true); }}
                       className="text-blue-600 hover:underline mr-3"
                     >
                       Edit
@@ -115,10 +117,10 @@ export default function AdminPage() {
         </table>
       </div>
 
-      {showModal && (
-        <EmployeeModal
+      {showEditModal && editingEmployee && (
+        <EditEmployeeModal
           employee={editingEmployee}
-          onClose={() => setShowModal(false)}
+          onClose={() => { setShowEditModal(false); setEditingEmployee(null); }}
           onSaved={fetchEmployees}
         />
       )}
@@ -126,19 +128,17 @@ export default function AdminPage() {
   );
 }
 
-function EmployeeModal({
+function EditEmployeeModal({
   employee,
   onClose,
   onSaved,
 }: {
-  employee: Employee | null;
+  employee: Employee;
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const [name, setName] = useState(employee?.name || '');
-  const [email, setEmail] = useState(employee?.email || '');
-  const [password, setPassword] = useState('');
-  const [rank, setRank] = useState(employee?.rank || 1);
+  const [name, setName] = useState(employee.name);
+  const [rank, setRank] = useState(employee.rank || 2);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const supabase = createClient();
@@ -148,110 +148,85 @@ function EmployeeModal({
     setLoading(true);
     setError('');
 
-    if (employee) {
-      // Update existing employee
-      await supabase.from('employees').update({ name, rank }).eq('id', employee.id);
-    } else {
-      // Create new user via Edge Function (uses admin API)
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create-employee`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token}`,
-          },
-          body: JSON.stringify({ email, password, name, rank }),
-        }
-      );
+    try {
+      const { error: updateError } = await supabase
+        .from('employees')
+        .update({ name, rank })
+        .eq('id', employee.id);
 
-      const result = await response.json();
-      
-      if (!response.ok) {
-        setError(result.error || 'Failed to create employee');
+      if (updateError) {
+        setError(updateError.message);
         setLoading(false);
         return;
       }
-    }
 
-    setLoading(false);
-    onSaved();
-    onClose();
+      setLoading(false);
+      onSaved();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      setLoading(false);
+    }
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <h2 className="text-xl font-bold mb-4">
-          {employee ? 'Edit Employee' : 'Add Employee'}
-        </h2>
+        <h2 className="text-xl font-bold mb-4">Edit Employee</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full border rounded-lg px-3 py-2"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
-          {!employee && (
-            <>
-              <div>
-                <label className="block text-sm font-medium mb-1">Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full border rounded-lg px-3 py-2"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full border rounded-lg px-3 py-2"
-                  required
-                  minLength={6}
-                />
-              </div>
-            </>
-          )}
           <div>
-            <label className="block text-sm font-medium mb-1">Rank</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input
+              type="email"
+              value={employee.email}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 cursor-not-allowed"
+              disabled
+            />
+            <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Rank</label>
             <input
               type="number"
               value={rank}
               onChange={(e) => setRank(Number(e.target.value))}
-              className="w-full border rounded-lg px-3 py-2"
-              min={1}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              min={2}
               required
             />
             <p className="text-xs text-gray-500 mt-1">
-              Lower number = higher authority (Rank 1 can approve Rank 2, 3, etc.)
+              Lower number = higher authority. Staff ranks typically start at 2.
             </p>
           </div>
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
           <div className="flex gap-3 justify-end">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? 'Saving...' : 'Save'}
+              {loading ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </form>
