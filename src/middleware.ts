@@ -33,11 +33,11 @@ export async function middleware(request: NextRequest) {
   }
 
   // Redirect authenticated users away from login based on role
-  if (user && request.nextUrl.pathname.startsWith('/login')) {
+  if (user?.email && request.nextUrl.pathname.startsWith('/login')) {
     const { data: employee } = await supabase
       .from('employees')
       .select('is_admin')
-      .eq('id', user.id)
+      .ilike('email', user.email)
       .single();
 
     const url = request.nextUrl.clone();
@@ -46,11 +46,11 @@ export async function middleware(request: NextRequest) {
   }
 
   // Check role-based access
-  if (user) {
+  if (user?.email) {
     const { data: employee } = await supabase
       .from('employees')
       .select('is_admin')
-      .eq('id', user.id)
+      .ilike('email', user.email)
       .single();
 
     // Admins cannot access staff routes

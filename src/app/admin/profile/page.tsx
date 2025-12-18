@@ -12,7 +12,7 @@ export default async function AdminProfilePage() {
   const { data: employee } = await supabase
     .from('employees')
     .select('*')
-    .eq('id', user.id)
+    .ilike('email', user.email!)
     .single();
 
   if (!employee?.is_admin) {
