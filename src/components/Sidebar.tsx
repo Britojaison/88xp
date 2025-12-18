@@ -2,64 +2,62 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { mockLogout } from '@/lib/mock-auth';
+import { createClient } from '@/lib/supabase/client';
 
-export default fun
+interface SidebarProps {
+  isAdmin?: boolean;
+}
+
+export default function Sidebar({ isAdmin = false }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const supabase = createClient();
 
-  {
-
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     router.push('/login');
+    router.refresh();
   };
 
-
   const navItems = isAdmin
-    ? [{ href: '/}]
+    ? [
+        { href: '/admin', label: 'Dashboard', icon: '📊' },
+        { href: '/admin/users', label: 'Manage Users', icon: '👥' },
+      ]
     : [
-    },
- '📁' },
-        { 👤' },
+        { href: '/home', label: 'Home', icon: '🏠' },
+        { href: '/projects', label: 'Projects', icon: '📁' },
+        { href: '/profile', label: 'Profile', icon: '👤' },
       ];
 
   return (
-    <aside className="w-64 bg-gra">
-      <h2 class">
-        {isAdmin ? 'Admin Pd'}
+    <aside className="w-64 bg-gray-800 text-white min-h-screen p-4">
+      <h2 className="text-xl font-bold mb-6">
+        {isAdmin ? 'Admin Panel' : 'Employee Dashboard'}
       </h2>
       <nav className="space-y-2">
         {navItems.map((item) => (
           <Link
-           tem.href}
+            key={item.href}
             href={item.href}
-            className={`flex items-ce ${
-              pat
-           `}
-          >
-            <sp>
-            <span>{item.lpan>
-          </Link>
-        ))}
-        {isAdmin && (
-          <nk
-            href="/admin"
-            className={`flex is ${
-              patay-800'
+            className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+              pathname === item.href
+                ? 'bg-blue-600 text-white'
+                : 'hover:bg-gray-700'
             }`}
           >
-            <n>
-            <span>Manage Users>
+            <span>{item.icon}</span>
+            <span>{item.label}</span>
           </Link>
-        )}
+        ))}
       </nav>
       <button
-        onClick}
-        clasolors"
+        onClick={handleLogout}
+        className="mt-8 w-full flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
       >
- </span>
-
+        <span>🚪</span>
+        <span>Logout</span>
+      </button>
+    </aside>
+  );
 }
-
-  ); </aside>tton>
-   /bu>
-      <span>Logout</  <span      
