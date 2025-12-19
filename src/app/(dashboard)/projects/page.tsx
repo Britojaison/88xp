@@ -273,24 +273,6 @@ export default function TasksPage() {
         </span>
       </div>
 
-      {/* Rank Badge */}
-      {currentUser?.rank && (
-        <div className={`rounded-xl p-4 text-white ${isRank1 ? 'bg-gradient-to-r from-amber-500 to-orange-600' : 'bg-gradient-to-r from-indigo-500 to-purple-600'}`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`text-sm ${isRank1 ? 'text-amber-100' : 'text-indigo-100'}`}>Your Rank</p>
-              <p className="text-2xl font-bold">#{currentUser.rank}</p>
-            </div>
-            {isRank1 && (
-              <p className="text-sm text-amber-100">
-                ✨ You can override points for any completed task
-              </p>
-            )}
-          </div>
-        </div>
-      )}
-
-
       {/* Ongoing Tasks Table */}
       <div className="bg-white rounded-xl shadow overflow-hidden">
         <div className="px-6 py-4 border-b bg-blue-50 flex items-center justify-between">
