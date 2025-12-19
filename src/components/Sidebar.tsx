@@ -32,7 +32,7 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
       ];
 
   return (
-    <aside className="w-72 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white min-h-screen p-6 shadow-2xl">
+    <aside className="relative w-72 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white min-h-screen p-6 shadow-2xl">
       {/* Logo/Brand */}
       <div className="mb-8">
         <div className="flex items-center gap-3">
@@ -67,18 +67,16 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
             <span className="font-medium">{item.label}</span>
           </Link>
         ))}
-      </nav>
-
-      {/* Logout button at bottom */}
-      <div className="absolute bottom-6 left-6 right-6">
+        
+        {/* Logout button */}
         <button
           onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-slate-700/50 hover:bg-red-600/80 text-slate-300 hover:text-white transition-all group"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-700/50 hover:bg-red-600/80 text-slate-300 hover:text-white transition-all"
         >
           <span className="text-lg">🚪</span>
           <span className="font-medium">Logout</span>
         </button>
-      </div>
+      </nav>
     </aside>
   );
 }
