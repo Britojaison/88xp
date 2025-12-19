@@ -78,7 +78,7 @@ export default async function ProfilePage() {
             </p>
           </div>
           <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl p-4 border border-violet-100">
-            <p className="text-sm text-violet-600 font-medium">Projects This Year</p>
+            <p className="text-sm text-violet-600 font-medium">Tasks This Year</p>
             <p className="text-2xl font-bold text-violet-700">{yearlyScore?.project_count || 0}</p>
           </div>
         </div>

@@ -56,7 +56,7 @@ export default function Scoreboard() {
   };
 
   const totalPoints = scores.reduce((sum, s) => sum + s.total_points, 0);
-  const totalProjects = scores.reduce((sum, s) => sum + s.project_count, 0);
+  const totalTasks = scores.reduce((sum, s) => sum + s.project_count, 0);
 
   if (loading) return <div className="animate-pulse bg-gray-200 h-64 rounded-lg"></div>;
 
@@ -102,7 +102,7 @@ export default function Scoreboard() {
                   <div>
                     <span className="font-medium hover:text-blue-600 transition-colors">{entry.employee_name}</span>
                     <span className="text-xs text-gray-500 ml-2">
-                      ({entry.project_count} projects)
+                      ({entry.project_count} tasks)
                     </span>
                   </div>
                 </div>
@@ -114,7 +114,7 @@ export default function Scoreboard() {
           </div>
 
           <div className="mt-4 pt-4 border-t text-sm text-gray-500 text-center">
-            Total: {totalPoints} points across {totalProjects} projects
+            Total: {totalPoints} points across {totalTasks} tasks
           </div>
         </>
       )}

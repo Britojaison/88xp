@@ -101,7 +101,7 @@ export default function YearlyScoreboard({ year }: Props) {
                 <div>
                   <span className="font-medium hover:text-blue-600 transition-colors">{entry.employee_name}</span>
                   <span className="text-xs text-gray-500 ml-2">
-                    ({entry.project_count} projects)
+                    ({entry.project_count} tasks)
                   </span>
                 </div>
               </div>
@@ -119,7 +119,7 @@ export default function YearlyScoreboard({ year }: Props) {
       {scores.length > 0 && (
         <div className="mt-4 pt-4 border-t text-sm text-gray-500 text-center">
           Total: {scores.reduce((sum, s) => sum + s.total_points, 0)} points across{' '}
-          {scores.reduce((sum, s) => sum + s.project_count, 0)} projects
+          {scores.reduce((sum, s) => sum + s.project_count, 0)} tasks
         </div>
       )}
     </div>
