@@ -8,6 +8,7 @@ interface Project {
   name: string;
   status: string;
   completed_at: string | null;
+  created_at: string;
   points_override: number | null;
   type: { name: string; points: number } | null;
 }
@@ -17,6 +18,8 @@ interface Props {
   employeeName: string;
 }
 
+type ViewType = 'monthly' | 'yearly';
+
 const statusConfig: Record<string, { bg: string; text: string }> = {
   pending: { bg: 'bg-amber-100', text: 'text-amber-700' },
   in_progress: { bg: 'bg-blue-100', text: 'text-blue-700' },
@@ -24,14 +27,27 @@ const statusConfig: Record<string, { bg: string; text: string }> = {
   approved: { bg: 'bg-violet-100', text: 'text-violet-700' },
 };
 
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+
 export default function RecentProjects({ employeeId, employeeName }: Props) {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewType, setViewType] = useState<ViewType>('monthly');
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const supabase = createClient();
 
   useEffect(() => {
     fetchProjects();
   }, [employeeId]);
+
+  useEffect(() => {
+    filterProjects();
+  }, [projects, viewType, selectedMonth, selectedYear]);
 
   const fetchProjects = async () => {
     setLoading(true);
@@ -43,12 +59,12 @@ export default function RecentProjects({ employeeId, employeeName }: Props) {
         name,
         status,
         completed_at,
+        created_at,
         points_override,
         type:project_types(name, points)
       `)
       .eq('assigned_to', employeeId)
-      .order('created_at', { ascending: false })
-      .limit(10);
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching projects:', error);
@@ -64,6 +80,56 @@ export default function RecentProjects({ employeeId, employeeName }: Props) {
 
     setProjects(transformed);
     setLoading(false);
+  };
+
+  const filterProjects = () => {
+    if (viewType === 'monthly') {
+      const filtered = projects.filter(p => {
+        const date = new Date(p.created_at);
+        return date.getMonth() === selectedMonth && date.getFullYear() === selectedYear;
+      });
+      setFilteredProjects(filtered);
+    } else {
+      const filtered = projects.filter(p => {
+        const date = new Date(p.created_at);
+        return date.getFullYear() === selectedYear;
+      });
+      setFilteredProjects(filtered);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (viewType === 'monthly') {
+      if (selectedMonth === 0) {
+        setSelectedMonth(11);
+        setSelectedYear(selectedYear - 1);
+      } else {
+        setSelectedMonth(selectedMonth - 1);
+      }
+    } else {
+      setSelectedYear(selectedYear - 1);
+    }
+  };
+
+  const handleNext = () => {
+    if (viewType === 'monthly') {
+      if (selectedMonth === 11) {
+        setSelectedMonth(0);
+        setSelectedYear(selectedYear + 1);
+      } else {
+        setSelectedMonth(selectedMonth + 1);
+      }
+    } else {
+      setSelectedYear(selectedYear + 1);
+    }
+  };
+
+  const getAvailableYears = () => {
+    const years = new Set<number>();
+    projects.forEach(p => {
+      years.add(new Date(p.created_at).getFullYear());
+    });
+    return Array.from(years).sort((a, b) => b - a);
   };
 
   const getPoints = (project: Project) => {
@@ -85,17 +151,105 @@ export default function RecentProjects({ employeeId, employeeName }: Props) {
     );
   }
 
+  const totalPoints = filteredProjects.reduce((sum, p) => sum + getPoints(p), 0);
+  const availableYears = getAvailableYears();
+
   return (
     <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Projects</h3>
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">Projects</h3>
       
-      {projects.length === 0 ? (
+      {/* View Selector and Month/Year Navigation */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        {/* View Type Toggle */}
+        <div className="inline-flex rounded-lg border-2 border-gray-200 bg-gray-50 p-1">
+          <button
+            onClick={() => setViewType('monthly')}
+            className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
+              viewType === 'monthly'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-gray-700 hover:text-gray-900'
+            }`}
+          >
+            Monthly
+          </button>
+          <button
+            onClick={() => setViewType('yearly')}
+            className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
+              viewType === 'yearly'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-gray-700 hover:text-gray-900'
+            }`}
+          >
+            Yearly
+          </button>
+        </div>
+
+        {/* Month/Year Selector */}
+        <div className="flex items-center gap-2 border-2 border-gray-200 rounded-lg px-4 py-2 bg-white">
+          <button
+            onClick={handlePrevious}
+            className="text-gray-600 hover:text-gray-900 p-1 hover:bg-gray-100 rounded transition-colors"
+          >
+            ←
+          </button>
+
+          {viewType === 'monthly' && (
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              className="text-base font-semibold text-gray-900 bg-transparent border-none outline-none cursor-pointer"
+            >
+              {MONTHS.map((month, index) => (
+                <option key={month} value={index}>
+                  {month}
+                </option>
+              ))}
+            </select>
+          )}
+
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(Number(e.target.value))}
+            className="text-base font-semibold text-gray-900 bg-transparent border-none outline-none cursor-pointer"
+          >
+            {availableYears.length > 0 ? (
+              availableYears.map(year => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))
+            ) : (
+              <option value={selectedYear}>{selectedYear}</option>
+            )}
+          </select>
+
+          <button
+            onClick={handleNext}
+            className="text-gray-600 hover:text-gray-900 p-1 hover:bg-gray-100 rounded transition-colors"
+          >
+            →
+          </button>
+        </div>
+      </div>
+
+      {/* Summary Stats */}
+      <div className="flex items-center justify-between pb-3 border-b-2 border-gray-200 mb-4">
+        <div className="text-sm text-gray-500">
+          {filteredProjects.length} {filteredProjects.length === 1 ? 'project' : 'projects'}
+        </div>
+        <div className="text-lg font-bold text-blue-600">
+          {totalPoints} pts
+        </div>
+      </div>
+      
+      {/* Projects List */}
+      {filteredProjects.length === 0 ? (
         <p className="text-gray-500 text-center py-8">
-          {employeeName} hasn't worked on any projects yet.
+          No projects found for this {viewType === 'monthly' ? 'month' : 'year'}.
         </p>
       ) : (
-        <div className="space-y-3">
-          {projects.map((project) => {
+        <div className="space-y-2">
+          {filteredProjects.map((project) => {
             const statusStyle = statusConfig[project.status] || statusConfig.pending;
             const points = getPoints(project);
             const hasOverride = project.points_override !== null;
