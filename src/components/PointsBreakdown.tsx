@@ -109,20 +109,20 @@ export default function PointsBreakdown({ employeeId, month, year }: Props) {
         <div className="text-right">
           <span className="text-sm text-gray-500">Total: </span>
           <span className="text-xl font-bold text-blue-600">{totalPoints} pts</span>
-          <span className="text-sm text-gray-500 ml-2">({projects.length} projects)</span>
+          <span className="text-sm text-gray-500 ml-2">({projects.length} tasks)</span>
         </div>
       </div>
 
       {projects.length === 0 ? (
         <div className="p-8 text-center text-gray-500">
-          No completed projects found for this period
+          No completed tasks found for this period
         </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-gray-600">
               <tr>
-                <th className="px-4 py-3 text-left font-medium">Project</th>
+                <th className="px-4 py-3 text-left font-medium">Task</th>
                 <th className="px-4 py-3 text-left font-medium">Type</th>
                 <th className="px-4 py-3 text-center font-medium">Base Pts</th>
                 <th className="px-4 py-3 text-center font-medium">Override</th>

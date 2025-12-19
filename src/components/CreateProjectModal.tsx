@@ -71,8 +71,8 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
     setLoading(false);
 
     if (insertError) {
-      setError(`Failed to create project: ${insertError.message}`);
-      console.error('Project creation error:', insertError);
+      setError(`Failed to create task: ${insertError.message}`);
+      console.error('Task creation error:', insertError);
       return;
     }
 
@@ -83,10 +83,10 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <h2 className="text-xl font-bold mb-4">Create Project</h2>
+        <h2 className="text-xl font-bold mb-4">Create Task</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Project Name</label>
+            <label className="block text-sm font-medium mb-1">Task Name</label>
             <input
               type="text"
               value={name}

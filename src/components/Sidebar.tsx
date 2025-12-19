@@ -27,7 +27,7 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
       ]
     : [
         { href: '/home', label: 'Dashboard', icon: '📊' },
-        { href: '/projects', label: 'Projects', icon: '📁' },
+        { href: '/projects', label: 'Tasks', icon: '📁' },
         { href: '/profile', label: 'Profile', icon: '👤' },
       ];
 

@@ -177,16 +177,16 @@ export default function ProjectsPage() {
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap justify-between items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Projects</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Tasks</h1>
             <p className="text-gray-500 mt-1">
-              Find projects quickly — filter by employee and status
+              Find tasks quickly — filter by employee and status
             </p>
           </div>
           <button
             onClick={() => setShowModal(true)}
             className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-lg shadow-blue-500/25 transition-all hover:shadow-xl hover:shadow-blue-500/30"
           >
-            + Create Project
+            + Create Task
           </button>
         </div>
 
@@ -233,7 +233,7 @@ export default function ProjectsPage() {
           </div>
 
           <div className="ml-auto text-sm text-gray-500">
-            Showing <span className="font-semibold text-gray-800">{filteredCreated.length + filteredAssigned.length + filteredTeam.length}</span> projects
+            Showing <span className="font-semibold text-gray-800">{filteredCreated.length + filteredAssigned.length + filteredTeam.length}</span> tasks
           </div>
         </div>
       </div>
@@ -245,7 +245,7 @@ export default function ProjectsPage() {
             <div>
               <h2 className="text-lg font-bold text-gray-900">My Ongoing</h2>
               <p className="text-sm text-gray-600">
-                Your active tasks stay pinned here while you browse everything else.
+                Your active tasks stay pinned here while you browse.
               </p>
             </div>
             <span className="bg-blue-600 text-white text-sm font-bold px-3 py-1 rounded-full">
@@ -254,7 +254,7 @@ export default function ProjectsPage() {
           </div>
           {myOngoingCount === 0 ? (
             <div className="mt-4 text-sm text-gray-500">
-              No ongoing projects for the selected filters.
+              No ongoing tasks for the selected filters.
             </div>
           ) : (
             <div className="mt-4 grid gap-3">
@@ -269,7 +269,7 @@ export default function ProjectsPage() {
               ))}
               {myOngoingCount > 4 && (
                 <div className="text-xs text-gray-500">
-                  Showing 4 of {myOngoingCount} ongoing projects. Use the filters above to narrow further.
+                  Showing 4 of {myOngoingCount} ongoing tasks. Use the filters above to narrow further.
                 </div>
               )}
             </div>
@@ -303,8 +303,8 @@ export default function ProjectsPage() {
               </svg>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Team Projects</h2>
-              <p className="text-sm text-gray-600">Projects from lower-ranked employees - click "Override Points" to adjust</p>
+              <h2 className="text-xl font-bold text-gray-900">Team Tasks</h2>
+              <p className="text-sm text-gray-600">Tasks from lower-ranked employees - click &quot;Override Points&quot; to adjust</p>
             </div>
             <span className="ml-auto bg-orange-500 text-white text-sm font-bold px-3 py-1 rounded-full">
               {filteredTeam.length}
@@ -333,8 +333,8 @@ export default function ProjectsPage() {
             </svg>
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-900">My Projects</h2>
-            <p className="text-sm text-gray-600">Projects you created and assigned to others</p>
+            <h2 className="text-xl font-bold text-gray-900">My Tasks</h2>
+            <p className="text-sm text-gray-600">Tasks you created and assigned to others</p>
           </div>
           <span className="ml-auto bg-blue-100 text-blue-700 text-sm font-bold px-3 py-1 rounded-full">
             {filteredCreated.length}
@@ -345,12 +345,12 @@ export default function ProjectsPage() {
             <svg className="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            <p>No projects created yet</p>
+            <p>No tasks created yet</p>
             <button 
               onClick={() => setShowModal(true)}
               className="mt-4 text-blue-600 hover:text-blue-700 font-medium"
             >
-              Create your first project →
+              Create your first task →
             </button>
           </div>
         ) : (
@@ -379,7 +379,7 @@ export default function ProjectsPage() {
           </div>
           <div>
             <h2 className="text-xl font-bold text-gray-900">Assigned to Me</h2>
-            <p className="text-sm text-gray-600">Projects assigned to you by others</p>
+            <p className="text-sm text-gray-600">Tasks assigned to you by others</p>
           </div>
           <span className="ml-auto bg-emerald-100 text-emerald-700 text-sm font-bold px-3 py-1 rounded-full">
             {filteredAssigned.length}
@@ -390,7 +390,7 @@ export default function ProjectsPage() {
             <svg className="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
             </svg>
-            <p>No projects assigned to you yet</p>
+            <p>No tasks assigned to you yet</p>
           </div>
         ) : (
           <div className="grid gap-4">
