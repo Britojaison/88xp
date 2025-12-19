@@ -39,11 +39,11 @@ serve(async (req) => {
       throw new Error('Unauthorized')
     }
 
-    // Check if user is admin
+    // Check if user is admin - use email for reliable lookup
     const { data: employee, error: empError } = await supabaseAdmin
       .from('employees')
       .select('is_admin')
-      .eq('id', user.id)
+      .ilike('email', user.email || '')
       .single()
 
     if (empError || !employee?.is_admin) {

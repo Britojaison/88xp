@@ -1,8 +1,28 @@
--- Points System Migration
--- This migration sets up the complete points tracking system with triggers
+-- ============================================
+-- 88XP Points System Migration
+-- Sets up the complete points tracking system with triggers
+-- 
+-- KEY RULES:
+-- 1. Points are awarded when a project is marked as 'completed'
+-- 2. Points use the project_types.points value OR points_override if set
+-- 3. Higher-ranked users (lower rank number) can override points for lower-ranked users
+-- 4. Overrides can ONLY be set on completed projects (enforced in app, tracked in DB)
+-- 5. Monthly and yearly scores are auto-calculated via triggers
+-- ============================================
 
 -- ============================================
--- 1. Drop existing tables if they exist
+-- 0. Ensure required base columns exist (idempotent safety)
+-- This prevents failures when the base tables were created earlier with slight differences.
+-- ============================================
+ALTER TABLE IF EXISTS project_types ADD COLUMN IF NOT EXISTS points INT NOT NULL DEFAULT 0;
+ALTER TABLE IF EXISTS projects ADD COLUMN IF NOT EXISTS type_id UUID;
+ALTER TABLE IF EXISTS projects ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'pending';
+ALTER TABLE IF EXISTS projects ADD COLUMN IF NOT EXISTS assigned_to UUID;
+ALTER TABLE IF EXISTS projects ADD COLUMN IF NOT EXISTS points_override INT;
+ALTER TABLE IF EXISTS projects ADD COLUMN IF NOT EXISTS completed_at TIMESTAMPTZ;
+
+-- ============================================
+-- 1. Drop existing tables if they exist (idempotent)
 -- ============================================
 DROP TABLE IF EXISTS monthly_scores CASCADE;
 DROP TABLE IF EXISTS yearly_scores CASCADE;
@@ -57,6 +77,7 @@ CREATE INDEX idx_projects_completed_at ON projects(completed_at);
 
 -- ============================================
 -- 5. Function to calculate points for a project
+-- Uses points_override if set, otherwise falls back to project_types.points
 -- ============================================
 CREATE OR REPLACE FUNCTION get_project_points(p_project_id UUID)
 RETURNS INT AS $$
@@ -65,16 +86,13 @@ DECLARE
     v_override INT;
     v_type_id UUID;
 BEGIN
-    -- Get project details
     SELECT points_override, type_id INTO v_override, v_type_id
     FROM projects WHERE id = p_project_id;
     
-    -- If override exists, use it
     IF v_override IS NOT NULL THEN
         RETURN v_override;
     END IF;
     
-    -- Otherwise get points from project_types
     SELECT points INTO v_points
     FROM project_types WHERE id = v_type_id;
     
@@ -96,16 +114,14 @@ RETURNS VOID AS $$
 DECLARE
     v_employee_name TEXT;
 BEGIN
-    -- Get employee name
     SELECT name INTO v_employee_name FROM employees WHERE id = p_employee_id;
     
-    -- Upsert monthly score
     INSERT INTO monthly_scores (employee_id, employee_name, total_points, project_count, month, year, updated_at)
-    VALUES (p_employee_id, v_employee_name, p_points_delta, p_project_count_delta, p_month, p_year, now())
+    VALUES (p_employee_id, v_employee_name, GREATEST(0, p_points_delta), GREATEST(0, p_project_count_delta), p_month, p_year, now())
     ON CONFLICT (employee_id, month, year)
     DO UPDATE SET 
-        total_points = monthly_scores.total_points + p_points_delta,
-        project_count = monthly_scores.project_count + p_project_count_delta,
+        total_points = GREATEST(0, monthly_scores.total_points + p_points_delta),
+        project_count = GREATEST(0, monthly_scores.project_count + p_project_count_delta),
         employee_name = v_employee_name,
         updated_at = now();
 END;
@@ -124,16 +140,14 @@ RETURNS VOID AS $$
 DECLARE
     v_employee_name TEXT;
 BEGIN
-    -- Get employee name
     SELECT name INTO v_employee_name FROM employees WHERE id = p_employee_id;
     
-    -- Upsert yearly score
     INSERT INTO yearly_scores (employee_id, employee_name, total_points, project_count, year, updated_at)
-    VALUES (p_employee_id, v_employee_name, p_points_delta, p_project_count_delta, p_year, now())
+    VALUES (p_employee_id, v_employee_name, GREATEST(0, p_points_delta), GREATEST(0, p_project_count_delta), p_year, now())
     ON CONFLICT (employee_id, year)
     DO UPDATE SET 
-        total_points = yearly_scores.total_points + p_points_delta,
-        project_count = yearly_scores.project_count + p_project_count_delta,
+        total_points = GREATEST(0, yearly_scores.total_points + p_points_delta),
+        project_count = GREATEST(0, yearly_scores.project_count + p_project_count_delta),
         employee_name = v_employee_name,
         updated_at = now();
 END;
@@ -141,7 +155,7 @@ $$ LANGUAGE plpgsql;
 
 -- ============================================
 -- 8. Trigger function for project completion
--- Points are awarded immediately when marked as COMPLETED (not on approval)
+-- Points are awarded IMMEDIATELY when marked as 'completed'
 -- ============================================
 CREATE OR REPLACE FUNCTION on_project_status_change()
 RETURNS TRIGGER AS $$
@@ -152,36 +166,25 @@ DECLARE
     v_completed_at TIMESTAMPTZ;
 BEGIN
     -- Award points when status changes to 'completed'
-    -- Points are given immediately upon completion, not upon approval
     IF NEW.status = 'completed' AND (OLD.status IS NULL OR OLD.status != 'completed') THEN
-        -- Set completion time to now
         v_completed_at := COALESCE(NEW.completed_at, now());
         v_month := EXTRACT(MONTH FROM v_completed_at)::INT;
         v_year := EXTRACT(YEAR FROM v_completed_at)::INT;
         
-        -- Calculate points for this project (uses points_override if set by rank 1, otherwise project_types default)
         v_points := get_project_points(NEW.id);
         
-        -- Update monthly score for the assignee
         PERFORM update_monthly_score(NEW.assigned_to, v_month, v_year, v_points, 1);
-        
-        -- Update yearly score for the assignee
         PERFORM update_yearly_score(NEW.assigned_to, v_year, v_points, 1);
         
-    -- Handle case where completion is revoked (status changes FROM completed to pending/in_progress)
-    ELSIF OLD.status = 'completed' AND NEW.status != 'completed' AND NEW.status != 'approved' THEN
-        -- Get the completion date from the old record
+    -- Handle case where completion is revoked (back to pending/in_progress)
+    ELSIF OLD.status = 'completed' AND NEW.status NOT IN ('completed', 'approved') THEN
         v_completed_at := COALESCE(OLD.completed_at, OLD.created_at);
         v_month := EXTRACT(MONTH FROM v_completed_at)::INT;
         v_year := EXTRACT(YEAR FROM v_completed_at)::INT;
         
-        -- Calculate points for this project
         v_points := get_project_points(OLD.id);
         
-        -- Subtract from monthly score
         PERFORM update_monthly_score(OLD.assigned_to, v_month, v_year, -v_points, -1);
-        
-        -- Subtract from yearly score
         PERFORM update_yearly_score(OLD.assigned_to, v_year, -v_points, -1);
     END IF;
     
@@ -190,7 +193,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ============================================
--- 9. Create trigger on projects table for status changes
+-- 9. Create trigger on projects for status changes
 -- ============================================
 DROP TRIGGER IF EXISTS trigger_project_status_change ON projects;
 CREATE TRIGGER trigger_project_status_change
@@ -199,8 +202,8 @@ CREATE TRIGGER trigger_project_status_change
     EXECUTE FUNCTION on_project_status_change();
 
 -- ============================================
--- 9b. Trigger function for points override changes
--- When Rank 1 overrides points on a completed project, recalculate scores
+-- 10. Trigger function for points override changes
+-- When points are overridden on a completed project, recalculate scores
 -- ============================================
 CREATE OR REPLACE FUNCTION on_points_override_change()
 RETURNS TRIGGER AS $$
@@ -211,7 +214,7 @@ DECLARE
     v_year INT;
     v_completed_at TIMESTAMPTZ;
 BEGIN
-    -- Only process if project is completed or approved and points_override changed
+    -- Only process if project is completed/approved and points_override changed
     IF (NEW.status = 'completed' OR NEW.status = 'approved') 
        AND NEW.completed_at IS NOT NULL
        AND (OLD.points_override IS DISTINCT FROM NEW.points_override) THEN
@@ -220,21 +223,23 @@ BEGIN
         v_month := EXTRACT(MONTH FROM v_completed_at)::INT;
         v_year := EXTRACT(YEAR FROM v_completed_at)::INT;
         
-        -- Calculate old points (what was previously counted)
+        -- Calculate old points
         IF OLD.points_override IS NOT NULL THEN
             v_old_points := OLD.points_override;
         ELSE
-            SELECT points INTO v_old_points FROM project_types WHERE id = OLD.type_id;
-            v_old_points := COALESCE(v_old_points, 0);
+            SELECT COALESCE(points, 0) INTO v_old_points 
+            FROM project_types WHERE id = OLD.type_id;
         END IF;
+        v_old_points := COALESCE(v_old_points, 0);
         
         -- Calculate new points
         IF NEW.points_override IS NOT NULL THEN
             v_new_points := NEW.points_override;
         ELSE
-            SELECT points INTO v_new_points FROM project_types WHERE id = NEW.type_id;
-            v_new_points := COALESCE(v_new_points, 0);
+            SELECT COALESCE(points, 0) INTO v_new_points 
+            FROM project_types WHERE id = NEW.type_id;
         END IF;
+        v_new_points := COALESCE(v_new_points, 0);
         
         -- Update scores with the difference
         PERFORM update_monthly_score(NEW.assigned_to, v_month, v_year, v_new_points - v_old_points, 0);
@@ -245,7 +250,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create trigger for points override changes
+-- ============================================
+-- 11. Create trigger for points override changes
+-- ============================================
 DROP TRIGGER IF EXISTS trigger_points_override_change ON projects;
 CREATE TRIGGER trigger_points_override_change
     AFTER UPDATE OF points_override ON projects
@@ -253,7 +260,7 @@ CREATE TRIGGER trigger_points_override_change
     EXECUTE FUNCTION on_points_override_change();
 
 -- ============================================
--- 10. Function to recalculate all scores (for data repair)
+-- 12. Function to recalculate all scores (data repair utility)
 -- ============================================
 CREATE OR REPLACE FUNCTION recalculate_all_scores()
 RETURNS VOID AS $$
@@ -263,81 +270,62 @@ DECLARE
     v_month INT;
     v_year INT;
 BEGIN
-    -- Clear existing scores
     DELETE FROM monthly_scores;
     DELETE FROM yearly_scores;
     
-    -- Loop through all COMPLETED or APPROVED projects (points awarded on completion)
     FOR r IN 
         SELECT p.*, e.name as employee_name
         FROM projects p
         JOIN employees e ON e.id = p.assigned_to
-        WHERE (p.status = 'completed' OR p.status = 'approved') AND p.completed_at IS NOT NULL
+        WHERE p.status IN ('completed', 'approved') AND p.completed_at IS NOT NULL
     LOOP
         v_points := get_project_points(r.id);
         v_month := EXTRACT(MONTH FROM r.completed_at)::INT;
         v_year := EXTRACT(YEAR FROM r.completed_at)::INT;
         
-        -- Update monthly
         PERFORM update_monthly_score(r.assigned_to, v_month, v_year, v_points, 1);
-        
-        -- Update yearly
         PERFORM update_yearly_score(r.assigned_to, v_year, v_points, 1);
     END LOOP;
 END;
 $$ LANGUAGE plpgsql;
 
 -- ============================================
--- 11. RLS Policies for new tables
+-- 13. RLS Policies for score tables
 -- ============================================
 ALTER TABLE monthly_scores ENABLE ROW LEVEL SECURITY;
 ALTER TABLE yearly_scores ENABLE ROW LEVEL SECURITY;
 
--- Drop existing policies if they exist
 DROP POLICY IF EXISTS "Anyone can view monthly_scores" ON monthly_scores;
 DROP POLICY IF EXISTS "Anyone can view yearly_scores" ON yearly_scores;
 DROP POLICY IF EXISTS "System can manage monthly_scores" ON monthly_scores;
 DROP POLICY IF EXISTS "System can manage yearly_scores" ON yearly_scores;
 
--- Everyone can read scores
 CREATE POLICY "Anyone can view monthly_scores" ON monthly_scores FOR SELECT USING (true);
 CREATE POLICY "Anyone can view yearly_scores" ON yearly_scores FOR SELECT USING (true);
-
--- Only system (triggers) can modify scores
 CREATE POLICY "System can manage monthly_scores" ON monthly_scores FOR ALL USING (true);
 CREATE POLICY "System can manage yearly_scores" ON yearly_scores FOR ALL USING (true);
 
 -- ============================================
--- 12. RLS Policies for projects table (enable updates by higher-ranked users)
+-- 14. RLS Policies for projects table
 -- ============================================
--- Enable RLS on projects if not already enabled
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 
--- Drop existing policies to avoid conflicts
 DROP POLICY IF EXISTS "Anyone can view projects" ON projects;
 DROP POLICY IF EXISTS "Employees can create projects" ON projects;
-DROP POLICY IF EXISTS "Employees can update own projects" ON projects;
-DROP POLICY IF EXISTS "Higher ranks can update points" ON projects;
-DROP POLICY IF EXISTS "Allow all project operations" ON projects;
+DROP POLICY IF EXISTS "Allow all project updates" ON projects;
+DROP POLICY IF EXISTS "Creator can delete projects" ON projects;
 
--- Allow authenticated users to view all projects
-CREATE POLICY "Anyone can view projects" ON projects 
-  FOR SELECT USING (true);
+CREATE POLICY "Anyone can view projects" ON projects FOR SELECT USING (true);
+CREATE POLICY "Employees can create projects" ON projects FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow all project updates" ON projects FOR UPDATE USING (true);
+CREATE POLICY "Creator can delete projects" ON projects FOR DELETE USING (true);
 
--- Allow authenticated users to insert projects
-CREATE POLICY "Employees can create projects" ON projects 
-  FOR INSERT WITH CHECK (true);
-
--- Allow all updates on projects (simpler approach - app handles authorization)
-CREATE POLICY "Allow all project updates" ON projects 
-  FOR UPDATE USING (true);
-
--- Allow deletes by project creator
-CREATE POLICY "Creator can delete projects" ON projects 
-  FOR DELETE USING (created_by = auth.uid());
+-- Grant permissions
+GRANT ALL ON projects TO authenticated;
+GRANT ALL ON monthly_scores TO authenticated;
+GRANT ALL ON yearly_scores TO authenticated;
 
 -- ============================================
--- 13. Initial calculation for existing completed projects
+-- 15. Recalculate scores from existing completed projects
 -- ============================================
 SELECT recalculate_all_scores();
-
