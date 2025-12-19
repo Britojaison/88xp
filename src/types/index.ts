@@ -24,8 +24,6 @@ export interface Project {
   assignee?: Employee;
   status: 'pending' | 'in_progress' | 'completed' | 'approved';
   points_override?: number;
-  approved_by?: string;
-  approver?: Employee;
   created_at: string;
   completed_at?: string;
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { canAssignTo } from '@/lib/rank-utils';
 
 interface ProjectType {
   id: string;
@@ -29,6 +30,7 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
   const [types, setTypes] = useState<ProjectType[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
@@ -43,9 +45,9 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
 
     setTypes(typesRes.data || []);
     
-    // Can only assign to same or lower rank (higher rank number) or self
+    // Filter employees that can be assigned to using centralized logic
     const assignable = (employeesRes.data || []).filter(
-      (e) => e.rank >= currentUserRank || e.id === currentUserId
+      (e) => canAssignTo(currentUserRank, e.rank, currentUserId, e.id)
     );
     setEmployees(assignable);
 
@@ -56,8 +58,9 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
-    await supabase.from('projects').insert({
+    const { error: insertError } = await supabase.from('projects').insert({
       name,
       type_id: typeId,
       created_by: currentUserId,
@@ -66,6 +69,13 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
     });
 
     setLoading(false);
+
+    if (insertError) {
+      setError(`Failed to create project: ${insertError.message}`);
+      console.error('Project creation error:', insertError);
+      return;
+    }
+
     onCreated();
     onClose();
   };
@@ -113,6 +123,11 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
               ))}
             </select>
           </div>
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
           <div className="flex gap-3 justify-end">
             <button
               type="button"

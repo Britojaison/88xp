@@ -95,7 +95,7 @@ export default function ProjectsPage() {
       // Filter to only show projects where assignee has higher rank number (lower authority)
       const filtered = (lowerRankedProjects || [])
         .map(transform)
-        .filter((p: Project) => {
+        .filter((p) => {
           const assigneeRank = p.assignee?.rank;
           return assigneeRank && employee.rank && assigneeRank > employee.rank;
         }) as Project[];

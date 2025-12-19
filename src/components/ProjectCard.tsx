@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { canOverridePoints, canMarkComplete as canMarkCompleteUtil, getOverrideBlockedReason } from '@/lib/rank-utils';
 
 interface Project {
   id: string;
@@ -37,14 +38,13 @@ export default function ProjectCard({ project, currentUserRank, currentUserId, o
   const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
 
-  const assigneeRank = project.assignee?.rank || 999;
-  const isAssignee = currentUserId === project.assigned_to;
+  const assigneeRank = project.assignee?.rank ?? 999;
+  const isCompleted = project.status === 'completed' || project.status === 'approved';
   
-  // Higher rank (lower number) can override points for lower ranks
-  const canEditPoints = currentUserRank < assigneeRank;
-  
-  // Only the assignee can mark their own project as complete
-  const canMarkComplete = isAssignee && project.status !== 'approved' && project.status !== 'completed';
+  // Use centralized rank utilities
+  const canEditPoints = canOverridePoints(currentUserRank, assigneeRank, project.status);
+  const canMarkComplete = canMarkCompleteUtil(currentUserId, project.assigned_to, project.status);
+  const overrideBlockedReason = getOverrideBlockedReason(currentUserRank, assigneeRank, project.status);
 
   const handleStatusChange = async (newStatus: string) => {
     setSaving(true);
@@ -176,6 +176,15 @@ export default function ProjectCard({ project, currentUserRank, currentUserId, o
                 >
                   Override Points
                 </button>
+              )}
+              {/* Show explanation when override is blocked */}
+              {!canEditPoints && overrideBlockedReason && currentUserRank < assigneeRank && (
+                <span 
+                  className="text-xs text-gray-400 italic"
+                  title={overrideBlockedReason}
+                >
+                  Complete to override
+                </span>
               )}
             </div>
           )}

@@ -28,14 +28,16 @@ export default function LoginPage() {
       return;
     }
 
-    // Check if user is admin
+    // Check if user is admin - use email for reliable lookup
     const { data: employee, error: empError } = await supabase
       .from('employees')
       .select('is_admin')
-      .eq('id', data.user?.id)
+      .ilike('email', data.user?.email || '')
       .single();
 
-    console.log('Employee lookup:', { employee, empError, userId: data.user?.id });
+    if (empError) {
+      console.error('Employee lookup error:', empError);
+    }
 
     if (employee?.is_admin === true) {
       router.push('/admin');

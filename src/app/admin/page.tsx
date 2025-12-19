@@ -36,23 +36,39 @@ export default function AdminPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this employee?')) return;
+    if (!confirm('Are you sure you want to delete this employee? This action cannot be undone.')) return;
     
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    await fetch(
-      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/delete-employee`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`,
-        },
-        body: JSON.stringify({ employeeId: id }),
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        alert('Session expired. Please log in again.');
+        return;
       }
-    );
-    
-    fetchEmployees();
+      
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/delete-employee`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ employeeId: id }),
+        }
+      );
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        alert(`Failed to delete employee: ${result.error || 'Unknown error'}`);
+        return;
+      }
+      
+      fetchEmployees();
+    } catch (err) {
+      alert(`Error: ${err instanceof Error ? err.message : 'Failed to delete employee'}`);
+    }
   };
 
   if (loading) return <div>Loading...</div>;
