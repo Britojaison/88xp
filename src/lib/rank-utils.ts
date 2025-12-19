@@ -118,3 +118,37 @@ export function getOverrideBlockedReason(
   return null;
 }
 
+/**
+ * Check if a user can delete a project.
+ * 
+ * Rules:
+ * - Creator can always delete their own project
+ * - Rank 1 can delete any ongoing project (pending, in_progress) from lower-ranked employees
+ * 
+ * @param currentUserId - The ID of the current user
+ * @param currentUserRank - The rank of the current user
+ * @param creatorId - The ID of the project creator
+ * @param assigneeRank - The rank of the project assignee
+ * @param projectStatus - The current status of the project
+ * @returns true if the user can delete the project
+ */
+export function canDeleteProject(
+  currentUserId: string | undefined,
+  currentUserRank: number | null,
+  creatorId: string,
+  assigneeRank: number | null,
+  projectStatus: string
+): boolean {
+  // Creator can always delete their own project
+  if (currentUserId === creatorId) return true;
+  
+  // Rank 1 can delete ongoing projects from lower-ranked employees
+  if (currentUserRank === 1) {
+    const isOngoing = projectStatus === 'pending' || projectStatus === 'in_progress';
+    const isLowerRanked = assigneeRank !== null && assigneeRank > 1;
+    return isOngoing && isLowerRanked;
+  }
+  
+  return false;
+}
+

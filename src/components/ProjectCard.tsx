@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { canOverridePoints, canMarkComplete as canMarkCompleteUtil, getOverrideBlockedReason } from '@/lib/rank-utils';
+import { canOverridePoints, canMarkComplete as canMarkCompleteUtil, getOverrideBlockedReason, canDeleteProject } from '@/lib/rank-utils';
 
 interface Project {
   id: string;
@@ -45,6 +46,7 @@ export default function ProjectCard({ project, currentUserRank, currentUserId, o
   const canEditPoints = canOverridePoints(currentUserRank, assigneeRank, project.status);
   const canMarkComplete = canMarkCompleteUtil(currentUserId, project.assigned_to, project.status);
   const overrideBlockedReason = getOverrideBlockedReason(currentUserRank, assigneeRank, project.status);
+  const canDelete = canDeleteProject(currentUserId, currentUserRank, project.created_by, assigneeRank, project.status);
 
   const handleStatusChange = async (newStatus: string) => {
     setSaving(true);
@@ -84,6 +86,30 @@ export default function ProjectCard({ project, currentUserRank, currentUserId, o
     onUpdate();
   };
 
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+      return;
+    }
+    
+    setSaving(true);
+    setError(null);
+    
+    const { error: deleteError } = await supabase
+      .from('projects')
+      .delete()
+      .eq('id', project.id);
+    
+    setSaving(false);
+    
+    if (deleteError) {
+      setError('Failed to delete project. Check permissions.');
+      console.error('Delete error:', deleteError);
+      return;
+    }
+    
+    onUpdate();
+  };
+
   const basePoints = project.type?.points || 0;
   const currentPoints = project.points_override ?? basePoints;
   const hasOverride = project.points_override !== null;
@@ -99,9 +125,12 @@ export default function ProjectCard({ project, currentUserRank, currentUserId, o
             <span className="text-sm text-gray-500">
               {isOwner ? 'Assigned to' : 'Created by'}:
             </span>
-            <span className="text-sm font-medium text-gray-700">
+            <Link 
+              href={`/user/${isOwner ? project.assigned_to : project.created_by}`}
+              className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+            >
               {isOwner ? project.assignee?.name : project.creator?.name}
-            </span>
+            </Link>
             {project.assignee?.rank && (
               <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
                 Rank {project.assignee.rank}
@@ -199,6 +228,18 @@ export default function ProjectCard({ project, currentUserRank, currentUserId, o
               className="bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
             >
               {saving ? 'Saving...' : '✓ Mark Complete'}
+            </button>
+          )}
+          {canDelete && (
+            <button
+              onClick={handleDelete}
+              disabled={saving}
+              className="bg-red-500 hover:bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+              title={currentUserRank === 1 && currentUserId !== project.created_by 
+                ? 'Delete as Rank 1 supervisor' 
+                : 'Delete your project'}
+            >
+              {saving ? 'Deleting...' : '🗑 Delete'}
             </button>
           )}
         </div>

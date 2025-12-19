@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
 interface YearlyScoreEntry {
@@ -82,9 +83,10 @@ export default function YearlyScoreboard({ year }: Props) {
       ) : (
         <div className="space-y-3">
           {scores.map((entry, index) => (
-            <div
+            <Link
               key={entry.id}
-              className={`flex items-center justify-between p-3 rounded-lg ${
+              href={`/user/${entry.employee_id}`}
+              className={`flex items-center justify-between p-3 rounded-lg transition-all hover:shadow-md hover:scale-[1.01] cursor-pointer ${
                 index < 3 ? 'bg-gradient-to-r from-yellow-50 to-orange-50' : 'bg-gray-50'
               }`}
             >
@@ -97,7 +99,7 @@ export default function YearlyScoreboard({ year }: Props) {
                   {getRankBadge(index)}
                 </span>
                 <div>
-                  <span className="font-medium">{entry.employee_name}</span>
+                  <span className="font-medium hover:text-blue-600 transition-colors">{entry.employee_name}</span>
                   <span className="text-xs text-gray-500 ml-2">
                     ({entry.project_count} projects)
                   </span>
@@ -109,7 +111,7 @@ export default function YearlyScoreboard({ year }: Props) {
                 </span>
                 <span className="text-sm text-gray-500 ml-1">pts</span>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}

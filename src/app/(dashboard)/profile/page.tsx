@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import ProfilePointsSection from './ProfilePointsSection';
+import ContributionGraph from '@/components/ContributionGraph';
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -88,6 +89,9 @@ export default async function ProfilePage() {
           </p>
         </div>
       </div>
+
+      {/* Contribution Graph */}
+      <ContributionGraph employeeId={employee?.id || ''} />
 
       {/* Points breakdown with month/year filtering */}
       <ProfilePointsSection employeeId={employee?.id || ''} />
