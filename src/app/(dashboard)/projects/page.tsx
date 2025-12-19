@@ -12,6 +12,7 @@ interface Project {
   status: string;
   points_override: number | null;
   created_at: string;
+  completed_at: string | null;
   created_by: string;
   assigned_to: string;
   type: { id: string; name: string; points: number } | null;
@@ -26,6 +27,9 @@ interface EmployeeOption {
 }
 
 type StatusFilter = 'all' | 'ongoing' | 'completed';
+type SelectValue = 'all' | string;
+
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 export default function ProjectsPage() {
   const [myProjects, setMyProjects] = useState<Project[]>([]);
@@ -35,6 +39,18 @@ export default function ProjectsPage() {
   const [employees, setEmployees] = useState<EmployeeOption[]>([]);
   const [employeeFilter, setEmployeeFilter] = useState<string>('all'); // assignee id
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+
+  // Section filters (requested): Team Projects + My Projects + Assigned to Me
+  const [teamEmployee, setTeamEmployee] = useState<SelectValue>('all'); // assignee id
+  const [teamYear, setTeamYear] = useState<SelectValue>('all');
+  const [teamMonth, setTeamMonth] = useState<SelectValue>('all');
+  const [myEmployee, setMyEmployee] = useState<SelectValue>('all'); // assignee id
+  const [myYear, setMyYear] = useState<SelectValue>('all');
+  const [myMonth, setMyMonth] = useState<SelectValue>('all');
+  const [assignedEmployee, setAssignedEmployee] = useState<SelectValue>('all'); // creator id (who assigned it to me)
+  const [assignedYear, setAssignedYear] = useState<SelectValue>('all');
+  const [assignedMonth, setAssignedMonth] = useState<SelectValue>('all');
+
   const [showModal, setShowModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<{ id: string; rank: number | null; is_admin: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -150,13 +166,60 @@ export default function ProjectsPage() {
     return list;
   };
 
+  const inPeriod = (iso: string | null | undefined, year: SelectValue, month: SelectValue) => {
+    if (!iso) return false;
+    if (year === 'all' && month === 'all') return true;
+    const d = new Date(iso);
+    if (year !== 'all' && d.getFullYear() !== Number(year)) return false;
+    if (month !== 'all' && d.getMonth() + 1 !== Number(month)) return false;
+    return true;
+  };
+
+  const applySectionFilters = (projects: Project[], assignee: SelectValue, year: SelectValue, month: SelectValue, useCreatorFilter: boolean = false) => {
+    let list = projects;
+    if (assignee !== 'all') {
+      // For "Assigned to Me", filter by creator (who assigned it)
+      // For other sections, filter by assignee (who it's assigned to)
+      if (useCreatorFilter) {
+        list = list.filter((p) => p.created_by === assignee);
+      } else {
+        list = list.filter((p) => p.assigned_to === assignee);
+      }
+    }
+    if (year !== 'all' || month !== 'all') {
+      // Use completed_at for completed projects, created_at for ongoing projects
+      list = list.filter((p) => {
+        const dateToUse = p.completed_at || p.created_at;
+        return inPeriod(dateToUse, year, month);
+      });
+    }
+    return list;
+  };
+
   const filteredMyWork = applyFilters(myWorkProjects);
-  const filteredTeam = applyFilters(teamProjects);
-  const filteredCreated = applyFilters(myProjects);
+  const filteredTeamBase = applyFilters(teamProjects);
+  const filteredCreatedBase = applyFilters(myProjects);
   const filteredAssigned = applyFilters(assignedProjects);
 
   const myOngoing = filteredMyWork.filter(isOngoing);
   const myOngoingCount = myOngoing.length;
+
+  const filteredTeam = applySectionFilters(filteredTeamBase, teamEmployee, teamYear, teamMonth, false);
+  const filteredCreated = applySectionFilters(filteredCreatedBase, myEmployee, myYear, myMonth, false);
+  const filteredAssignedFiltered = applySectionFilters(filteredAssigned, assignedEmployee, assignedYear, assignedMonth, true);
+
+  // Generate year options dynamically from all projects
+  const allProjectsForYears = [...myProjects, ...assignedProjects, ...teamProjects];
+  const availableYears = new Set<number>();
+  allProjectsForYears.forEach((p) => {
+    const dateToUse = p.completed_at || p.created_at;
+    if (dateToUse) {
+      availableYears.add(new Date(dateToUse).getFullYear());
+    }
+  });
+  const now = new Date();
+  availableYears.add(now.getFullYear()); // Always include current year
+  const yearOptions = Array.from(availableYears).sort((a, b) => b - a).map(String);
 
   if (loading) {
     return (
@@ -296,19 +359,78 @@ export default function ProjectsPage() {
       {/* Team Projects - Priority section for higher ranks */}
       {filteredTeam.length > 0 && (
         <section className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl p-6 border border-orange-100">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="bg-orange-500 text-white p-2 rounded-lg">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
+            <div className="flex items-center gap-3">
+              <div className="bg-orange-500 text-white p-2 rounded-lg">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Team Projects</h2>
+                <p className="text-sm text-gray-600">Projects from lower-ranked employees - click \"Override Points\" to adjust</p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">Team Projects</h2>
-              <p className="text-sm text-gray-600">Projects from lower-ranked employees - click "Override Points" to adjust</p>
+
+            {/* Section filters */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2 bg-white/80 border border-orange-100 rounded-xl px-3 py-2 shadow-sm">
+                <span className="text-xs font-semibold text-gray-600">Employee</span>
+                <select
+                  value={teamEmployee}
+                  onChange={(e) => setTeamEmployee(e.target.value)}
+                  className="text-sm bg-transparent outline-none"
+                >
+                  <option value="all">All</option>
+                  {employees.map((e) => (
+                    <option key={e.id} value={e.id}>
+                      {e.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2 bg-white/80 border border-orange-100 rounded-xl px-3 py-2 shadow-sm">
+                <span className="text-xs font-semibold text-gray-600">Year</span>
+                <select
+                  value={teamYear}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setTeamYear(v);
+                    if (v === 'all') setTeamMonth('all');
+                  }}
+                  className="text-sm bg-transparent outline-none"
+                >
+                  <option value="all">All</option>
+                  {yearOptions.map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={`flex items-center gap-2 bg-white/80 border border-orange-100 rounded-xl px-3 py-2 shadow-sm ${teamYear === 'all' ? 'opacity-50' : ''}`}>
+                <span className="text-xs font-semibold text-gray-600">Month</span>
+                <select
+                  value={teamMonth}
+                  onChange={(e) => setTeamMonth(e.target.value)}
+                  className="text-sm bg-transparent outline-none"
+                  disabled={teamYear === 'all'}
+                >
+                  <option value="all">All</option>
+                  {MONTH_NAMES.map((m, idx) => (
+                    <option key={m} value={String(idx + 1)}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <span className="bg-orange-500 text-white text-sm font-bold px-3 py-1 rounded-full">
+                {filteredTeam.length}
+              </span>
             </div>
-            <span className="ml-auto bg-orange-500 text-white text-sm font-bold px-3 py-1 rounded-full">
-              {filteredTeam.length}
-            </span>
           </div>
           <div className="grid gap-4">
             {filteredTeam.map((project) => (
@@ -326,31 +448,90 @@ export default function ProjectsPage() {
 
       {/* My Projects Section */}
       <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <div className="flex items-center gap-3 mb-5">
-          <div className="bg-blue-500 text-white p-2 rounded-lg">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-500 text-white p-2 rounded-lg">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">My Projects</h2>
+              <p className="text-sm text-gray-600">Projects you created and assigned to others</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">My Projects</h2>
-            <p className="text-sm text-gray-600">Projects you created and assigned to others</p>
+
+          {/* Section filters */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2 bg-slate-50 border border-gray-200 rounded-xl px-3 py-2">
+              <span className="text-xs font-semibold text-gray-600">Assignee</span>
+              <select
+                value={myEmployee}
+                onChange={(e) => setMyEmployee(e.target.value)}
+                className="text-sm bg-transparent outline-none"
+              >
+                <option value="all">All</option>
+                {employees.map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2 bg-slate-50 border border-gray-200 rounded-xl px-3 py-2">
+              <span className="text-xs font-semibold text-gray-600">Year</span>
+              <select
+                value={myYear}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setMyYear(v);
+                  if (v === 'all') setMyMonth('all');
+                }}
+                className="text-sm bg-transparent outline-none"
+              >
+                <option value="all">All</option>
+                {yearOptions.map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className={`flex items-center gap-2 bg-slate-50 border border-gray-200 rounded-xl px-3 py-2 ${myYear === 'all' ? 'opacity-50' : ''}`}>
+              <span className="text-xs font-semibold text-gray-600">Month</span>
+              <select
+                value={myMonth}
+                onChange={(e) => setMyMonth(e.target.value)}
+                className="text-sm bg-transparent outline-none"
+                disabled={myYear === 'all'}
+              >
+                <option value="all">All</option>
+                {MONTH_NAMES.map((m, idx) => (
+                  <option key={m} value={String(idx + 1)}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <span className="bg-blue-100 text-blue-700 text-sm font-bold px-3 py-1 rounded-full">
+              {filteredCreated.length}
+            </span>
           </div>
-          <span className="ml-auto bg-blue-100 text-blue-700 text-sm font-bold px-3 py-1 rounded-full">
-            {filteredCreated.length}
-          </span>
         </div>
         {filteredCreated.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
             <svg className="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            <p>No projects created yet</p>
+            <p>No projects found for the selected filters</p>
             <button 
               onClick={() => setShowModal(true)}
               className="mt-4 text-blue-600 hover:text-blue-700 font-medium"
             >
-              Create your first project →
+              Create a project →
             </button>
           </div>
         ) : (
@@ -371,21 +552,80 @@ export default function ProjectsPage() {
 
       {/* Assigned to Me Section */}
       <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <div className="flex items-center gap-3 mb-5">
-          <div className="bg-emerald-500 text-white p-2 rounded-lg">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
+          <div className="flex items-center gap-3">
+            <div className="bg-emerald-500 text-white p-2 rounded-lg">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Assigned to Me</h2>
+              <p className="text-sm text-gray-600">Projects assigned to you by others</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">Assigned to Me</h2>
-            <p className="text-sm text-gray-600">Projects assigned to you by others</p>
+
+          {/* Section filters */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2 bg-slate-50 border border-gray-200 rounded-xl px-3 py-2">
+              <span className="text-xs font-semibold text-gray-600">Creator</span>
+              <select
+                value={assignedEmployee}
+                onChange={(e) => setAssignedEmployee(e.target.value)}
+                className="text-sm bg-transparent outline-none"
+              >
+                <option value="all">All</option>
+                {employees.map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2 bg-slate-50 border border-gray-200 rounded-xl px-3 py-2">
+              <span className="text-xs font-semibold text-gray-600">Year</span>
+              <select
+                value={assignedYear}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setAssignedYear(v);
+                  if (v === 'all') setAssignedMonth('all');
+                }}
+                className="text-sm bg-transparent outline-none"
+              >
+                <option value="all">All</option>
+                {yearOptions.map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className={`flex items-center gap-2 bg-slate-50 border border-gray-200 rounded-xl px-3 py-2 ${assignedYear === 'all' ? 'opacity-50' : ''}`}>
+              <span className="text-xs font-semibold text-gray-600">Month</span>
+              <select
+                value={assignedMonth}
+                onChange={(e) => setAssignedMonth(e.target.value)}
+                className="text-sm bg-transparent outline-none"
+                disabled={assignedYear === 'all'}
+              >
+                <option value="all">All</option>
+                {MONTH_NAMES.map((m, idx) => (
+                  <option key={m} value={String(idx + 1)}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <span className="bg-emerald-100 text-emerald-700 text-sm font-bold px-3 py-1 rounded-full">
+              {filteredAssignedFiltered.length}
+            </span>
           </div>
-          <span className="ml-auto bg-emerald-100 text-emerald-700 text-sm font-bold px-3 py-1 rounded-full">
-            {filteredAssigned.length}
-          </span>
         </div>
-        {filteredAssigned.length === 0 ? (
+        {filteredAssignedFiltered.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
             <svg className="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
@@ -394,7 +634,7 @@ export default function ProjectsPage() {
           </div>
         ) : (
           <div className="grid gap-4">
-            {filteredAssigned.map((project) => (
+            {filteredAssignedFiltered.map((project) => (
               <ProjectCard
                 key={project.id}
                 project={project}
