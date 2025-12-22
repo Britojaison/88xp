@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import CreateProjectModal from '@/components/CreateProjectModal';
+import CompletionModal from '@/components/CompletionModal';
+import BrandManagement from '@/components/BrandManagement';
 
 interface Task {
   id: string;
@@ -14,7 +16,9 @@ interface Task {
   completed_at: string | null;
   created_by: string;
   assigned_to: string;
+  remarks?: string | null;
   type: { id: string; name: string; points: number } | null;
+  brand?: { id: string; name: string } | null;
   creator: { id: string; name: string; rank: number | null } | null;
   assignee: { id: string; name: string; rank: number | null } | null;
 }
@@ -44,6 +48,12 @@ export default function TasksPage() {
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [overridePoints, setOverridePoints] = useState<number>(0);
   const [saving, setSaving] = useState(false);
+  
+  // Completion modal state
+  const [completingTask, setCompletingTask] = useState<Task | null>(null);
+  
+  // Brand management modal state (for rank 1 users)
+  const [showBrandManagement, setShowBrandManagement] = useState(false);
   
   const router = useRouter();
   const supabase = createClient();
@@ -81,6 +91,7 @@ export default function TasksPage() {
     const transform = (p: Record<string, unknown>) => ({
       ...p,
       type: Array.isArray(p.type) ? p.type[0] : p.type,
+      brand: Array.isArray(p.brand) ? p.brand[0] : p.brand,
       creator: Array.isArray(p.creator) ? p.creator[0] : p.creator,
       assignee: Array.isArray(p.assignee) ? p.assignee[0] : p.assignee,
     });
@@ -94,7 +105,7 @@ export default function TasksPage() {
 
     const { data: tasks } = await supabase
       .from('projects')
-      .select('*, type:project_types(*), creator:employees!created_by(*), assignee:employees!assigned_to(*)')
+      .select('*, type:project_types(*), brand:brands(*), creator:employees!created_by(*), assignee:employees!assigned_to(*)')
       .order('created_at', { ascending: false });
 
     setAllTasks((tasks || []).map(transform) as Task[]);
@@ -194,12 +205,26 @@ export default function TasksPage() {
           <h1 className="text-3xl font-bold text-gray-900">Tasks</h1>
           <p className="text-gray-500 mt-1">Manage all tasks in one place</p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-lg"
-        >
-          + Create Task
-        </button>
+        <div className="flex gap-3">
+          {/* Brand Management - only for Rank 1 */}
+          {isRank1 && (
+            <button
+              onClick={() => setShowBrandManagement(true)}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-lg flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+              </svg>
+              Manage Brands
+            </button>
+          )}
+          <button
+            onClick={() => setShowModal(true)}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-lg"
+          >
+            + Create Task
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -292,6 +317,7 @@ export default function TasksPage() {
               <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium">Task Name</th>
+                  <th className="px-4 py-3 text-left font-medium">Brand</th>
                   <th className="px-4 py-3 text-left font-medium">Assigned To</th>
                   <th className="px-4 py-3 text-left font-medium">Created By</th>
                   <th className="px-4 py-3 text-center font-medium">Status</th>
@@ -305,6 +331,13 @@ export default function TasksPage() {
                 {ongoingTasks.map((task) => (
                   <tr key={task.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 font-medium text-gray-900">{task.name}</td>
+                    <td className="px-4 py-3">
+                      {task.brand ? (
+                        <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                          {task.brand.name}
+                        </span>
+                      ) : '-'}
+                    </td>
                     <td className="px-4 py-3 text-gray-600">{task.assignee?.name || '-'}</td>
                     <td className="px-4 py-3 text-gray-600">{task.creator?.name || '-'}</td>
                     <td className="px-4 py-3 text-center">{getStatusBadge(task.status)}</td>
@@ -323,7 +356,7 @@ export default function TasksPage() {
                       <div className="flex items-center justify-center gap-2">
                         {canMarkComplete(task) && (
                           <button
-                            onClick={() => handleStatusChange(task.id, 'completed')}
+                            onClick={() => setCompletingTask(task)}
                             className="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-2 py-1 rounded"
                           >
                             Complete
@@ -366,6 +399,7 @@ export default function TasksPage() {
               <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium">Task Name</th>
+                  <th className="px-4 py-3 text-left font-medium">Brand</th>
                   <th className="px-4 py-3 text-left font-medium">Completed By</th>
                   <th className="px-4 py-3 text-left font-medium">Created By</th>
                   <th className="px-4 py-3 text-center font-medium">Status</th>
@@ -378,7 +412,22 @@ export default function TasksPage() {
               <tbody className="divide-y divide-gray-100">
                 {completedTasks.map((task) => (
                   <tr key={task.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-900">{task.name}</td>
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-gray-900">{task.name}</div>
+                      {/* Remarks visible to Rank 1 */}
+                      {isRank1 && task.remarks && (
+                        <div className="mt-1 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 max-w-xs">
+                          <span className="font-semibold">📋 </span>{task.remarks}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {task.brand ? (
+                        <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                          {task.brand.name}
+                        </span>
+                      ) : '-'}
+                    </td>
                     <td className="px-4 py-3 text-gray-600">{task.assignee?.name || '-'}</td>
                     <td className="px-4 py-3 text-gray-600">{task.creator?.name || '-'}</td>
                     <td className="px-4 py-3 text-center">{getStatusBadge(task.status)}</td>
@@ -460,6 +509,26 @@ export default function TasksPage() {
           onCreated={fetchData}
           currentUserId={currentUser.id}
           currentUserRank={currentUser.rank ?? 999}
+        />
+      )}
+
+      {/* Completion Modal */}
+      {completingTask && (
+        <CompletionModal
+          projectId={completingTask.id}
+          projectName={completingTask.name}
+          currentTypeId={completingTask.type?.id || null}
+          currentTypeName={completingTask.type?.name || null}
+          onClose={() => setCompletingTask(null)}
+          onComplete={fetchData}
+        />
+      )}
+
+      {/* Brand Management Modal - for Rank 1 users */}
+      {showBrandManagement && (
+        <BrandManagement
+          isModal={true}
+          onClose={() => setShowBrandManagement(false)}
         />
       )}
     </div>

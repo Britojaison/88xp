@@ -13,17 +13,26 @@ export interface ProjectType {
   points: number;
 }
 
+export interface Brand {
+  id: string;
+  name: string;
+  created_at?: string;
+}
+
 export interface Project {
   id: string;
   name: string;
   type_id: string;
   type?: ProjectType;
+  brand_id?: string;
+  brand?: Brand;
   created_by: string;
   creator?: Employee;
   assigned_to: string;
   assignee?: Employee;
   status: 'pending' | 'in_progress' | 'completed' | 'approved';
   points_override?: number;
+  remarks?: string;
   created_at: string;
   completed_at?: string;
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import BrandManagement from '@/components/BrandManagement';
 
 interface Employee {
   id: string;
@@ -155,6 +156,11 @@ export default function AdminPage() {
           onClose={() => { setShowResetModal(false); setResetEmployee(null); }}
         />
       )}
+
+      {/* Brand Management Section */}
+      <div className="mt-8">
+        <BrandManagement />
+      </div>
     </div>
   );
 }

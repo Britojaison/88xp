@@ -16,6 +16,11 @@ interface Employee {
   rank: number;
 }
 
+interface Brand {
+  id: string;
+  name: string;
+}
+
 interface Props {
   onClose: () => void;
   onCreated: () => void;
@@ -26,8 +31,10 @@ interface Props {
 export default function CreateProjectModal({ onClose, onCreated, currentUserId, currentUserRank }: Props) {
   const [name, setName] = useState('');
   const [typeId, setTypeId] = useState('');
+  const [brandId, setBrandId] = useState('');
   const [assignTo, setAssignTo] = useState('');
   const [types, setTypes] = useState<ProjectType[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,12 +45,14 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
   }, []);
 
   const fetchData = async () => {
-    const [typesRes, employeesRes] = await Promise.all([
+    const [typesRes, employeesRes, brandsRes] = await Promise.all([
       supabase.from('project_types').select('*').order('points'),
       supabase.from('employees').select('id, name, rank').eq('is_admin', false).order('rank'),
+      supabase.from('brands').select('id, name').order('name'),
     ]);
 
     setTypes(typesRes.data || []);
+    setBrands(brandsRes.data || []);
     
     // Filter employees that can be assigned to using centralized logic
     const assignable = (employeesRes.data || []).filter(
@@ -52,6 +61,7 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
     setEmployees(assignable);
 
     if (typesRes.data?.length) setTypeId(typesRes.data[0].id);
+    if (brandsRes.data?.length) setBrandId(brandsRes.data[0].id);
     setAssignTo(currentUserId);
   };
 
@@ -63,6 +73,7 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
     const { error: insertError } = await supabase.from('projects').insert({
       name,
       type_id: typeId,
+      brand_id: brandId || null,
       created_by: currentUserId,
       assigned_to: assignTo || currentUserId,
       status: 'pending',
@@ -94,6 +105,22 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
               className="w-full border rounded-lg px-3 py-2"
               required
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Brand</label>
+            <select
+              value={brandId}
+              onChange={(e) => setBrandId(e.target.value)}
+              className="w-full border rounded-lg px-3 py-2"
+              required
+            >
+              <option value="">Select a brand...</option>
+              {brands.map((brand) => (
+                <option key={brand.id} value={brand.id}>
+                  {brand.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Type</label>

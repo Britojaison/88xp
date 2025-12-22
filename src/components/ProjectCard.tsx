@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { canOverridePoints, canMarkComplete as canMarkCompleteUtil, getOverrideBlockedReason, canDeleteProject } from '@/lib/rank-utils';
+import CompletionModal from './CompletionModal';
 
 interface Project {
   id: string;
@@ -12,7 +13,9 @@ interface Project {
   points_override: number | null;
   created_by: string;
   assigned_to: string;
+  remarks?: string | null;
   type: { id: string; name: string; points: number } | null;
+  brand?: { id: string; name: string } | null;
   creator: { id: string; name: string; rank: number | null } | null;
   assignee: { id: string; name: string; rank: number | null } | null;
 }
@@ -37,7 +40,11 @@ export default function ProjectCard({ project, currentUserRank, currentUserId, o
   const [newPoints, setNewPoints] = useState(project.points_override || project.type?.points || 0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
   const supabase = createClient();
+  
+  // Rank 1 can see remarks
+  const canSeeRemarks = currentUserRank === 1;
 
   const assigneeRank = project.assignee?.rank ?? 999;
   const isCompleted = project.status === 'completed' || project.status === 'approved';
@@ -116,6 +123,7 @@ export default function ProjectCard({ project, currentUserRank, currentUserId, o
   const statusStyle = statusConfig[project.status] || statusConfig.pending;
 
   return (
+    <>
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow">
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
@@ -143,6 +151,19 @@ export default function ProjectCard({ project, currentUserRank, currentUserId, o
         </span>
       </div>
 
+      {/* Remarks - visible only to Rank 1 */}
+      {canSeeRemarks && project.remarks && (
+        <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+          <div className="flex items-start gap-2">
+            <span className="text-amber-600">📋</span>
+            <div>
+              <span className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Remarks</span>
+              <p className="text-sm text-amber-900 mt-1">{project.remarks}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Error message */}
       {error && (
         <div className="mb-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
@@ -152,7 +173,14 @@ export default function ProjectCard({ project, currentUserRank, currentUserId, o
 
       {/* Project details */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Brand badge */}
+          {project.brand && (
+            <span className="bg-purple-100 text-purple-700 text-sm font-medium px-3 py-1 rounded-lg">
+              {project.brand.name}
+            </span>
+          )}
+          
           {/* Project type badge */}
           <span className="bg-indigo-100 text-indigo-700 text-sm font-medium px-3 py-1 rounded-lg">
             {project.type?.name || 'Unknown'}
@@ -223,7 +251,7 @@ export default function ProjectCard({ project, currentUserRank, currentUserId, o
         <div className="flex gap-2">
           {canMarkComplete && (
             <button
-              onClick={() => handleStatusChange('completed')}
+              onClick={() => setShowCompletionModal(true)}
               disabled={saving}
               className="bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
             >
@@ -245,5 +273,18 @@ export default function ProjectCard({ project, currentUserRank, currentUserId, o
         </div>
       </div>
     </div>
+
+    {/* Completion Modal */}
+    {showCompletionModal && (
+      <CompletionModal
+        projectId={project.id}
+        projectName={project.name}
+        currentTypeId={project.type?.id || null}
+        currentTypeName={project.type?.name || null}
+        onClose={() => setShowCompletionModal(false)}
+        onComplete={onUpdate}
+      />
+    )}
+    </>
   );
 }
