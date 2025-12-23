@@ -28,6 +28,7 @@ export default function CompletionModal({
 }: Props) {
   const [remarks, setRemarks] = useState('');
   const [selectedTypeId, setSelectedTypeId] = useState(currentTypeId || '');
+  const [customPoints, setCustomPoints] = useState('');
   const [types, setTypes] = useState<ProjectType[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingTypes, setLoadingTypes] = useState(true);
@@ -58,6 +59,20 @@ export default function CompletionModal({
     setLoading(true);
     setError(null);
 
+    // Check if the selected type is "Other"
+    const selectedType = types.find(t => t.id === selectedTypeId);
+    const isOtherType = selectedType?.name === 'Other';
+
+    // Validate custom points for "Other" type
+    if (isOtherType) {
+      const points = parseInt(customPoints);
+      if (!customPoints || isNaN(points) || points <= 0) {
+        setError('Please enter a valid number of points (greater than 0) for "Other" type tasks.');
+        setLoading(false);
+        return;
+      }
+    }
+
     const updates: Record<string, unknown> = {
       status: 'completed',
       completed_at: new Date().toISOString(),
@@ -71,6 +86,11 @@ export default function CompletionModal({
     // Update type if changed
     if (selectedTypeId && selectedTypeId !== currentTypeId) {
       updates.type_id = selectedTypeId;
+    }
+
+    // Add custom points for "Other" type
+    if (isOtherType && customPoints) {
+      updates.points_override = parseInt(customPoints);
     }
 
     const { error: updateError } = await supabase
@@ -128,12 +148,33 @@ export default function CompletionModal({
                 ))}
               </select>
             )}
-            {typeChanged && selectedType && (
+            {typeChanged && selectedType && selectedType.name !== 'Other' && (
               <p className="mt-2 text-sm text-gray-600">
                 Points will be updated to <span className="font-bold text-emerald-600">{selectedType.points} pts</span>
               </p>
             )}
           </div>
+
+          {/* Custom Points Input for "Other" Type */}
+          {selectedType?.name === 'Other' && (
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Custom Points *
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={customPoints}
+                onChange={(e) => setCustomPoints(e.target.value)}
+                placeholder="Enter points for this task"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                required
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                💡 Since this is "Other" type, you must specify the points manually.
+              </p>
+            </div>
+          )}
 
           {/* Remarks */}
           <div>

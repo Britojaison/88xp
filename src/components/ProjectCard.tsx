@@ -40,7 +40,7 @@ export default function ProjectCard({ project, currentUserRank, currentUserId, o
   const [newPoints, setNewPoints] = useState(project.points_override || project.type?.points || 0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showCompletionModal, setShowCompletionModal] = useState(false);
+    const [showCompletionModal, setShowCompletionModal] = useState(false);
   const supabase = createClient();
   
   // Rank 1 can see remarks

@@ -33,6 +33,7 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
   const [typeId, setTypeId] = useState('');
   const [brandId, setBrandId] = useState('');
   const [assignTo, setAssignTo] = useState('');
+  const [customPoints, setCustomPoints] = useState('');
   const [types, setTypes] = useState<ProjectType[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -70,14 +71,35 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
     setLoading(true);
     setError(null);
 
-    const { error: insertError } = await supabase.from('projects').insert({
+    // Check if "Other" type is selected
+    const selectedType = types.find(t => t.id === typeId);
+    const isOtherType = selectedType?.name === 'Other';
+
+    // Validate custom points for "Other" type
+    if (isOtherType) {
+      const points = parseInt(customPoints);
+      if (!customPoints || isNaN(points) || points <= 0) {
+        setError('Please enter a valid number of points (greater than 0) for "Other" type tasks.');
+        setLoading(false);
+        return;
+      }
+    }
+
+    const projectData: any = {
       name,
       type_id: typeId,
       brand_id: brandId || null,
       created_by: currentUserId,
       assigned_to: assignTo || currentUserId,
       status: 'pending',
-    });
+    };
+
+    // Add points_override for "Other" type
+    if (isOtherType && customPoints) {
+      projectData.points_override = parseInt(customPoints);
+    }
+
+    const { error: insertError } = await supabase.from('projects').insert(projectData);
 
     setLoading(false);
 
@@ -136,6 +158,23 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
               ))}
             </select>
           </div>
+          {types.find(t => t.id === typeId)?.name === 'Other' && (
+            <div>
+              <label className="block text-sm font-medium mb-1">Custom Points *</label>
+              <input
+                type="number"
+                min="1"
+                value={customPoints}
+                onChange={(e) => setCustomPoints(e.target.value)}
+                className="w-full border rounded-lg px-3 py-2"
+                placeholder="Enter points for this task"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Since this is "Other" type, you must specify the points manually.
+              </p>
+            </div>
+          )}
           <div>
             <label className="block text-sm font-medium mb-1">Assign To</label>
             <select
