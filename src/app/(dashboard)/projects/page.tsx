@@ -42,8 +42,14 @@ export default function TasksPage() {
   const [employees, setEmployees] = useState<EmployeeOption[]>([]);
   const [employeeFilter, setEmployeeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [yearFilter, setYearFilter] = useState<string>('all');
-  const [monthFilter, setMonthFilter] = useState<string>('all');
+  
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1; // getMonth() returns 0-11, so add 1
+  const availableYears = Array.from({ length: 5 }, (_, i) => currentYear - i);
+  
+  const [yearFilter, setYearFilter] = useState<string>(currentYear.toString());
+  const [monthFilter, setMonthFilter] = useState<string>(currentMonth.toString());
   const [showModal, setShowModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<{ id: string; rank: number | null; is_admin: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -67,10 +73,6 @@ export default function TasksPage() {
   
   const router = useRouter();
   const supabase = createClient();
-
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const availableYears = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
   useEffect(() => {
     fetchData();
