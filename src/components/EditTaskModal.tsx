@@ -16,28 +16,50 @@ interface Employee {
   rank: number;
 }
 
-interface Brand {
+interface Task {
   id: string;
   name: string;
+  status: string;
+  assigned_to: string;
+  type: { id: string; name: string; points: number } | null;
+  deadline: string | null;
+  remarks?: string | null;
 }
 
 interface Props {
+  task: Task;
   onClose: () => void;
-  onCreated: () => void;
+  onUpdated: () => void;
   currentUserId: string;
   currentUserRank: number;
+  isAdmin?: boolean;
+  isRank1?: boolean;
 }
 
-export default function CreateProjectModal({ onClose, onCreated, currentUserId, currentUserRank }: Props) {
-  const [name, setName] = useState('');
-  const [typeId, setTypeId] = useState('');
-  const [brandId, setBrandId] = useState('');
-  const [assignTo, setAssignTo] = useState('');
-  const [customPoints, setCustomPoints] = useState('');
-  const [deadlineDate, setDeadlineDate] = useState('');
-  const [deadlineTime, setDeadlineTime] = useState('23:59');
+export default function EditTaskModal({ 
+  task, 
+  onClose, 
+  onUpdated, 
+  currentUserId, 
+  currentUserRank,
+  isAdmin = false,
+  isRank1 = false
+}: Props) {
+  const [name, setName] = useState(task.name);
+  const [typeId, setTypeId] = useState(task.type?.id || '');
+  const [assignTo, setAssignTo] = useState(task.assigned_to);
+  const [deadlineDate, setDeadlineDate] = useState(() => {
+    if (!task.deadline) return '';
+    const date = new Date(task.deadline);
+    return date.toISOString().split('T')[0];
+  });
+  const [deadlineTime, setDeadlineTime] = useState(() => {
+    if (!task.deadline) return '23:59';
+    const date = new Date(task.deadline);
+    return date.toTimeString().slice(0, 5);
+  });
+  const [remarks, setRemarks] = useState(task.remarks || '');
   const [types, setTypes] = useState<ProjectType[]>([]);
-  const [brands, setBrands] = useState<Brand[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,10 +70,9 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
   }, []);
 
   const fetchData = async () => {
-    const [typesRes, employeesRes, brandsRes] = await Promise.all([
+    const [typesRes, employeesRes] = await Promise.all([
       supabase.from('project_types').select('*').order('points'),
       supabase.from('employees').select('id, name, rank').eq('is_admin', false).order('rank'),
-      supabase.from('brands').select('id, name').order('name'),
     ]);
 
     // Sort types: Story first, Other last, rest in ascending order
@@ -64,37 +85,18 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
     });
 
     setTypes(sortedTypes);
-    setBrands(brandsRes.data || []);
     
     // Filter employees that can be assigned to using centralized logic
     const assignable = (employeesRes.data || []).filter(
       (e) => canAssignTo(currentUserRank, e.rank, currentUserId, e.id)
     );
     setEmployees(assignable);
-
-    if (sortedTypes.length) setTypeId(sortedTypes[0].id);
-    if (brandsRes.data?.length) setBrandId(brandsRes.data[0].id);
-    setAssignTo(currentUserId);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-
-    // Check if "Other" type is selected
-    const selectedType = types.find(t => t.id === typeId);
-    const isOtherType = selectedType?.name === 'Other';
-
-    // Validate custom points for "Other" type
-    if (isOtherType) {
-      const points = parseInt(customPoints);
-      if (!customPoints || isNaN(points) || points <= 0) {
-        setError('Please enter a valid number of points (greater than 0) for "Other" type tasks.');
-        setLoading(false);
-        return;
-      }
-    }
 
     // Combine date and time for deadline
     let deadlineValue = null;
@@ -110,39 +112,52 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
       }
     }
 
-    const projectData: any = {
-      name,
-      type_id: typeId,
-      brand_id: brandId || null,
-      created_by: currentUserId,
-      assigned_to: assignTo || currentUserId,
-      status: 'pending',
-      deadline: deadlineValue,
-    };
-
-    // Add points_override for "Other" type
-    if (isOtherType && customPoints) {
-      projectData.points_override = parseInt(customPoints);
-    }
-
-    const { error: insertError } = await supabase.from('projects').insert(projectData);
-
-    setLoading(false);
-
-    if (insertError) {
-      setError(`Failed to create task: ${insertError.message}`);
-      console.error('Task creation error:', insertError);
+    // For completed tasks, only allow deadline changes if admin
+    const isCompleted = task.status === 'completed' || task.status === 'approved';
+    const originalDeadline = task.deadline ? new Date(task.deadline).toISOString() : null;
+    if (isCompleted && !isAdmin && deadlineValue !== originalDeadline) {
+      setError('Cannot change deadline on completed tasks unless you are an admin');
+      setLoading(false);
       return;
     }
 
-    onCreated();
+    // Check if reassigning to a higher-ranked employee
+    const newAssignee = employees.find(e => e.id === assignTo);
+    if (newAssignee && !canAssignTo(currentUserRank, newAssignee.rank, currentUserId, newAssignee.id)) {
+      setError('Cannot reassign task to a higher-ranked employee');
+      setLoading(false);
+      return;
+    }
+
+    const updates: Record<string, unknown> = {
+      name,
+      type_id: typeId || null,
+      assigned_to: assignTo,
+      deadline: deadlineValue,
+      remarks: remarks || null,
+    };
+
+    const { error: updateError } = await supabase
+      .from('projects')
+      .update(updates)
+      .eq('id', task.id);
+
+    setLoading(false);
+
+    if (updateError) {
+      setError(`Failed to update task: ${updateError.message}`);
+      console.error('Task update error:', updateError);
+      return;
+    }
+
+    onUpdated();
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <h2 className="text-xl font-bold mb-4">Create Task</h2>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
+      <div className="bg-white rounded-lg p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+        <h2 className="text-xl font-bold mb-4">Edit Task</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">Task Name</label>
@@ -154,29 +169,16 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
               required
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Brand</label>
-            <select
-              value={brandId}
-              onChange={(e) => setBrandId(e.target.value)}
-              className="w-full border rounded-lg px-3 py-2"
-              required
-            >
-              <option value="">Select a brand...</option>
-              {brands.map((brand) => (
-                <option key={brand.id} value={brand.id}>
-                  {brand.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          
           <div>
             <label className="block text-sm font-medium mb-1">Type</label>
             <select
               value={typeId}
               onChange={(e) => setTypeId(e.target.value)}
               className="w-full border rounded-lg px-3 py-2"
+              required
             >
+              <option value="">Select a type...</option>
               {types.map((type) => (
                 <option key={type.id} value={type.id}>
                   {type.name} ({type.points} pts)
@@ -184,29 +186,14 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
               ))}
             </select>
           </div>
-          {types.find(t => t.id === typeId)?.name === 'Other' && (
-            <div>
-              <label className="block text-sm font-medium mb-1">Custom Points *</label>
-              <input
-                type="number"
-                min="1"
-                value={customPoints}
-                onChange={(e) => setCustomPoints(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2"
-                placeholder="Enter points for this task"
-                required
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Since this is "Other" type, you must specify the points manually.
-              </p>
-            </div>
-          )}
+
           <div>
             <label className="block text-sm font-medium mb-1">Assign To</label>
             <select
               value={assignTo}
               onChange={(e) => setAssignTo(e.target.value)}
               className="w-full border rounded-lg px-3 py-2"
+              required
             >
               {employees.map((emp) => (
                 <option key={emp.id} value={emp.id}>
@@ -215,6 +202,7 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
               ))}
             </select>
           </div>
+
           <div>
             <label className="block text-sm font-medium mb-2">
               Deadline (optional)
@@ -228,6 +216,7 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
                   onChange={(e) => setDeadlineDate(e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                   min={new Date().toISOString().split('T')[0]}
+                  disabled={(task.status === 'completed' || task.status === 'approved') && !isAdmin}
                 />
               </div>
               <div>
@@ -237,6 +226,7 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
                   value={deadlineTime}
                   onChange={(e) => setDeadlineTime(e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  disabled={(task.status === 'completed' || task.status === 'approved') && !isAdmin}
                 />
               </div>
             </div>
@@ -248,16 +238,39 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
                   setDeadlineTime('23:59');
                 }}
                 className="mt-2 text-xs text-red-600 hover:text-red-700 font-medium"
+                disabled={(task.status === 'completed' || task.status === 'approved') && !isAdmin}
               >
                 Clear deadline
               </button>
             )}
+            {(task.status === 'completed' || task.status === 'approved') && !isAdmin && (
+              <p className="text-xs text-amber-600 mt-2 bg-amber-50 px-2 py-1.5 rounded border border-amber-200">
+                ⚠️ Deadline cannot be changed on completed tasks unless you are an admin.
+              </p>
+            )}
           </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Remarks (optional)
+            </label>
+            <textarea
+              value={remarks}
+              onChange={(e) => setRemarks(e.target.value)}
+              className="w-full border rounded-lg px-3 py-2 min-h-[80px]"
+              placeholder="Add any notes about this task... (visible to supervisors)"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Remarks are visible to Rank 1 supervisors
+            </p>
+          </div>
+
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
               {error}
             </div>
           )}
+          
           <div className="flex gap-3 justify-end">
             <button
               type="button"
@@ -271,7 +284,7 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
               disabled={loading}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
-              {loading ? 'Creating...' : 'Create'}
+              {loading ? 'Saving...' : 'Save'}
             </button>
           </div>
         </form>
@@ -279,3 +292,4 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
     </div>
   );
 }
+
