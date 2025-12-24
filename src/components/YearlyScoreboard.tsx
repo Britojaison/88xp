@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { TrophyIcon } from 'lucide-react';
 
 interface YearlyScoreEntry {
   id: string;
@@ -64,7 +65,10 @@ export default function YearlyScoreboard({ year }: Props) {
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold">🏆 Yearly Scoreboard</h3>
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <TrophyIcon className="w-5 h-5" />
+          Yearly Scoreboard
+        </h3>
         <select
           value={selectedYear}
           onChange={(e) => setSelectedYear(Number(e.target.value))}
@@ -113,13 +117,6 @@ export default function YearlyScoreboard({ year }: Props) {
               </div>
             </Link>
           ))}
-        </div>
-      )}
-
-      {scores.length > 0 && (
-        <div className="mt-4 pt-4 border-t text-sm text-gray-500 text-center">
-          Total: {scores.reduce((sum, s) => sum + s.total_points, 0)} points across{' '}
-          {scores.reduce((sum, s) => sum + s.project_count, 0)} tasks
         </div>
       )}
     </div>

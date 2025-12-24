@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import MonthSelector from './MonthSelector';
+import { TrophyIcon } from 'lucide-react';
 
 interface ScoreEntry {
   id: string;
@@ -55,15 +56,15 @@ export default function Scoreboard() {
     return `#${index + 1}`;
   };
 
-  const totalPoints = scores.reduce((sum, s) => sum + s.total_points, 0);
-  const totalTasks = scores.reduce((sum, s) => sum + s.project_count, 0);
-
   if (loading) return <div className="animate-pulse bg-gray-200 h-64 rounded-lg"></div>;
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
-        <h3 className="text-lg font-semibold">🏆 Monthly Scoreboard</h3>
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <TrophyIcon className="w-5 h-5" />
+          Monthly Scoreboard
+        </h3>
         <MonthSelector
           month={month}
           year={year}
@@ -111,10 +112,6 @@ export default function Scoreboard() {
                 </span>
               </Link>
             ))}
-          </div>
-
-          <div className="mt-4 pt-4 border-t text-sm text-gray-500 text-center">
-            Total: {totalPoints} points across {totalTasks} tasks
           </div>
         </>
       )}

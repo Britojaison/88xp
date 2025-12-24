@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import CreateProjectModal from '@/components/CreateProjectModal';
 import CompletionModal from '@/components/CompletionModal';
 import BrandManagement from '@/components/BrandManagement';
+import { ClipboardIcon, CheckIcon, RefreshCwIcon, CheckCircleIcon } from 'lucide-react';
 
 interface Task {
   id: string;
@@ -302,7 +303,7 @@ export default function TasksPage() {
       <div className="bg-white rounded-xl shadow overflow-hidden">
         <div className="px-6 py-4 border-b bg-blue-50 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-lg">🔄</span>
+            <RefreshCwIcon className="w-5 h-5 text-blue-600" />
             <h2 className="text-lg font-semibold text-gray-900">Ongoing Tasks</h2>
           </div>
           <span className="bg-blue-600 text-white text-sm font-bold px-3 py-1 rounded-full">
@@ -384,7 +385,7 @@ export default function TasksPage() {
       <div className="bg-white rounded-xl shadow overflow-hidden">
         <div className="px-6 py-4 border-b bg-emerald-50 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-lg">✅</span>
+            <CheckCircleIcon className="w-5 h-5 text-emerald-600" />
             <h2 className="text-lg font-semibold text-gray-900">Completed Tasks</h2>
           </div>
           <span className="bg-emerald-600 text-white text-sm font-bold px-3 py-1 rounded-full">
@@ -416,8 +417,9 @@ export default function TasksPage() {
                       <div className="font-medium text-gray-900">{task.name}</div>
                       {/* Remarks visible to Rank 1 */}
                       {isRank1 && task.remarks && (
-                        <div className="mt-1 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 max-w-xs">
-                          <span className="font-semibold">📋 </span>{task.remarks}
+                        <div className="mt-1 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 max-w-xs flex items-start gap-1">
+                          <ClipboardIcon className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                          <span>{task.remarks}</span>
                         </div>
                       )}
                     </td>
@@ -450,9 +452,9 @@ export default function TasksPage() {
                           <button
                             onClick={() => handleOverridePoints(task.id)}
                             disabled={saving}
-                            className="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-2 py-1 rounded"
+                            className="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-2 py-1 rounded flex items-center justify-center"
                           >
-                            {saving ? '...' : '✓'}
+                            {saving ? '...' : <CheckIcon className="w-3 h-3" />}
                           </button>
                           <button
                             onClick={cancelEditing}

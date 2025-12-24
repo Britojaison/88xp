@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { Loader2 } from 'lucide-react';
 
 interface Brand {
   id: string;
@@ -147,7 +148,7 @@ export default function BrandManagement({ onClose, isModal = false }: Props) {
           >
             {adding ? (
               <>
-                <span className="animate-spin">⏳</span>
+                <Loader2 className="w-4 h-4 animate-spin" />
                 Adding...
               </>
             ) : (
@@ -200,7 +201,7 @@ export default function BrandManagement({ onClose, isModal = false }: Props) {
                 className="text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50"
               >
                 {deleting === brand.id ? (
-                  <span className="animate-spin">⏳</span>
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <span className="flex items-center gap-1">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

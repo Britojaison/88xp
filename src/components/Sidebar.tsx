@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { UsersIcon, UserPlusIcon, UserIcon, LayoutDashboardIcon, FolderIcon, LogOutIcon } from 'lucide-react';
 
 interface SidebarProps {
   isAdmin?: boolean;
@@ -21,15 +22,27 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
 
   const navItems = isAdmin
     ? [
-        { href: '/admin', label: 'Employees', icon: '👥' },
-        { href: '/admin/add-user', label: 'Add User', icon: '➕' },
-        { href: '/admin/profile', label: 'Profile', icon: '👤' },
+        { href: '/admin', label: 'Employees', icon: 'users' },
+        { href: '/admin/add-user', label: 'Add User', icon: 'user-plus' },
+        { href: '/admin/profile', label: 'Profile', icon: 'user' },
       ]
     : [
-        { href: '/home', label: 'Dashboard', icon: '📊' },
-        { href: '/projects', label: 'Tasks', icon: '📁' },
-        { href: '/profile', label: 'Profile', icon: '👤' },
+        { href: '/home', label: 'Dashboard', icon: 'dashboard' },
+        { href: '/projects', label: 'Tasks', icon: 'folder' },
+        { href: '/profile', label: 'Profile', icon: 'user' },
       ];
+
+  const getIcon = (iconName: string) => {
+    const iconProps = { className: "w-5 h-5" };
+    switch (iconName) {
+      case 'users': return <UsersIcon {...iconProps} />;
+      case 'user-plus': return <UserPlusIcon {...iconProps} />;
+      case 'user': return <UserIcon {...iconProps} />;
+      case 'dashboard': return <LayoutDashboardIcon {...iconProps} />;
+      case 'folder': return <FolderIcon {...iconProps} />;
+      default: return null;
+    }
+  };
 
   return (
     <aside className="relative w-72 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white min-h-screen p-6 shadow-2xl">
@@ -63,7 +76,7 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
                 : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
             }`}
           >
-            <span className="text-lg">{item.icon}</span>
+            {getIcon(item.icon)}
             <span className="font-medium">{item.label}</span>
           </Link>
         ))}
@@ -73,7 +86,7 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
           onClick={handleLogout}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-700/50 hover:bg-red-600/80 text-slate-300 hover:text-white transition-all"
         >
-          <span className="text-lg">🚪</span>
+          <LogOutIcon className="w-5 h-5" />
           <span className="font-medium">Logout</span>
         </button>
       </nav>

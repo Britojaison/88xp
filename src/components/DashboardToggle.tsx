@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Scoreboard from './Scoreboard';
 import YearlyScoreboard from './YearlyScoreboard';
 import ActiveProjects from './ActiveProjects';
+import { TrophyIcon, ClipboardIcon } from 'lucide-react';
 
 type View = 'scoreboard' | 'tasks';
 
@@ -24,7 +25,7 @@ export default function DashboardToggle() {
             }`}
           >
             <span className="flex items-center gap-2">
-              <span>🏆</span>
+              <TrophyIcon className="w-4 h-4" />
               Scoreboard
             </span>
           </button>
@@ -37,7 +38,7 @@ export default function DashboardToggle() {
             }`}
           >
             <span className="flex items-center gap-2">
-              <span>📋</span>
+              <ClipboardIcon className="w-4 h-4" />
               All Tasks
             </span>
           </button>

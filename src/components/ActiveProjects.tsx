@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { RefreshCwIcon, CheckCircleIcon } from 'lucide-react';
 
 interface Task {
   id: string;
@@ -14,8 +15,6 @@ interface Task {
   created_at: string;
 }
 
-type FilterMode = 'all' | 'month' | 'year';
-
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
@@ -26,7 +25,6 @@ export default function ActiveProjects() {
   const [ongoingTasks, setOngoingTasks] = useState<Task[]>([]);
   const [completedTasks, setCompletedTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const supabase = createClient();
@@ -36,7 +34,7 @@ export default function ActiveProjects() {
 
   useEffect(() => {
     fetchTasks();
-  }, [filterMode, selectedMonth, selectedYear]);
+  }, [selectedMonth, selectedYear]);
 
   const fetchTasks = async () => {
     setLoading(true);
@@ -53,8 +51,6 @@ export default function ActiveProjects() {
     }));
 
     const filterByDate = (task: Task, useCompletedDate: boolean) => {
-      if (filterMode === 'all') return true;
-      
       const dateStr = useCompletedDate ? task.completed_at : task.created_at;
       if (!dateStr) return false;
       
@@ -62,12 +58,7 @@ export default function ActiveProjects() {
       const taskMonth = date.getMonth() + 1;
       const taskYear = date.getFullYear();
 
-      if (filterMode === 'month') {
-        return taskMonth === selectedMonth && taskYear === selectedYear;
-      } else if (filterMode === 'year') {
-        return taskYear === selectedYear;
-      }
-      return true;
+      return taskMonth === selectedMonth && taskYear === selectedYear;
     };
 
     const ongoing = transformed.filter(p => 
@@ -103,9 +94,7 @@ export default function ActiveProjects() {
   };
 
   const getFilterLabel = () => {
-    if (filterMode === 'all') return 'All Time';
-    if (filterMode === 'month') return `${MONTHS[selectedMonth - 1]} ${selectedYear}`;
-    return `Year ${selectedYear}`;
+    return `${MONTHS[selectedMonth - 1]} ${selectedYear}`;
   };
 
   return (
@@ -113,64 +102,27 @@ export default function ActiveProjects() {
       {/* Filter Controls */}
       <div className="bg-white rounded-lg shadow p-4">
         <div className="flex flex-wrap items-center gap-4">
-          <span className="text-sm font-medium text-gray-700">Filter by:</span>
+          <span className="text-sm font-medium text-gray-700">Filter by Month:</span>
           
-          <div className="flex rounded-lg border overflow-hidden">
-            <button
-              onClick={() => setFilterMode('all')}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
-                filterMode === 'all'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              All Time
-            </button>
-            <button
-              onClick={() => setFilterMode('month')}
-              className={`px-4 py-2 text-sm font-medium border-l transition-colors ${
-                filterMode === 'month'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setFilterMode('year')}
-              className={`px-4 py-2 text-sm font-medium border-l transition-colors ${
-                filterMode === 'year'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              Yearly
-            </button>
-          </div>
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(Number(e.target.value))}
+            className="border rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-indigo-500"
+          >
+            {MONTHS.map((month, index) => (
+              <option key={index} value={index + 1}>{month}</option>
+            ))}
+          </select>
 
-          {filterMode === 'month' && (
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(Number(e.target.value))}
-              className="border rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-indigo-500"
-            >
-              {MONTHS.map((month, index) => (
-                <option key={index} value={index + 1}>{month}</option>
-              ))}
-            </select>
-          )}
-
-          {(filterMode === 'month' || filterMode === 'year') && (
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="border rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-indigo-500"
-            >
-              {availableYears.map((year) => (
-                <option key={year} value={year}>{year}</option>
-              ))}
-            </select>
-          )}
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(Number(e.target.value))}
+            className="border rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-indigo-500"
+          >
+            {availableYears.map((year) => (
+              <option key={year} value={year}>{year}</option>
+            ))}
+          </select>
 
           <span className="ml-auto text-sm text-gray-500">
             Showing: <span className="font-medium text-gray-700">{getFilterLabel()}</span>
@@ -185,7 +137,7 @@ export default function ActiveProjects() {
           {/* Ongoing Tasks */}
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center gap-2 mb-4">
-              <span className="text-lg">🔄</span>
+              <RefreshCwIcon className="w-5 h-5 text-blue-600" />
               <h3 className="text-lg font-semibold">Ongoing Tasks</h3>
               <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-full ml-auto">
                 {ongoingTasks.length}
@@ -193,7 +145,7 @@ export default function ActiveProjects() {
             </div>
             {ongoingTasks.length === 0 ? (
               <p className="text-gray-500 text-center py-4">
-                No ongoing tasks {filterMode !== 'all' && `for ${getFilterLabel()}`}
+                No ongoing tasks for {getFilterLabel()}
               </p>
             ) : (
               <div className="space-y-2">
@@ -224,7 +176,7 @@ export default function ActiveProjects() {
           {/* Completed Tasks */}
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center gap-2 mb-4">
-              <span className="text-lg">✅</span>
+              <CheckCircleIcon className="w-5 h-5 text-emerald-600" />
               <h3 className="text-lg font-semibold">Completed Tasks</h3>
               <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-1 rounded-full ml-auto">
                 {completedTasks.length}
@@ -232,7 +184,7 @@ export default function ActiveProjects() {
             </div>
             {completedTasks.length === 0 ? (
               <p className="text-gray-500 text-center py-4">
-                No completed tasks {filterMode !== 'all' && `for ${getFilterLabel()}`}
+                No completed tasks for {getFilterLabel()}
               </p>
             ) : (
               <div className="space-y-2">

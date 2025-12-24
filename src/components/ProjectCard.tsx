@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { canOverridePoints, canMarkComplete as canMarkCompleteUtil, getOverrideBlockedReason, canDeleteProject } from '@/lib/rank-utils';
 import CompletionModal from './CompletionModal';
+import { ClipboardIcon, CheckIcon } from 'lucide-react';
 
 interface Project {
   id: string;
@@ -155,7 +156,7 @@ export default function ProjectCard({ project, currentUserRank, currentUserId, o
       {canSeeRemarks && project.remarks && (
         <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
           <div className="flex items-start gap-2">
-            <span className="text-amber-600">📋</span>
+            <ClipboardIcon className="w-4 h-4 text-amber-600 mt-0.5" />
             <div>
               <span className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Remarks</span>
               <p className="text-sm text-amber-900 mt-1">{project.remarks}</p>
@@ -253,9 +254,14 @@ export default function ProjectCard({ project, currentUserRank, currentUserId, o
             <button
               onClick={() => setShowCompletionModal(true)}
               disabled={saving}
-              className="bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+              className="bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1.5"
             >
-              {saving ? 'Saving...' : '✓ Mark Complete'}
+              {saving ? 'Saving...' : (
+                <>
+                  <CheckIcon className="w-4 h-4" />
+                  Mark Complete
+                </>
+              )}
             </button>
           )}
           {canDelete && (

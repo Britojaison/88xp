@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { LightbulbIcon, ClipboardIcon, Loader2, CheckIcon } from 'lucide-react';
 
 interface ProjectType {
   id: string;
@@ -170,8 +171,9 @@ export default function CompletionModal({
                 className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                 required
               />
-              <p className="mt-1 text-xs text-gray-500">
-                💡 Since this is "Other" type, you must specify the points manually.
+              <p className="mt-1 text-xs text-gray-500 flex items-center gap-1">
+                <LightbulbIcon className="w-3 h-3" />
+                Since this is "Other" type, you must specify the points manually.
               </p>
             </div>
           )}
@@ -187,8 +189,9 @@ export default function CompletionModal({
               placeholder="Add any notes about this task... (visible to supervisors)"
               className="w-full border border-gray-300 rounded-lg px-4 py-3 h-28 resize-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
             />
-            <p className="mt-1 text-xs text-gray-500">
-              📋 Remarks are visible to Rank 1 supervisors
+            <p className="mt-1 text-xs text-gray-500 flex items-center gap-1">
+              <ClipboardIcon className="w-3 h-3" />
+              Remarks are visible to Rank 1 supervisors
             </p>
           </div>
 
@@ -216,12 +219,13 @@ export default function CompletionModal({
             >
               {loading ? (
                 <>
-                  <span className="animate-spin">⏳</span>
+                  <Loader2 className="w-4 h-4 animate-spin" />
                   Completing...
                 </>
               ) : (
                 <>
-                  ✓ Complete Task
+                  <CheckIcon className="w-4 h-4" />
+                  Complete Task
                 </>
               )}
             </button>
