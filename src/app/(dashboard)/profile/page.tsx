@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import ProfilePointsSection from './ProfilePointsSection';
 import ContributionGraph from '@/components/ContributionGraph';
 import TargetProgressCard from '@/components/TargetProgressCard';
+import { MonthlyTarget } from '@/types';
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -50,7 +51,7 @@ export default async function ProfilePage() {
     })
     .single();
 
-  const targetPoints = targetData?.target_points ?? 100;
+  const targetPoints = (targetData as MonthlyTarget | null)?.target_points ?? 100;
   const obtainedPoints = monthlyScore?.total_points ?? 0;
 
   return (
