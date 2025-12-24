@@ -6,7 +6,9 @@ import { createClient } from '@/lib/supabase/client';
 import CreateProjectModal from '@/components/CreateProjectModal';
 import CompletionModal from '@/components/CompletionModal';
 import BrandManagement from '@/components/BrandManagement';
-import { ClipboardIcon, CheckIcon, RefreshCwIcon, CheckCircleIcon } from 'lucide-react';
+import { ClipboardIcon, CheckIcon, RefreshCwIcon, CheckCircleIcon, PencilIcon } from 'lucide-react';
+import EditTaskModal from '@/components/EditTaskModal';
+import { canEditTask } from '@/lib/rank-utils';
 
 interface Task {
   id: string;
@@ -17,6 +19,7 @@ interface Task {
   completed_at: string | null;
   created_by: string;
   assigned_to: string;
+  deadline: string | null;
   remarks?: string | null;
   type: { id: string; name: string; points: number } | null;
   brand?: { id: string; name: string } | null;
@@ -55,6 +58,12 @@ export default function TasksPage() {
   
   // Brand management modal state (for rank 1 users)
   const [showBrandManagement, setShowBrandManagement] = useState(false);
+  
+  // Edit task modal state
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  
+  // Toast notification state
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   
   const router = useRouter();
   const supabase = createClient();
@@ -128,6 +137,12 @@ export default function TasksPage() {
     fetchData();
   };
 
+  const handleTaskUpdated = () => {
+    fetchData();
+    setToast({ message: 'Task updated successfully', type: 'success' });
+    setTimeout(() => setToast(null), 3000);
+  };
+
   const handleOverridePoints = async (taskId: string) => {
     setSaving(true);
     await supabase.from('projects').update({ points_override: overridePoints }).eq('id', taskId);
@@ -168,7 +183,41 @@ export default function TasksPage() {
     return true;
   });
 
-  const ongoingTasks = filteredTasks.filter(isOngoing);
+  // Sort ongoing tasks: overdue first, then earliest deadline, then created_at
+  const sortedOngoingTasks = filteredTasks.filter(isOngoing).sort((a, b) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const aDeadline = a.deadline ? new Date(a.deadline) : null;
+    const bDeadline = b.deadline ? new Date(b.deadline) : null;
+    
+    // Check if overdue
+    const aOverdue = aDeadline && aDeadline < today;
+    const bOverdue = bDeadline && bDeadline < today;
+    
+    // Overdue tasks first
+    if (aOverdue && !bOverdue) return -1;
+    if (!aOverdue && bOverdue) return 1;
+    
+    // If both overdue or both not overdue, sort by deadline
+    if (aOverdue && bOverdue) {
+      return (aDeadline?.getTime() || 0) - (bDeadline?.getTime() || 0);
+    }
+    
+    // If both not overdue, sort by deadline (earliest first)
+    if (aDeadline && bDeadline) {
+      return aDeadline.getTime() - bDeadline.getTime();
+    }
+    
+    // If one has deadline and other doesn't, deadline first
+    if (aDeadline && !bDeadline) return -1;
+    if (!aDeadline && bDeadline) return 1;
+    
+    // Finally, sort by created_at (newest first)
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
+  const ongoingTasks = sortedOngoingTasks;
   const completedTasks = filteredTasks.filter(isCompleted);
 
   const getStatusBadge = (status: string) => {
@@ -193,6 +242,41 @@ export default function TasksPage() {
     currentUser?.id === task.assigned_to && !isCompleted(task);
 
   const canDelete = (task: Task) => currentUser?.id === task.created_by;
+
+  const canEdit = (task: Task) => {
+    if (!currentUser) return false;
+    return canEditTask(
+      currentUser.rank,
+      currentUser.id,
+      task.creator?.rank ?? null,
+      task.created_by,
+      task.status,
+      currentUser.is_admin
+    );
+  };
+
+  const getDeadlineDisplay = (task: Task) => {
+    if (!task.deadline) return <span className="text-gray-400">-</span>;
+    
+    const deadlineDate = new Date(task.deadline);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    deadlineDate.setHours(0, 0, 0, 0);
+    
+    const isOverdue = deadlineDate < today && !isCompleted(task);
+    const isDueToday = deadlineDate.getTime() === today.getTime();
+    
+    const dateStr = deadlineDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    
+    if (isOverdue) {
+      return <span className="text-red-600 font-medium">Overdue</span>;
+    }
+    if (isDueToday) {
+      return <span className="text-orange-600 font-medium">Due Today</span>;
+    }
+    
+    return <span className="text-gray-600">{dateStr}</span>;
+  };
 
   if (loading) {
     return <div className="animate-pulse bg-gray-200 h-96 rounded-lg"></div>;
@@ -262,13 +346,24 @@ export default function TasksPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-gray-700">Month:</span>
+          <select
+            value={monthFilter}
+            onChange={(e) => setMonthFilter(e.target.value)}
+            className="border rounded-lg px-3 py-2 text-sm bg-white"
+          >
+            <option value="all">All</option>
+            {MONTH_NAMES.map((m, i) => (
+              <option key={m} value={i + 1}>{m}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-gray-700">Year:</span>
           <select
             value={yearFilter}
-            onChange={(e) => {
-              setYearFilter(e.target.value);
-              if (e.target.value === 'all') setMonthFilter('all');
-            }}
+            onChange={(e) => setYearFilter(e.target.value)}
             className="border rounded-lg px-3 py-2 text-sm bg-white"
           >
             <option value="all">All</option>
@@ -277,22 +372,6 @@ export default function TasksPage() {
             ))}
           </select>
         </div>
-
-        {yearFilter !== 'all' && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-700">Month:</span>
-            <select
-              value={monthFilter}
-              onChange={(e) => setMonthFilter(e.target.value)}
-              className="border rounded-lg px-3 py-2 text-sm bg-white"
-            >
-              <option value="all">All</option>
-              {MONTH_NAMES.map((m, i) => (
-                <option key={m} value={i + 1}>{m}</option>
-              ))}
-            </select>
-          </div>
-        )}
 
         <span className="ml-auto text-sm text-gray-500">
           Total: <span className="font-semibold">{filteredTasks.length}</span> tasks
@@ -324,6 +403,7 @@ export default function TasksPage() {
                   <th className="px-4 py-3 text-center font-medium">Status</th>
                   <th className="px-4 py-3 text-left font-medium">Type</th>
                   <th className="px-4 py-3 text-center font-medium">Points</th>
+                  <th className="px-4 py-3 text-left font-medium">Deadline</th>
                   <th className="px-4 py-3 text-left font-medium">Created</th>
                   <th className="px-4 py-3 text-center font-medium">Actions</th>
                 </tr>
@@ -350,6 +430,9 @@ export default function TasksPage() {
                     <td className="px-4 py-3 text-center font-semibold text-gray-700">
                       {getPoints(task)} pts
                     </td>
+                    <td className="px-4 py-3">
+                      {getDeadlineDisplay(task)}
+                    </td>
                     <td className="px-4 py-3 text-gray-500">
                       {new Date(task.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </td>
@@ -358,15 +441,24 @@ export default function TasksPage() {
                         {canMarkComplete(task) && (
                           <button
                             onClick={() => setCompletingTask(task)}
-                            className="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-2 py-1 rounded"
+                            className="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg font-medium transition-all"
                           >
                             Complete
+                          </button>
+                        )}
+                        {canEdit(task) && (
+                          <button
+                            onClick={() => setEditingTask(task)}
+                            className="text-xs bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg transition-all hover:scale-105 shadow-sm"
+                            title="Edit Task"
+                          >
+                            <PencilIcon className="w-3.5 h-3.5" />
                           </button>
                         )}
                         {canDelete(task) && (
                           <button
                             onClick={() => handleDelete(task.id)}
-                            className="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
+                            className="text-xs bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg font-medium transition-all"
                           >
                             Delete
                           </button>
@@ -402,10 +494,10 @@ export default function TasksPage() {
                   <th className="px-4 py-3 text-left font-medium">Task Name</th>
                   <th className="px-4 py-3 text-left font-medium">Brand</th>
                   <th className="px-4 py-3 text-left font-medium">Completed By</th>
-                  <th className="px-4 py-3 text-left font-medium">Created By</th>
                   <th className="px-4 py-3 text-center font-medium">Status</th>
                   <th className="px-4 py-3 text-left font-medium">Type</th>
                   <th className="px-4 py-3 text-center font-medium">Points</th>
+                  <th className="px-4 py-3 text-left font-medium">Created</th>
                   <th className="px-4 py-3 text-left font-medium">Completed</th>
                   <th className="px-4 py-3 text-center font-medium">Actions</th>
                 </tr>
@@ -431,7 +523,6 @@ export default function TasksPage() {
                       ) : '-'}
                     </td>
                     <td className="px-4 py-3 text-gray-600">{task.assignee?.name || '-'}</td>
-                    <td className="px-4 py-3 text-gray-600">{task.creator?.name || '-'}</td>
                     <td className="px-4 py-3 text-center">{getStatusBadge(task.status)}</td>
                     <td className="px-4 py-3">
                       <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-1 rounded">
@@ -471,6 +562,9 @@ export default function TasksPage() {
                           </span>
                         </div>
                       )}
+                    </td>
+                    <td className="px-4 py-3 text-gray-500">
+                      {new Date(task.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </td>
                     <td className="px-4 py-3 text-gray-500">
                       {task.completed_at 
@@ -532,6 +626,37 @@ export default function TasksPage() {
           isModal={true}
           onClose={() => setShowBrandManagement(false)}
         />
+      )}
+
+      {/* Edit Task Modal */}
+      {editingTask && currentUser && (
+        <EditTaskModal
+          task={editingTask}
+          onClose={() => setEditingTask(null)}
+          onUpdated={handleTaskUpdated}
+          currentUserId={currentUser.id}
+          currentUserRank={currentUser.rank ?? 999}
+          isAdmin={currentUser.is_admin}
+          isRank1={isRank1}
+        />
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg animate-in slide-in-from-top-5 ${
+          toast.type === 'success' 
+            ? 'bg-green-500 text-white' 
+            : 'bg-red-500 text-white'
+        }`}>
+          <div className="flex items-center gap-2">
+            {toast.type === 'success' ? (
+              <CheckCircleIcon className="w-5 h-5" />
+            ) : (
+              <span className="text-xl">⚠️</span>
+            )}
+            <span className="font-medium">{toast.message}</span>
+          </div>
+        </div>
       )}
     </div>
   );

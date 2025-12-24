@@ -152,3 +152,44 @@ export function canDeleteProject(
   return false;
 }
 
+/**
+ * Check if a user can edit a task.
+ * 
+ * Rules:
+ * - Admin can always edit
+ * - Creator can always edit their own task
+ * - Higher-ranked users (lower rank number) can edit tasks created by lower-ranked users (only on completed tasks)
+ * - Assigned users CANNOT edit tasks (only the creator can)
+ * 
+ * @param currentUserRank - The rank of the current user (lower = higher authority)
+ * @param currentUserId - The ID of the current user
+ * @param creatorRank - The rank of the task creator
+ * @param creatorId - The ID of the task creator
+ * @param taskStatus - The current status of the task
+ * @param isAdmin - Whether the current user is an admin
+ * @returns true if the user can edit the task
+ */
+export function canEditTask(
+  currentUserRank: number | null,
+  currentUserId: string | undefined,
+  creatorRank: number | null,
+  creatorId: string,
+  taskStatus: string,
+  isAdmin: boolean = false
+): boolean {
+  // Admin can always edit
+  if (isAdmin) return true;
+  
+  // Creator can always edit their own task
+  if (currentUserId === creatorId) return true;
+  
+  // For completed tasks, higher-ranked users (lower rank number) can edit tasks from lower-ranked users
+  const isCompleted = taskStatus === 'completed' || taskStatus === 'approved';
+  if (isCompleted && currentUserRank !== null && creatorRank !== null) {
+    return currentUserRank < creatorRank; // Strictly less than (higher authority)
+  }
+  
+  // Otherwise, cannot edit
+  return false;
+}
+
