@@ -17,7 +17,7 @@ export default async function DashboardLayout({
 
   const { data: employee } = await supabase
     .from('employees')
-    .select('is_admin')
+    .select('is_admin, rank')
     .ilike('email', user.email!)
     .single();
 
@@ -28,7 +28,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100">
-      <Sidebar isAdmin={false} />
+      <Sidebar isAdmin={false} userRank={employee?.rank ?? null} />
       <main className="flex-1 p-8 overflow-auto flex flex-col">
         <div className="flex-1">{children}</div>
         <Footer />

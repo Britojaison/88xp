@@ -3,13 +3,14 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { UsersIcon, UserPlusIcon, UserIcon, LayoutDashboardIcon, FolderIcon, LogOutIcon } from 'lucide-react';
+import { UsersIcon, UserPlusIcon, UserIcon, LayoutDashboardIcon, FolderIcon, LogOutIcon, TargetIcon } from 'lucide-react';
 
 interface SidebarProps {
   isAdmin?: boolean;
+  userRank?: number | null;
 }
 
-export default function Sidebar({ isAdmin = false }: SidebarProps) {
+export default function Sidebar({ isAdmin = false, userRank = null }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
@@ -20,17 +21,24 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
     router.refresh();
   };
 
+  const baseEmployeeItems = [
+    { href: '/home', label: 'Dashboard', icon: 'dashboard' },
+    { href: '/projects', label: 'Tasks', icon: 'folder' },
+    { href: '/profile', label: 'Profile', icon: 'user' },
+  ];
+
+  // Add Targets link for Rank 1 users
+  const employeeItems = userRank === 1
+    ? [...baseEmployeeItems, { href: '/targets', label: 'Targets', icon: 'target' }]
+    : baseEmployeeItems;
+
   const navItems = isAdmin
     ? [
         { href: '/admin', label: 'Employees', icon: 'users' },
         { href: '/admin/add-user', label: 'Add User', icon: 'user-plus' },
         { href: '/admin/profile', label: 'Profile', icon: 'user' },
       ]
-    : [
-        { href: '/home', label: 'Dashboard', icon: 'dashboard' },
-        { href: '/projects', label: 'Tasks', icon: 'folder' },
-        { href: '/profile', label: 'Profile', icon: 'user' },
-      ];
+    : employeeItems;
 
   const getIcon = (iconName: string) => {
     const iconProps = { className: "w-5 h-5" };
@@ -40,6 +48,7 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
       case 'user': return <UserIcon {...iconProps} />;
       case 'dashboard': return <LayoutDashboardIcon {...iconProps} />;
       case 'folder': return <FolderIcon {...iconProps} />;
+      case 'target': return <TargetIcon {...iconProps} />;
       default: return null;
     }
   };

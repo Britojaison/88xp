@@ -80,3 +80,14 @@ export interface PointsBreakdownEntry {
   completed_at: string;
   status: string;
 }
+
+export interface MonthlyTarget {
+  id: string;
+  employee_id: string;
+  target_points: number;
+  month: number;
+  year: number;
+  created_at?: string;
+  updated_at?: string;
+  updated_by?: string;
+}
