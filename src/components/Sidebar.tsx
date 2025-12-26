@@ -54,7 +54,7 @@ export default function Sidebar({ isAdmin = false, userRank = null }: SidebarPro
   };
 
   return (
-    <aside className="relative w-72 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white min-h-screen p-6 shadow-2xl">
+    <aside className="fixed left-0 top-0 w-72 h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white p-6 shadow-2xl overflow-y-auto">
       {/* Logo/Brand */}
       <div className="mb-8">
         <div className="flex items-center gap-3">

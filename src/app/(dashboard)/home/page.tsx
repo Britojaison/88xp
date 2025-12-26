@@ -13,11 +13,11 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-6 text-white shadow-lg">
-        <h1 className="text-3xl font-bold">
+      <div className="rounded-2xl p-6">
+        <h1 className="text-3xl font-bold text-gray-900">
           Welcome back, {employee?.name || 'User'}! 👋
         </h1>
-        <p className="text-indigo-100 mt-2">
+        <p className="text-gray-600 mt-2">
           Track your tasks and climb the scoreboard
         </p>
       </div>
