@@ -117,7 +117,7 @@ export default function TasksPage() {
 
     const { data: tasks } = await supabase
       .from('projects')
-      .select('*, type:project_types(*), brand:brands(*), creator:employees!created_by(*), assignee:employees!assigned_to(*)')
+      .select('id, name, status, deadline, remarks, points_override, created_at, completed_at, created_by, assigned_to, type_id, brand_id, type:project_types(id, name, points), brand:brands(id, name), creator:employees!created_by(id, name, rank), assignee:employees!assigned_to(id, name, rank)')
       .order('created_at', { ascending: false });
 
     setAllTasks((tasks || []).map(transform) as Task[]);

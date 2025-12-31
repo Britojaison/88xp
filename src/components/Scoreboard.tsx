@@ -36,7 +36,7 @@ export default function Scoreboard() {
 
     const { data, error } = await supabase
       .from('monthly_scores')
-      .select('*')
+      .select('id, employee_id, employee_name, total_points, project_count')
       .eq('month', month)
       .eq('year', year)
       .order('total_points', { ascending: false });

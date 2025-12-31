@@ -12,7 +12,7 @@ export default async function ProfilePage() {
   // Match by email since employee.id may differ from auth user.id
   const { data: employee } = await supabase
     .from('employees')
-    .select('*')
+    .select('id, name, email, rank, is_admin, created_at')
     .ilike('email', user?.email || '')
     .single();
 

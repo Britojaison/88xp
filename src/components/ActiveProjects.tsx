@@ -39,38 +39,44 @@ export default function ActiveProjects() {
   const fetchTasks = async () => {
     setLoading(true);
     
-    const { data } = await supabase
+    // Calculate date range for filtering at database level
+    // Start of month
+    const startDate = new Date(selectedYear, selectedMonth - 1, 1);
+    startDate.setHours(0, 0, 0, 0);
+    // End of month
+    const endDate = new Date(selectedYear, selectedMonth, 0);
+    endDate.setHours(23, 59, 59, 999);
+    
+    const startDateStr = startDate.toISOString();
+    const endDateStr = endDate.toISOString();
+    
+    // Fetch ongoing tasks (filter by created_at)
+    const { data: ongoingData } = await supabase
       .from('projects')
       .select('id, name, status, points_override, completed_at, created_at, assignee:employees!assigned_to(name), type:project_types(name, points)')
+      .in('status', ['pending', 'in_progress'])
+      .gte('created_at', startDateStr)
+      .lte('created_at', endDateStr)
       .order('created_at', { ascending: false });
 
-    const transformed = (data || []).map(p => ({
+    // Fetch completed tasks (filter by completed_at)
+    const { data: completedData } = await supabase
+      .from('projects')
+      .select('id, name, status, points_override, completed_at, created_at, assignee:employees!assigned_to(name), type:project_types(name, points)')
+      .in('status', ['completed', 'approved'])
+      .not('completed_at', 'is', null)
+      .gte('completed_at', startDateStr)
+      .lte('completed_at', endDateStr)
+      .order('completed_at', { ascending: false });
+
+    const transform = (items: typeof ongoingData) => (items || []).map(p => ({
       ...p,
       assignee: Array.isArray(p.assignee) ? p.assignee[0] : p.assignee,
       type: Array.isArray(p.type) ? p.type[0] : p.type,
     }));
 
-    const filterByDate = (task: Task, useCompletedDate: boolean) => {
-      const dateStr = useCompletedDate ? task.completed_at : task.created_at;
-      if (!dateStr) return false;
-      
-      const date = new Date(dateStr);
-      const taskMonth = date.getMonth() + 1;
-      const taskYear = date.getFullYear();
-
-        return taskMonth === selectedMonth && taskYear === selectedYear;
-    };
-
-    const ongoing = transformed.filter(p => 
-      (p.status === 'pending' || p.status === 'in_progress') && filterByDate(p, false)
-    );
-    
-    const completed = transformed.filter(p => 
-      (p.status === 'completed' || p.status === 'approved') && filterByDate(p, true)
-    );
-
-    setOngoingTasks(ongoing);
-    setCompletedTasks(completed);
+    setOngoingTasks(transform(ongoingData) as Task[]);
+    setCompletedTasks(transform(completedData) as Task[]);
     setLoading(false);
   };
 

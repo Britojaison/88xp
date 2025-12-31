@@ -1,10 +1,24 @@
 'use client';
 
 import { useState } from 'react';
-import Scoreboard from './Scoreboard';
-import YearlyScoreboard from './YearlyScoreboard';
-import ActiveProjects from './ActiveProjects';
+import dynamic from 'next/dynamic';
 import { TrophyIcon, ClipboardIcon } from 'lucide-react';
+
+// Dynamically import components to reduce initial bundle size
+const Scoreboard = dynamic(() => import('./Scoreboard'), {
+  loading: () => <div className="animate-pulse bg-gray-200 h-64 rounded-lg"></div>,
+  ssr: false
+});
+
+const YearlyScoreboard = dynamic(() => import('./YearlyScoreboard'), {
+  loading: () => <div className="animate-pulse bg-gray-200 h-64 rounded-lg"></div>,
+  ssr: false
+});
+
+const ActiveProjects = dynamic(() => import('./ActiveProjects'), {
+  loading: () => <div className="animate-pulse bg-gray-200 h-64 rounded-lg"></div>,
+  ssr: false
+});
 
 type View = 'scoreboard' | 'tasks';
 
@@ -47,7 +61,7 @@ export default function DashboardToggle() {
         </div>
       </div>
 
-      {/* Content based on toggle */}
+      {/* Content based on toggle - dynamically loaded */}
       {activeView === 'scoreboard' ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <Scoreboard />

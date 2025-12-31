@@ -37,7 +37,7 @@ export default function YearlyScoreboard({ year }: Props) {
     
     const { data, error } = await supabase
       .from('yearly_scores')
-      .select('*')
+      .select('id, employee_id, employee_name, total_points, project_count, year')
       .eq('year', selectedYear)
       .order('total_points', { ascending: false });
 
