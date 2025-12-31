@@ -58,7 +58,7 @@ export default function ActiveProjects() {
       const taskMonth = date.getMonth() + 1;
       const taskYear = date.getFullYear();
 
-      return taskMonth === selectedMonth && taskYear === selectedYear;
+        return taskMonth === selectedMonth && taskYear === selectedYear;
     };
 
     const ongoing = transformed.filter(p => 
@@ -104,25 +104,25 @@ export default function ActiveProjects() {
         <div className="flex flex-wrap items-center gap-4">
           <span className="text-sm font-medium text-gray-700">Filter by Month:</span>
           
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(Number(e.target.value))}
-            className="border rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-indigo-500"
-          >
-            {MONTHS.map((month, index) => (
-              <option key={index} value={index + 1}>{month}</option>
-            ))}
-          </select>
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              className="border rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-indigo-500"
+            >
+              {MONTHS.map((month, index) => (
+                <option key={index} value={index + 1}>{month}</option>
+              ))}
+            </select>
 
-          <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="border rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-indigo-500"
-          >
-            {availableYears.map((year) => (
-              <option key={year} value={year}>{year}</option>
-            ))}
-          </select>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className="border rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-indigo-500"
+            >
+              {availableYears.map((year) => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
 
           <span className="ml-auto text-sm text-gray-500">
             Showing: <span className="font-medium text-gray-700">{getFilterLabel()}</span>
