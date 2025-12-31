@@ -5,9 +5,19 @@ export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
   const path = request.nextUrl.pathname;
 
+  // Check if environment variables are set
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Missing Supabase environment variables in middleware');
+    // Allow the request to proceed if env vars are missing (will fail at page level)
+    return supabaseResponse;
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
@@ -24,7 +34,15 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  let user = null;
+  try {
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    user = authUser;
+  } catch (error) {
+    console.error('Error getting user in middleware:', error);
+    // If auth fails, allow request to proceed (will be handled at page level)
+    return supabaseResponse;
+  }
 
   // Redirect unauthenticated users to login
   if (!user && !path.startsWith('/login')) {
@@ -41,13 +59,20 @@ export async function middleware(request: NextRequest) {
     
     // Only query the database if we're on a route that needs role checking
     if (isLoginPage || isAdminRoute || isStaffRoute) {
-      const { data: employee } = await supabase
-        .from('employees')
-        .select('is_admin')
-        .ilike('email', user.email)
-        .single();
+      let isAdmin = false;
+      try {
+        const { data: employee } = await supabase
+          .from('employees')
+          .select('is_admin')
+          .ilike('email', user.email)
+          .single();
 
-      const isAdmin = employee?.is_admin === true;
+        isAdmin = employee?.is_admin === true;
+      } catch (error) {
+        console.error('Error checking employee role in middleware:', error);
+        // If DB query fails, allow request to proceed (will be handled at page level)
+        return supabaseResponse;
+      }
 
       // Redirect from login to appropriate dashboard
       if (isLoginPage) {

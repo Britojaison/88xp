@@ -285,29 +285,30 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Tasks</h1>
-          <p className="text-gray-500 mt-1">Manage all tasks in one place</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Tasks</h1>
+          <p className="text-sm sm:text-base text-gray-500 mt-1">Manage all tasks in one place</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           {/* Brand Management - only for Rank 1 */}
           {isRank1 && (
             <button
               onClick={() => setShowBrandManagement(true)}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-lg flex items-center gap-2"
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-medium shadow-lg flex items-center justify-center gap-2 text-sm sm:text-base"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
               </svg>
-              Manage Brands
+              <span className="hidden xs:inline">Manage Brands</span>
+              <span className="xs:hidden">Brands</span>
             </button>
           )}
           <button
             onClick={() => setShowModal(true)}
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-lg"
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-medium shadow-lg text-sm sm:text-base"
           >
             + Create Task
           </button>
@@ -315,7 +316,7 @@ export default function TasksPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow p-4 flex flex-wrap items-center gap-4">
+      <div className="bg-white rounded-xl shadow p-3 sm:p-4 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-4">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-gray-700">Employee:</span>
           <select
@@ -375,71 +376,72 @@ export default function TasksPage() {
           </select>
         </div>
 
-        <span className="ml-auto text-sm text-gray-500">
+        <span className="text-sm text-gray-500 sm:ml-auto">
           Total: <span className="font-semibold">{filteredTasks.length}</span> tasks
         </span>
       </div>
 
       {/* Ongoing Tasks Table */}
       <div className="bg-white rounded-xl shadow overflow-hidden">
-        <div className="px-6 py-4 border-b bg-blue-50 flex items-center justify-between">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b bg-blue-50 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <RefreshCwIcon className="w-5 h-5 text-blue-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Ongoing Tasks</h2>
+            <RefreshCwIcon className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Ongoing Tasks</h2>
           </div>
-          <span className="bg-blue-600 text-white text-sm font-bold px-3 py-1 rounded-full">
+          <span className="bg-blue-600 text-white text-xs sm:text-sm font-bold px-2.5 sm:px-3 py-1 rounded-full">
             {ongoingTasks.length}
           </span>
         </div>
         {ongoingTasks.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">No ongoing tasks</div>
+          <div className="p-6 sm:p-8 text-center text-gray-500 text-sm sm:text-base">No ongoing tasks</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <div className="inline-block min-w-full align-middle">
+              <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
               <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium">Task Name</th>
-                  <th className="px-4 py-3 text-left font-medium">Brand</th>
-                  <th className="px-4 py-3 text-left font-medium">Assigned To</th>
-                  <th className="px-4 py-3 text-left font-medium">Created By</th>
-                  <th className="px-4 py-3 text-center font-medium">Status</th>
-                  <th className="px-4 py-3 text-left font-medium">Type</th>
-                  <th className="px-4 py-3 text-center font-medium">Points</th>
-                  <th className="px-4 py-3 text-left font-medium">Deadline</th>
-                  <th className="px-4 py-3 text-left font-medium">Created</th>
-                  <th className="px-4 py-3 text-center font-medium">Actions</th>
+                  <th className="px-3 sm:px-4 py-2 sm:py-3 text-left font-medium">Task Name</th>
+                  <th className="px-3 sm:px-4 py-2 sm:py-3 text-left font-medium hidden md:table-cell">Brand</th>
+                  <th className="px-3 sm:px-4 py-2 sm:py-3 text-left font-medium">Assigned To</th>
+                  <th className="px-3 sm:px-4 py-2 sm:py-3 text-left font-medium hidden lg:table-cell">Created By</th>
+                  <th className="px-3 sm:px-4 py-2 sm:py-3 text-center font-medium">Status</th>
+                  <th className="px-3 sm:px-4 py-2 sm:py-3 text-left font-medium hidden sm:table-cell">Type</th>
+                  <th className="px-3 sm:px-4 py-2 sm:py-3 text-center font-medium">Points</th>
+                  <th className="px-3 sm:px-4 py-2 sm:py-3 text-left font-medium hidden lg:table-cell">Deadline</th>
+                  <th className="px-3 sm:px-4 py-2 sm:py-3 text-left font-medium hidden xl:table-cell">Created</th>
+                  <th className="px-3 sm:px-4 py-2 sm:py-3 text-center font-medium">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-100 bg-white">
                 {ongoingTasks.map((task) => (
                   <tr key={task.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-900">{task.name}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 sm:px-4 py-2 sm:py-3 font-medium text-gray-900 max-w-[150px] sm:max-w-none truncate">{task.name}</td>
+                    <td className="px-3 sm:px-4 py-2 sm:py-3 hidden md:table-cell">
                       {task.brand ? (
                         <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
                           {task.brand.name}
                         </span>
                       ) : '-'}
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{task.assignee?.name || '-'}</td>
-                    <td className="px-4 py-3 text-gray-600">{task.creator?.name || '-'}</td>
-                    <td className="px-4 py-3 text-center">{getStatusBadge(task.status)}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 sm:px-4 py-2 sm:py-3 text-gray-600">{task.assignee?.name || '-'}</td>
+                    <td className="px-3 sm:px-4 py-2 sm:py-3 text-gray-600 hidden lg:table-cell">{task.creator?.name || '-'}</td>
+                    <td className="px-3 sm:px-4 py-2 sm:py-3 text-center">{getStatusBadge(task.status)}</td>
+                    <td className="px-3 sm:px-4 py-2 sm:py-3 hidden sm:table-cell">
                       <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-1 rounded">
                         {task.type?.name || '-'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-center font-semibold text-gray-700">
+                    <td className="px-3 sm:px-4 py-2 sm:py-3 text-center font-semibold text-gray-700 text-xs sm:text-sm">
                       {getPoints(task)} pts
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 sm:px-4 py-2 sm:py-3 hidden lg:table-cell">
                       {getDeadlineDisplay(task)}
                     </td>
-                    <td className="px-4 py-3 text-gray-500">
+                    <td className="px-3 sm:px-4 py-2 sm:py-3 text-gray-500 hidden xl:table-cell text-xs">
                       {new Date(task.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </td>
-                    <td className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-2">
+                    <td className="px-3 sm:px-4 py-2 sm:py-3 text-center">
+                      <div className="flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
                         {canMarkComplete(task) && (
                           <button
                             onClick={() => setCompletingTask(task)}
@@ -470,45 +472,47 @@ export default function TasksPage() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+              </table>
+            </div>
           </div>
         )}
       </div>
 
       {/* Completed Tasks Table */}
       <div className="bg-white rounded-xl shadow overflow-hidden">
-        <div className="px-6 py-4 border-b bg-emerald-50 flex items-center justify-between">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b bg-emerald-50 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CheckCircleIcon className="w-5 h-5 text-emerald-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Completed Tasks</h2>
+            <CheckCircleIcon className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Completed Tasks</h2>
           </div>
-          <span className="bg-emerald-600 text-white text-sm font-bold px-3 py-1 rounded-full">
+          <span className="bg-emerald-600 text-white text-xs sm:text-sm font-bold px-2.5 sm:px-3 py-1 rounded-full">
             {completedTasks.length}
           </span>
         </div>
         {completedTasks.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">No completed tasks</div>
+          <div className="p-6 sm:p-8 text-center text-gray-500 text-sm sm:text-base">No completed tasks</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <div className="inline-block min-w-full align-middle">
+              <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
               <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium">Task Name</th>
-                  <th className="px-4 py-3 text-left font-medium">Brand</th>
-                  <th className="px-4 py-3 text-left font-medium">Completed By</th>
-                  <th className="px-4 py-3 text-center font-medium">Status</th>
-                  <th className="px-4 py-3 text-left font-medium">Type</th>
-                  <th className="px-4 py-3 text-center font-medium">Points</th>
-                  <th className="px-4 py-3 text-left font-medium">Created</th>
-                  <th className="px-4 py-3 text-left font-medium">Completed</th>
-                  <th className="px-4 py-3 text-center font-medium">Actions</th>
+                  <th className="px-3 sm:px-4 py-2 sm:py-3 text-left font-medium">Task Name</th>
+                  <th className="px-3 sm:px-4 py-2 sm:py-3 text-left font-medium hidden md:table-cell">Brand</th>
+                  <th className="px-3 sm:px-4 py-2 sm:py-3 text-left font-medium">Completed By</th>
+                  <th className="px-3 sm:px-4 py-2 sm:py-3 text-center font-medium">Status</th>
+                  <th className="px-3 sm:px-4 py-2 sm:py-3 text-left font-medium hidden sm:table-cell">Type</th>
+                  <th className="px-3 sm:px-4 py-2 sm:py-3 text-center font-medium">Points</th>
+                  <th className="px-3 sm:px-4 py-2 sm:py-3 text-left font-medium hidden lg:table-cell">Created</th>
+                  <th className="px-3 sm:px-4 py-2 sm:py-3 text-left font-medium hidden xl:table-cell">Completed</th>
+                  <th className="px-3 sm:px-4 py-2 sm:py-3 text-center font-medium">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-100 bg-white">
                 {completedTasks.map((task) => (
                   <tr key={task.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <div className="font-medium text-gray-900">{task.name}</div>
+                    <td className="px-3 sm:px-4 py-2 sm:py-3">
+                      <div className="font-medium text-gray-900 max-w-[150px] sm:max-w-none truncate">{task.name}</div>
                       {/* Remarks visible to Rank 1 */}
                       {isRank1 && task.remarks && (
                         <div className="mt-1 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 max-w-xs flex items-start gap-1">
@@ -517,21 +521,21 @@ export default function TasksPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 sm:px-4 py-2 sm:py-3 hidden md:table-cell">
                       {task.brand ? (
                         <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
                           {task.brand.name}
                         </span>
                       ) : '-'}
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{task.assignee?.name || '-'}</td>
-                    <td className="px-4 py-3 text-center">{getStatusBadge(task.status)}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 sm:px-4 py-2 sm:py-3 text-gray-600">{task.assignee?.name || '-'}</td>
+                    <td className="px-3 sm:px-4 py-2 sm:py-3 text-center">{getStatusBadge(task.status)}</td>
+                    <td className="px-3 sm:px-4 py-2 sm:py-3 hidden sm:table-cell">
                       <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-1 rounded">
                         {task.type?.name || '-'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-3 sm:px-4 py-2 sm:py-3 text-center">
                       {editingTaskId === task.id ? (
                         <div className="flex items-center justify-center gap-1">
                           <input
@@ -565,16 +569,16 @@ export default function TasksPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-gray-500">
+                    <td className="px-3 sm:px-4 py-2 sm:py-3 text-gray-500 hidden lg:table-cell text-xs">
                       {new Date(task.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </td>
-                    <td className="px-4 py-3 text-gray-500">
+                    <td className="px-3 sm:px-4 py-2 sm:py-3 text-gray-500 hidden xl:table-cell text-xs">
                       {task.completed_at 
                         ? new Date(task.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                         : '-'}
                     </td>
-                    <td className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-2">
+                    <td className="px-3 sm:px-4 py-2 sm:py-3 text-center">
+                      <div className="flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
                         {isRank1 && editingTaskId !== task.id && (
                           <button
                             onClick={() => startEditing(task)}
@@ -597,6 +601,7 @@ export default function TasksPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </div>

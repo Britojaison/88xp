@@ -78,68 +78,72 @@ export default function AdminPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Employee Management</h1>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold">Employee Management</h1>
         <button
           onClick={() => router.push('/admin/add-user')}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base"
         >
           + Add Employee
         </button>
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rank</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
-          </thead>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm sm:text-base">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden sm:table-cell">Email</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rank</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+              </tr>
+            </thead>
           <tbody className="divide-y divide-gray-200">
             {employees.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                <td colSpan={4} className="px-4 sm:px-6 py-6 sm:py-8 text-center text-gray-500 text-sm sm:text-base">
                   No employees yet. Click &quot;Add Employee&quot; to create one.
                 </td>
               </tr>
             ) : (
               employees.map((emp) => (
-                <tr key={emp.id}>
-                  <td className="px-6 py-4 font-medium">{emp.name}</td>
-                  <td className="px-6 py-4 text-gray-500">{emp.email}</td>
-                  <td className="px-6 py-4">
-                    <span className="bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded">
+                <tr key={emp.id} className="hover:bg-gray-50">
+                  <td className="px-4 sm:px-6 py-3 sm:py-4 font-medium">{emp.name}</td>
+                  <td className="px-4 sm:px-6 py-3 sm:py-4 text-gray-500 hidden sm:table-cell truncate max-w-[200px]">{emp.email}</td>
+                  <td className="px-4 sm:px-6 py-3 sm:py-4">
+                    <span className="bg-blue-100 text-blue-800 text-xs sm:text-sm px-2 py-1 rounded">
                       Rank {emp.rank}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
-                    <button
-                      onClick={() => { setEditingEmployee(emp); setShowEditModal(true); }}
-                      className="text-blue-600 hover:underline mr-3"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => { setResetEmployee(emp); setShowResetModal(true); }}
-                      className="text-orange-600 hover:underline mr-3"
-                    >
-                      Reset Password
-                    </button>
-                    <button
-                      onClick={() => handleDelete(emp.id)}
-                      className="text-red-600 hover:underline"
-                    >
-                      Delete
-                    </button>
+                  <td className="px-4 sm:px-6 py-3 sm:py-4">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-0">
+                      <button
+                        onClick={() => { setEditingEmployee(emp); setShowEditModal(true); }}
+                        className="text-blue-600 hover:underline text-xs sm:text-sm sm:mr-3 text-left sm:text-left"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => { setResetEmployee(emp); setShowResetModal(true); }}
+                        className="text-orange-600 hover:underline text-xs sm:text-sm sm:mr-3 text-left sm:text-left"
+                      >
+                        Reset Password
+                      </button>
+                      <button
+                        onClick={() => handleDelete(emp.id)}
+                        className="text-red-600 hover:underline text-xs sm:text-sm text-left sm:text-left"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
             )}
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
 
       {showEditModal && editingEmployee && (

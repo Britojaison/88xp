@@ -18,6 +18,10 @@ interface TargetEntry {
   original_target: number;
 }
 
+interface TargetData {
+  target_points: number;
+}
+
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
@@ -86,11 +90,13 @@ export default function TargetsPage() {
         })
         .single();
 
+      const target = targetData as TargetData | null;
+
       return {
         employee_id: emp.id,
         employee_name: emp.name,
-        target_points: targetData?.target_points ?? 100,
-        original_target: targetData?.target_points ?? 100,
+        target_points: target?.target_points ?? 100,
+        original_target: target?.target_points ?? 100,
       };
     });
 
@@ -170,14 +176,14 @@ export default function TargetsPage() {
   }
 
   return (
-    <div className="max-w-4xl space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="max-w-4xl space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <TargetIcon className="w-8 h-8 text-indigo-600" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
+            <TargetIcon className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-600" />
             Monthly Targets
           </h1>
-          <p className="text-gray-500 mt-1">
+          <p className="text-sm sm:text-base text-gray-500 mt-1">
             Set point targets for {MONTH_NAMES[currentMonth - 1]} {currentYear}
           </p>
         </div>
@@ -185,7 +191,7 @@ export default function TargetsPage() {
         <button
           onClick={handleSave}
           disabled={saving || !hasChanges}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all ${
+          className={`flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-medium transition-all text-sm sm:text-base ${
             hasChanges
               ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200'
               : 'bg-gray-100 text-gray-400 cursor-not-allowed'
@@ -217,53 +223,54 @@ export default function TargetsPage() {
       )}
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gradient-to-r from-slate-50 to-gray-50 border-b border-gray-100">
-            <tr>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Employee
-              </th>
-              <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Target Points
-              </th>
-              <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {targets.map((target) => {
-              const isChanged = target.target_points !== target.original_target;
-              return (
-                <tr
-                  key={target.employee_id}
-                  className={`transition-colors ${isChanged ? 'bg-indigo-50/50' : 'hover:bg-gray-50'}`}
-                >
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold shadow-sm">
-                        {target.employee_name.charAt(0).toUpperCase()}
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gradient-to-r from-slate-50 to-gray-50 border-b border-gray-100">
+              <tr>
+                <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Employee
+                </th>
+                <th className="px-4 sm:px-6 py-3 sm:py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Target Points
+                </th>
+                <th className="px-4 sm:px-6 py-3 sm:py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {targets.map((target) => {
+                const isChanged = target.target_points !== target.original_target;
+                return (
+                  <tr
+                    key={target.employee_id}
+                    className={`transition-colors ${isChanged ? 'bg-indigo-50/50' : 'hover:bg-gray-50'}`}
+                  >
+                    <td className="px-4 sm:px-6 py-3 sm:py-4">
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold shadow-sm flex-shrink-0">
+                          {target.employee_name.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="font-medium text-gray-900 text-sm sm:text-base truncate">{target.employee_name}</span>
                       </div>
-                      <span className="font-medium text-gray-900">{target.employee_name}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex justify-center">
-                      <input
-                        type="number"
-                        value={target.target_points}
-                        onChange={(e) => handleTargetChange(target.employee_id, Number(e.target.value))}
-                        className={`w-24 text-center border rounded-lg px-3 py-2 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${
-                          isChanged
-                            ? 'border-indigo-300 bg-white text-indigo-700'
-                            : 'border-gray-200 text-gray-700'
-                        }`}
-                        min={0}
-                        step={10}
-                      />
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-center">
+                    </td>
+                    <td className="px-4 sm:px-6 py-3 sm:py-4">
+                      <div className="flex justify-center">
+                        <input
+                          type="number"
+                          value={target.target_points}
+                          onChange={(e) => handleTargetChange(target.employee_id, Number(e.target.value))}
+                          className={`w-20 sm:w-24 text-center border rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 font-semibold text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${
+                            isChanged
+                              ? 'border-indigo-300 bg-white text-indigo-700'
+                              : 'border-gray-200 text-gray-700'
+                          }`}
+                          min={0}
+                          step={10}
+                        />
+                      </div>
+                    </td>
+                    <td className="px-4 sm:px-6 py-3 sm:py-4 text-center">
                     {isChanged ? (
                       <span className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 bg-indigo-100 px-2.5 py-1 rounded-full">
                         <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse"></span>
@@ -276,12 +283,13 @@ export default function TargetsPage() {
                 </tr>
               );
             })}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-        <p className="text-sm text-amber-800">
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 sm:p-4">
+        <p className="text-xs sm:text-sm text-amber-800">
           <strong>Note:</strong> Targets are carried forward automatically to the next month. 
           You only need to update them when an employee&apos;s target changes.
         </p>

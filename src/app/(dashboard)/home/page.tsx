@@ -12,12 +12,12 @@ export default async function HomePage() {
     .single();
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-2xl p-6">
-        <h1 className="text-3xl font-bold text-gray-900">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="rounded-2xl p-4 sm:p-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
           Welcome back, {employee?.name || 'User'}! 👋
         </h1>
-        <p className="text-gray-600 mt-2">
+        <p className="text-sm sm:text-base text-gray-600 mt-2">
           Track your tasks and climb the scoreboard
         </p>
       </div>

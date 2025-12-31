@@ -13,7 +13,13 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const maskTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
-  const supabase = createClient();
+  // Create client lazily only on client side
+  const [supabase] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return createClient();
+    }
+    return null;
+  });
 
   // Handle password input with delayed masking
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,6 +105,10 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!supabase) {
+      setError('Client not initialized. Please refresh the page.');
+      return;
+    }
     setLoading(true);
     setError('');
 
@@ -132,9 +142,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold text-center mb-6">88XP Dashboard</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+      <div className="bg-white p-6 sm:p-8 rounded-lg shadow-md w-full max-w-md">
+        <h1 className="text-xl sm:text-2xl font-bold text-center mb-6">88XP Dashboard</h1>
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
