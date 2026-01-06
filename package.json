@@ -6,7 +6,11 @@
     "dev": "next dev --turbo",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "vercel": "vercel",
+    "vercel:prod": "vercel --prod",
+    "vercel:inspect": "vercel inspect",
+    "vercel:logs": "vercel logs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
