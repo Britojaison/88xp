@@ -1,17 +1,23 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
+// Simple in-memory cache for role lookups (edge runtime compatible)
+const roleCache = new Map<string, { isAdmin: boolean; timestamp: number }>();
+const CACHE_TTL = 60000; // 1 minute cache
+
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
   const path = request.nextUrl.pathname;
 
-  // Check if environment variables are set
+  // Skip middleware for static assets and API routes
+  if (path.startsWith('/api/') || path.includes('.')) {
+    return supabaseResponse;
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.error('Missing Supabase environment variables in middleware');
-    // Allow the request to proceed if env vars are missing (will fail at page level)
     return supabaseResponse;
   }
 
@@ -34,15 +40,9 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  let user = null;
-  try {
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    user = authUser;
-  } catch (error) {
-    console.error('Error getting user in middleware:', error);
-    // If auth fails, allow request to proceed (will be handled at page level)
-    return supabaseResponse;
-  }
+  // Use getSession for faster auth check (doesn't hit Supabase API if session exists in cookie)
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
 
   // Redirect unauthenticated users to login
   if (!user && !path.startsWith('/login')) {
@@ -51,44 +51,47 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // For authenticated users, only query DB when role check is actually needed
+  // For authenticated users, check role with caching
   if (user?.email) {
     const isLoginPage = path.startsWith('/login');
     const isAdminRoute = path.startsWith('/admin');
-    const isStaffRoute = ['/home', '/projects', '/profile'].some(r => path.startsWith(r));
+    const isStaffRoute = ['/home', '/projects', '/profile', '/targets', '/user'].some(r => path.startsWith(r));
     
-    // Only query the database if we're on a route that needs role checking
     if (isLoginPage || isAdminRoute || isStaffRoute) {
       let isAdmin = false;
-      try {
-        const { data: employee } = await supabase
-          .from('employees')
-          .select('is_admin')
-          .ilike('email', user.email)
-          .single();
+      const cacheKey = user.email.toLowerCase();
+      const cached = roleCache.get(cacheKey);
+      
+      // Use cached value if fresh
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+        isAdmin = cached.isAdmin;
+      } else {
+        try {
+          const { data: employee } = await supabase
+            .from('employees')
+            .select('is_admin')
+            .ilike('email', user.email)
+            .single();
 
-        isAdmin = employee?.is_admin === true;
-      } catch (error) {
-        console.error('Error checking employee role in middleware:', error);
-        // If DB query fails, allow request to proceed (will be handled at page level)
-        return supabaseResponse;
+          isAdmin = employee?.is_admin === true;
+          roleCache.set(cacheKey, { isAdmin, timestamp: Date.now() });
+        } catch {
+          return supabaseResponse;
+        }
       }
 
-      // Redirect from login to appropriate dashboard
       if (isLoginPage) {
         const url = request.nextUrl.clone();
         url.pathname = isAdmin ? '/admin' : '/home';
         return NextResponse.redirect(url);
       }
 
-      // Admins cannot access staff routes
       if (isAdmin && isStaffRoute) {
         const url = request.nextUrl.clone();
         url.pathname = '/admin';
         return NextResponse.redirect(url);
       }
 
-      // Staff cannot access admin routes
       if (!isAdmin && isAdminRoute) {
         const url = request.nextUrl.clone();
         url.pathname = '/home';
