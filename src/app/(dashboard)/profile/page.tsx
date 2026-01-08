@@ -107,7 +107,7 @@ export default function ProfilePage() {
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="mb-2">
-        <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Your Activity & Performance</p>
+        <p className="text-xs text-white uppercase tracking-wider mb-1">Your Activity & Performance</p>
         <h1 className="text-2xl sm:text-3xl font-bold text-white border-b-2 border-white inline-block pb-1">Profile</h1>
       </div>
 
@@ -128,8 +128,8 @@ export default function ProfilePage() {
 
             {/* Name & Email */}
             <h2 className="text-xl font-semibold text-white mb-1">{employee?.name}</h2>
-            <p className="text-sm text-gray-400 mb-1">{employee?.email}</p>
-            <p className="text-xs text-gray-500 mb-6">
+            <p className="text-sm text-white mb-1">{employee?.email}</p>
+            <p className="text-xs text-white mb-6">
               Member Since: {new Date(employee?.created_at).toLocaleDateString()}
             </p>
 
@@ -153,12 +153,20 @@ export default function ProfilePage() {
 
         {/* Right - Activity Timeline (with max width) */}
         <div className="flex-1 max-w-4xl flex items-center gap-4">
-          <div className="flex-1">
+          <div className="flex-1 space-y-6">
             <ContributionGraph 
               employeeId={employee?.id || ''} 
               selectedYear={selectedYear}
               onYearChange={setSelectedYear}
             />
+            
+            {/* Badges Section */}
+            <div className="bg-[#2A2A2A] rounded-xl p-8 border border-gray-700 shadow-lg">
+              <h3 className="text-base font-semibold text-white mb-4">Badges</h3>
+              <div className="flex items-center justify-center py-12">
+                <p className="text-gray-400 text-sm">No badges yet</p>
+              </div>
+            </div>
           </div>
           
           {/* Year Selector - Vertical */}
@@ -170,7 +178,7 @@ export default function ProfilePage() {
                 className={`px-4 py-3 rounded-xl font-semibold text-lg transition-all ${
                   selectedYear === year
                     ? 'bg-blue-600 text-white shadow-lg'
-                    : 'bg-[#2A2A2A] text-gray-400 hover:bg-[#333333] hover:text-white border border-gray-700'
+                    : 'bg-[#2A2A2A] text-white hover:bg-[#333333] border border-gray-700'
                 }`}
               >
                 {year}

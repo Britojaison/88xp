@@ -16,9 +16,7 @@ export default function ProfilePointsSection({ employeeId }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-xl font-semibold text-white">Points History</h2>
-        
+      <div className="flex flex-wrap items-center justify-end gap-4">
         <div className="flex items-center gap-4">
           {/* View mode toggle */}
           <div className="flex rounded-lg border border-gray-700 overflow-hidden">
@@ -27,7 +25,7 @@ export default function ProfilePointsSection({ employeeId }: Props) {
               className={`px-3 py-1.5 text-sm ${
                 viewMode === 'month'
                   ? 'bg-blue-600 text-white'
-                  : 'bg-[#2A2A2A] text-gray-400 hover:bg-[#333333]'
+                  : 'bg-[#2A2A2A] text-white hover:bg-[#333333]'
               }`}
             >
               Monthly
@@ -37,7 +35,7 @@ export default function ProfilePointsSection({ employeeId }: Props) {
               className={`px-3 py-1.5 text-sm border-l border-gray-700 ${
                 viewMode === 'year'
                   ? 'bg-blue-600 text-white'
-                  : 'bg-[#2A2A2A] text-gray-400 hover:bg-[#333333]'
+                  : 'bg-[#2A2A2A] text-white hover:bg-[#333333]'
               }`}
             >
               Yearly
@@ -47,7 +45,7 @@ export default function ProfilePointsSection({ employeeId }: Props) {
               className={`px-3 py-1.5 text-sm border-l border-gray-700 ${
                 viewMode === 'all'
                   ? 'bg-blue-600 text-white'
-                  : 'bg-[#2A2A2A] text-gray-400 hover:bg-[#333333]'
+                  : 'bg-[#2A2A2A] text-white hover:bg-[#333333]'
               }`}
             >
               All Time
