@@ -17,37 +17,37 @@ export default function ProfilePointsSection({ employeeId }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-xl font-semibold">Points History</h2>
+        <h2 className="text-xl font-semibold text-white">Points History</h2>
         
         <div className="flex items-center gap-4">
           {/* View mode toggle */}
-          <div className="flex rounded-lg border overflow-hidden">
+          <div className="flex rounded-lg border border-gray-700 overflow-hidden">
             <button
               onClick={() => setViewMode('month')}
               className={`px-3 py-1.5 text-sm ${
                 viewMode === 'month'
                   ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-50'
+                  : 'bg-[#2A2A2A] text-gray-400 hover:bg-[#333333]'
               }`}
             >
               Monthly
             </button>
             <button
               onClick={() => setViewMode('year')}
-              className={`px-3 py-1.5 text-sm border-l ${
+              className={`px-3 py-1.5 text-sm border-l border-gray-700 ${
                 viewMode === 'year'
                   ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-50'
+                  : 'bg-[#2A2A2A] text-gray-400 hover:bg-[#333333]'
               }`}
             >
               Yearly
             </button>
             <button
               onClick={() => setViewMode('all')}
-              className={`px-3 py-1.5 text-sm border-l ${
+              className={`px-3 py-1.5 text-sm border-l border-gray-700 ${
                 viewMode === 'all'
                   ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-50'
+                  : 'bg-[#2A2A2A] text-gray-400 hover:bg-[#333333]'
               }`}
             >
               All Time
@@ -68,7 +68,7 @@ export default function ProfilePointsSection({ employeeId }: Props) {
             <select
               value={year}
               onChange={(e) => setYear(Number(e.target.value))}
-              className="border rounded-lg px-3 py-2 bg-white"
+              className="border border-gray-700 rounded-lg px-3 py-2 bg-[#2A2A2A] text-white"
             >
               {Array.from({ length: 5 }, (_, i) => now.getFullYear() - i).map((y) => (
                 <option key={y} value={y}>

@@ -13,6 +13,8 @@ interface ContributionDay {
 interface Props {
   employeeId: string;
   showLegend?: boolean;
+  selectedYear?: number;
+  onYearChange?: (year: number) => void;
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -22,21 +24,20 @@ const MAX_CELL = 16;
 const MIN_CELL = 10;
 const GAP = 3;
 const WEEKS = 53;
-const DAY_LABEL_WIDTH = 36; // matches the left gutter used in layout below
+const DAY_LABEL_WIDTH = 36;
 
 /**
  * Blue color scale using FIXED buckets (fair across all users)
  */
 const getFillColor = (count: number): string => {
-  // NOTE: SVG uses `fill`, not CSS `background-color` (Tailwind `bg-*` won't apply to <rect>).
-  if (count <= 0) return '#e2e8f0'; // slate-200-ish, light neutral
-  if (count === 1) return '#bfdbfe'; // blue-200
-  if (count <= 3) return '#60a5fa'; // blue-400
-  if (count <= 6) return '#3b82f6'; // blue-500
-  return '#1d4ed8'; // blue-700
+  if (count <= 0) return '#e2e8f0';
+  if (count === 1) return '#bfdbfe';
+  if (count <= 3) return '#60a5fa';
+  if (count <= 6) return '#3b82f6';
+  return '#1d4ed8';
 };
 
-export default function ContributionGraph({ employeeId, showLegend = true }: Props) {
+export default function ContributionGraph({ employeeId, showLegend = true, selectedYear }: Props) {
   const [contributions, setContributions] = useState<Map<string, { count: number; points: number }>>(new Map());
   const [loading, setLoading] = useState(true);
   const [totalProjects, setTotalProjects] = useState(0);
@@ -47,14 +48,28 @@ export default function ContributionGraph({ employeeId, showLegend = true }: Pro
 
   useEffect(() => {
     fetchContributions();
-  }, [employeeId]);
+  }, [employeeId, selectedYear]);
 
   const fetchContributions = async () => {
     setLoading(true);
     
     const now = new Date();
-    const oneYearAgo = new Date(now);
-    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    const currentYear = selectedYear || now.getFullYear();
+    const isCurrentYear = currentYear === now.getFullYear();
+    
+    let startDate: Date;
+    let endDate: Date;
+    
+    if (isCurrentYear) {
+      // For current year, show last 365 days
+      endDate = new Date(now);
+      startDate = new Date(now);
+      startDate.setDate(startDate.getDate() - 365);
+    } else {
+      // For past years, show the full year
+      startDate = new Date(currentYear, 0, 1);
+      endDate = new Date(currentYear, 11, 31, 23, 59, 59);
+    }
     
     const { data: projects, error } = await supabase
       .from('projects')
@@ -62,7 +77,8 @@ export default function ContributionGraph({ employeeId, showLegend = true }: Pro
       .eq('assigned_to', employeeId)
       .in('status', ['completed', 'approved'])
       .not('completed_at', 'is', null)
-      .gte('completed_at', oneYearAgo.toISOString())
+      .gte('completed_at', startDate.toISOString())
+      .lte('completed_at', endDate.toISOString())
       .order('completed_at', { ascending: true });
 
     if (error) {
@@ -95,19 +111,32 @@ export default function ContributionGraph({ employeeId, showLegend = true }: Pro
     setLoading(false);
   };
 
-  // Generate grid: 53 weeks, rightmost week contains today
-  // Each week is a column, each day is a row (Sun=0, Sat=6)
   const { weeks, monthLabels } = useMemo(() => {
+    const currentYear = selectedYear || new Date().getFullYear();
     const today = new Date();
     today.setHours(12, 0, 0, 0);
+    const isCurrentYear = currentYear === today.getFullYear();
     
-    // Find the Saturday of the current week (end of week)
-    const endDate = new Date(today);
-    endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
+    let endDate: Date;
+    let startDate: Date;
     
-    // Go back 52 weeks to find start (Sunday)
-    const startDate = new Date(endDate);
-    startDate.setDate(startDate.getDate() - (WEEKS * 7) + 1);
+    if (isCurrentYear) {
+      // For current year, show last 365 days (53 weeks)
+      endDate = new Date(today);
+      endDate.setDate(endDate.getDate() + (6 - endDate.getDay())); // End on Saturday
+      
+      startDate = new Date(endDate);
+      startDate.setDate(startDate.getDate() - (WEEKS * 7) + 1); // Go back 53 weeks
+    } else {
+      // For past years, show the full year
+      endDate = new Date(currentYear, 11, 31);
+      const lastSaturday = new Date(endDate);
+      lastSaturday.setDate(lastSaturday.getDate() + (6 - lastSaturday.getDay()));
+      
+      startDate = new Date(lastSaturday);
+      startDate.setDate(startDate.getDate() - (WEEKS * 7) + 1);
+      endDate = lastSaturday;
+    }
     
     const weeksArr: ContributionDay[][] = [];
     const labels: { month: string; weekIndex: number }[] = [];
@@ -125,11 +154,10 @@ export default function ContributionGraph({ employeeId, showLegend = true }: Pro
         week.push({
           date: new Date(currentDate),
           dateStr,
-          count: isFuture ? -1 : 0, // -1 marks future days
+          count: isFuture ? -1 : 0,
           points: 0,
         });
         
-        // Check for month boundary (first day we see of a new month+year)
         const monthYear = `${currentDate.getFullYear()}-${currentDate.getMonth()}`;
         if (monthYear !== lastMonthYear && !isFuture) {
           labels.push({ month: MONTHS[currentDate.getMonth()], weekIndex: w });
@@ -143,15 +171,12 @@ export default function ContributionGraph({ employeeId, showLegend = true }: Pro
     }
     
     return { weeks: weeksArr, monthLabels: labels };
-  }, []);
+  }, [selectedYear]);
 
   const todayStr = new Date().toISOString().split('T')[0];
-
-  // Grid dimensions
   const gridWidth = WEEKS * cellSize + (WEEKS - 1) * GAP;
   const gridHeight = 7 * cellSize + 6 * GAP;
 
-  // Fit-to-card sizing (use more space; never clip; no horizontal scrolling)
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -159,7 +184,7 @@ export default function ContributionGraph({ employeeId, showLegend = true }: Pro
     const update = () => {
       const width = el.clientWidth;
       if (!width) return;
-      const available = Math.max(0, width - DAY_LABEL_WIDTH - 16); // padding cushion
+      const available = Math.max(0, width - DAY_LABEL_WIDTH - 16);
       const computed = Math.floor((available - (WEEKS - 1) * GAP) / WEEKS);
       const next = Math.max(MIN_CELL, Math.min(MAX_CELL, computed));
       setCellSize(next);
@@ -173,32 +198,28 @@ export default function ContributionGraph({ employeeId, showLegend = true }: Pro
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl p-5 border border-gray-100">
+      <div className="bg-[#2A2A2A] rounded-xl p-8 border border-gray-700">
         <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-48 mb-4"></div>
-          <div className="h-24 bg-gray-200 rounded"></div>
+          <div className="h-4 bg-gray-700 rounded w-48 mb-4"></div>
+          <div className="h-24 bg-gray-700 rounded"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-      {/* Header */}
+    <div className="bg-[#2A2A2A] rounded-xl p-8 border border-gray-700 shadow-lg">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-base font-semibold text-gray-900">Activity Timeline</h3>
-        <div className="text-sm text-gray-500">
-          <span className="font-semibold text-blue-600">{totalProjects}</span> projects • 
-          <span className="font-semibold text-blue-600 ml-1">{totalPoints}</span> pts
+        <h3 className="text-base font-semibold text-white">Activity Timeline</h3>
+        <div className="text-sm text-gray-400">
+          <span className="font-semibold text-blue-400">{totalProjects}</span> projects • 
+          <span className="font-semibold text-blue-400 ml-1">{totalPoints}</span> pts
         </div>
       </div>
 
-      {/* Graph container */}
       <div ref={containerRef} className="overflow-x-hidden">
         <div className="w-full">
-          {/* Month labels */}
           <div className="flex mb-1" style={{ marginLeft: DAY_LABEL_WIDTH }}>
-            {/* Add 1px padding via viewBox so right edge can never be clipped */}
             <svg width={gridWidth + 2} height={16} viewBox={`-1 0 ${gridWidth + 2} 16`} overflow="visible">
               {monthLabels.map((label, idx) => (
                 <text
@@ -214,9 +235,7 @@ export default function ContributionGraph({ employeeId, showLegend = true }: Pro
             </svg>
           </div>
 
-          {/* Day labels + Grid */}
           <div className="flex">
-            {/* Day labels */}
             <div className="flex flex-col justify-between pr-1" style={{ height: gridHeight, width: DAY_LABEL_WIDTH }}>
               <span></span>
               <span className="text-[10px] text-gray-400 leading-none">Mon</span>
@@ -227,8 +246,6 @@ export default function ContributionGraph({ employeeId, showLegend = true }: Pro
               <span></span>
             </div>
 
-            {/* Grid */}
-            {/* Add 1px padding via viewBox so last column isn't clipped */}
             <svg
               width={gridWidth + 2}
               height={gridHeight + 2}
@@ -257,7 +274,7 @@ export default function ContributionGraph({ employeeId, showLegend = true }: Pro
                         height={cellSize}
                         rx={2}
                         fill={getFillColor(count)}
-                        stroke={isToday ? '#94a3b8' : 'none'} /* slate-400 */
+                        stroke={isToday ? '#94a3b8' : 'none'}
                         strokeWidth={isToday ? 1 : 0}
                       >
                         <title>{`${day.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}\n${count} project${count !== 1 ? 's' : ''} • ${points} points`}</title>
@@ -269,7 +286,6 @@ export default function ContributionGraph({ employeeId, showLegend = true }: Pro
             </svg>
           </div>
 
-          {/* Legend */}
           {showLegend && (
             <div className="flex items-center justify-end mt-3 gap-1 text-[10px] text-gray-400">
               <span>Less</span>

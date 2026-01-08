@@ -99,68 +99,68 @@ export default function PointsBreakdown({ employeeId, month, year }: Props) {
   };
 
   if (loading) {
-    return <div className="animate-pulse bg-gray-200 h-48 rounded-lg"></div>;
+    return <div className="animate-pulse bg-gray-700 h-48 rounded-lg"></div>;
   }
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Points Breakdown</h3>
+    <div className="bg-[#2A2A2A] rounded-lg shadow-lg overflow-hidden border border-gray-700">
+      <div className="p-4 border-b border-gray-700 bg-[#1E1E1E] flex justify-between items-center">
+        <h3 className="text-lg font-semibold text-white">Points History</h3>
         <div className="text-right">
-          <span className="text-sm text-gray-500">Total: </span>
-          <span className="text-xl font-bold text-blue-600">{totalPoints} pts</span>
-          <span className="text-sm text-gray-500 ml-2">({projects.length} tasks)</span>
+          <span className="text-sm text-gray-400">Total: </span>
+          <span className="text-xl font-bold text-[#9F4E99]">{totalPoints} pts</span>
+          <span className="text-sm text-gray-400 ml-2">({projects.length} projects)</span>
         </div>
       </div>
 
       {projects.length === 0 ? (
-        <div className="p-8 text-center text-gray-500">
+        <div className="p-8 text-center text-gray-400">
           No completed tasks found for this period
         </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-600">
+            <thead className="bg-[#1E1E1E] text-gray-400">
               <tr>
-                <th className="px-4 py-3 text-left font-medium">Task</th>
+                <th className="px-4 py-3 text-left font-medium">Project</th>
                 <th className="px-4 py-3 text-left font-medium">Type</th>
-                <th className="px-4 py-3 text-center font-medium">Base Pts</th>
+                <th className="px-4 py-3 text-center font-medium">Base pts</th>
                 <th className="px-4 py-3 text-center font-medium">Override</th>
-                <th className="px-4 py-3 text-center font-medium">Final Pts</th>
+                <th className="px-4 py-3 text-center font-medium">Final pts</th>
                 <th className="px-4 py-3 text-left font-medium">Assigned By</th>
-                <th className="px-4 py-3 text-left font-medium">Completed</th>
+                <th className="px-4 py-3 text-left font-medium">Completed On</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-700">
               {projects.map((project) => (
-                <tr key={project.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium">{project.name}</td>
+                <tr key={project.id} className="hover:bg-[#333333]">
+                  <td className="px-4 py-3 font-medium text-white">{project.name}</td>
                   <td className="px-4 py-3">
-                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded capitalize">
+                    <span className="text-[#003B65] text-xs px-2 py-1 rounded capitalize">
                       {project.type?.name || 'Unknown'}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-center text-gray-600">
+                  <td className="px-4 py-3 text-center text-gray-400">
                     {project.type?.points ?? '-'}
                   </td>
                   <td className="px-4 py-3 text-center">
                     {project.points_override ? (
-                      <span className="text-orange-600 font-medium">
-                        {project.points_override}
+                      <span className="text-[#9F4E99] font-medium">
+                        {project.points_override} pts
                       </span>
                     ) : (
-                      <span className="text-gray-400">-</span>
+                      <span className="text-gray-500">0 pts</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <span className="font-bold text-green-600">
-                      {getPoints(project)}
+                    <span className="font-bold text-[#6885BC]">
+                      {getPoints(project)} pts
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-gray-600">
+                  <td className="px-4 py-3 text-gray-400">
                     {project.creator?.name || 'Unknown'}
                   </td>
-                  <td className="px-4 py-3 text-gray-500">
+                  <td className="px-4 py-3 text-gray-400">
                     {project.completed_at
                       ? new Date(project.completed_at).toLocaleDateString('en-US', {
                           month: 'short',
@@ -172,13 +172,6 @@ export default function PointsBreakdown({ employeeId, month, year }: Props) {
                 </tr>
               ))}
             </tbody>
-            <tfoot className="bg-gray-50 font-semibold">
-              <tr>
-                <td colSpan={4} className="px-4 py-3 text-right">Total:</td>
-                <td className="px-4 py-3 text-center text-green-600">{totalPoints}</td>
-                <td colSpan={2}></td>
-              </tr>
-            </tfoot>
           </table>
         </div>
       )}

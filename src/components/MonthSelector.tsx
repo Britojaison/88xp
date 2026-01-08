@@ -63,10 +63,10 @@ export default function MonthSelector({
   };
 
   return (
-    <div className="flex items-center gap-2 bg-white rounded-lg border p-2">
+    <div className="flex items-center gap-2 bg-[#2A2A2A] rounded-lg border border-gray-700 p-2">
       <button
         onClick={goToPreviousMonth}
-        className="p-1 hover:bg-gray-100 rounded transition-colors"
+        className="p-1 hover:bg-[#333333] rounded transition-colors text-gray-400"
         title="Previous month"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,7 +78,7 @@ export default function MonthSelector({
         <select
           value={month}
           onChange={(e) => onMonthChange(Number(e.target.value))}
-          className="border-0 bg-transparent font-medium focus:ring-0 cursor-pointer"
+          className="border-0 bg-transparent font-medium focus:ring-0 cursor-pointer text-white"
         >
           {showAllOption && <option value={0}>All Months</option>}
           {MONTHS.map((m) => (
@@ -91,7 +91,7 @@ export default function MonthSelector({
         <select
           value={year}
           onChange={(e) => onYearChange(Number(e.target.value))}
-          className="border-0 bg-transparent font-medium focus:ring-0 cursor-pointer"
+          className="border-0 bg-transparent font-medium focus:ring-0 cursor-pointer text-white"
         >
           {availableYears.map((y) => (
             <option key={y} value={y}>
@@ -103,7 +103,7 @@ export default function MonthSelector({
 
       <button
         onClick={goToNextMonth}
-        className="p-1 hover:bg-gray-100 rounded transition-colors"
+        className="p-1 hover:bg-[#333333] rounded transition-colors text-gray-400"
         title="Next month"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,7 +114,7 @@ export default function MonthSelector({
       {!isCurrentMonth() && (
         <button
           onClick={goToCurrentMonth}
-          className="ml-2 text-xs text-blue-600 hover:text-blue-800 hover:underline"
+          className="ml-2 text-xs text-blue-400 hover:text-blue-300 hover:underline"
         >
           Today
         </button>

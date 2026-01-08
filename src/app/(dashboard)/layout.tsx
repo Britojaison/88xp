@@ -27,9 +27,9 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100">
+    <div className="min-h-screen bg-[#1E1E1E]">
       <TopNav isAdmin={false} userRank={employee?.rank ?? null} userName={employee?.name || 'User'} />
-      <main className="pt-20 px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8 max-w-7xl mx-auto flex flex-col min-h-screen">
+      <main className="pt-20 px-4 sm:px-6 lg:px-12 pb-4 sm:pb-6 lg:pb-8 flex flex-col min-h-screen">
         <div className="flex-1">{children}</div>
         <Footer />
       </main>
