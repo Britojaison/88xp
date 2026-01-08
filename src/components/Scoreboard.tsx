@@ -56,12 +56,12 @@ export default function Scoreboard() {
     return `#${index + 1}`;
   };
 
-  if (loading) return <div className="animate-pulse bg-gray-200 h-64 rounded-lg"></div>;
+  if (loading) return <div className="animate-pulse bg-gray-800 h-64 rounded-lg"></div>;
 
   return (
-    <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+    <div className="bg-gray-900 rounded-lg shadow p-4 sm:p-6 border border-gray-800">
       <div className="flex flex-col sm:flex-row sm:flex-wrap sm:justify-between sm:items-center gap-3 sm:gap-4 mb-4">
-        <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2">
+        <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2 text-white">
           <TrophyIcon className="w-4 h-4 sm:w-5 sm:h-5" />
           Monthly Scoreboard
         </h3>
@@ -74,7 +74,7 @@ export default function Scoreboard() {
       </div>
 
       {scores.length === 0 ? (
-        <p className="text-gray-500 text-center py-6 sm:py-8 text-sm sm:text-base">
+        <p className="text-gray-400 text-center py-6 sm:py-8 text-sm sm:text-base">
           No scores yet for {MONTH_NAMES[month - 1]} {year}
         </p>
       ) : (
@@ -85,26 +85,26 @@ export default function Scoreboard() {
                 key={entry.id}
                 href={`/user/${entry.employee_id}`}
                 className={`flex items-center justify-between p-2.5 sm:p-3 rounded-lg transition-all hover:shadow-md hover:scale-[1.01] cursor-pointer ${
-                  index < 3 ? 'bg-gradient-to-r from-yellow-50 to-orange-50' : 'bg-gray-50'
+                  index < 3 ? 'bg-gradient-to-r from-yellow-900/30 to-orange-900/30 border border-yellow-800/30' : 'bg-gray-800/50 border border-gray-700/50'
                 }`}
               >
                 <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                   <span
                     className={`text-base sm:text-lg font-bold min-w-[2rem] sm:min-w-[2.5rem] ${
-                      index < 3 ? 'text-yellow-600' : 'text-gray-400'
+                      index < 3 ? 'text-yellow-500' : 'text-gray-400'
                     }`}
                   >
                     {getRankBadge(index)}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <span className="font-medium hover:text-blue-600 transition-colors text-sm sm:text-base block truncate">{entry.employee_name}</span>
-                    <span className="text-xs text-gray-500">
+                    <span className="font-medium hover:text-blue-400 transition-colors text-sm sm:text-base block truncate text-white">{entry.employee_name}</span>
+                    <span className="text-xs text-gray-400">
                       ({entry.project_count} tasks)
                     </span>
                   </div>
                 </div>
-                <span className="font-bold text-blue-600 text-sm sm:text-base ml-2 flex-shrink-0">
-                  {entry.total_points} <span className="text-xs sm:text-sm text-gray-500">pts</span>
+                <span className="font-bold text-blue-400 text-sm sm:text-base ml-2 flex-shrink-0">
+                  {entry.total_points} <span className="text-xs sm:text-sm text-gray-400">pts</span>
                 </span>
               </Link>
             ))}

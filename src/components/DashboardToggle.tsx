@@ -15,48 +15,40 @@ const YearlyScoreboard = dynamic(() => import('./YearlyScoreboard'), {
   ssr: false
 });
 
-const ActiveProjects = dynamic(() => import('./ActiveProjects'), {
-  loading: () => <div className="animate-pulse bg-gray-200 h-64 rounded-lg"></div>,
+const ProjectsTable = dynamic(() => import('./ProjectsTable'), {
+  loading: () => <div className="animate-pulse bg-gray-800 h-64 rounded-lg"></div>,
   ssr: false
 });
 
 type View = 'scoreboard' | 'tasks';
 
 export default function DashboardToggle() {
-  const [activeView, setActiveView] = useState<View>('scoreboard');
+  const [activeView, setActiveView] = useState<View>('tasks');
 
   return (
     <div className="space-y-6">
       {/* Toggle Button */}
-      <div className="flex justify-center">
-        <div className="bg-gray-100 p-1 rounded-xl inline-flex shadow-inner">
+      <div className="flex justify-start">
+        <div className="p-2.5 rounded-lg inline-flex gap-2.5" style={{ backgroundColor: 'rgb(44,44,44)' }}>
           <button
             onClick={() => setActiveView('scoreboard')}
-            className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-all duration-200 ${
+            className={`px-6 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 ${
               activeView === 'scoreboard'
-                ? 'bg-white text-indigo-600 shadow-md'
-                : 'text-gray-600 hover:text-gray-800'
+                ? 'bg-white text-black'
+                : 'bg-transparent text-white'
             }`}
           >
-            <span className="flex items-center gap-1.5 sm:gap-2">
-              <TrophyIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="hidden xs:inline">Scoreboard</span>
-              <span className="xs:hidden">Board</span>
-            </span>
+            Scoreboard
           </button>
           <button
             onClick={() => setActiveView('tasks')}
-            className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-all duration-200 ${
+            className={`px-6 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 ${
               activeView === 'tasks'
-                ? 'bg-white text-indigo-600 shadow-md'
-                : 'text-gray-600 hover:text-gray-800'
+                ? 'bg-white text-black'
+                : 'bg-transparent text-white'
             }`}
           >
-            <span className="flex items-center gap-1.5 sm:gap-2">
-              <ClipboardIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="hidden xs:inline">All Tasks</span>
-              <span className="xs:hidden">Tasks</span>
-            </span>
+            Projects
           </button>
         </div>
       </div>
@@ -68,7 +60,7 @@ export default function DashboardToggle() {
           <YearlyScoreboard />
         </div>
       ) : (
-        <ActiveProjects />
+        <ProjectsTable />
       )}
     </div>
   );

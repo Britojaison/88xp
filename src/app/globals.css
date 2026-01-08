@@ -19,25 +19,5 @@ body {
   font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
-/* Ensure text visibility across all components */
-h1, h2, h3, h4, h5, h6 {
-  color: #1e293b;
-}
-
-p {
-  color: #475569;
-}
-
-/* Ensure form inputs have proper text color */
-input, select, textarea {
-  color: #1e293b;
-}
-
-/* Ensure table text is visible */
-table {
-  color: #1e293b;
-}
-
-td, th {
-  color: inherit;
-}
+/* Let Tailwind utility classes handle text colors */
+/* Removed global color overrides to allow Tailwind classes to work properly */
