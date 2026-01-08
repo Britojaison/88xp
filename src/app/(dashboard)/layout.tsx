@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import Sidebar from '@/components/Sidebar';
+import TopNav from '@/components/TopNav';
 import Footer from '@/components/Footer';
 
 export default async function DashboardLayout({
@@ -17,7 +17,7 @@ export default async function DashboardLayout({
 
   const { data: employee } = await supabase
     .from('employees')
-    .select('is_admin, rank')
+    .select('is_admin, rank, name')
     .ilike('email', user.email!)
     .single();
 
@@ -27,9 +27,9 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100">
-      <Sidebar isAdmin={false} userRank={employee?.rank ?? null} />
-      <main className="flex-1 pt-14 sm:pt-6 lg:pt-8 px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8 overflow-y-auto flex flex-col lg:ml-72">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100">
+      <TopNav isAdmin={false} userRank={employee?.rank ?? null} userName={employee?.name || 'User'} />
+      <main className="pt-20 px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8 max-w-7xl mx-auto flex flex-col min-h-screen">
         <div className="flex-1">{children}</div>
         <Footer />
       </main>
