@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { TrophyIcon } from 'lucide-react';
 
 interface YearlyScoreEntry {
   id: string;
@@ -14,19 +13,20 @@ interface YearlyScoreEntry {
   year: number;
 }
 
-interface Props {
-  year?: number;
-}
+const MONTH_NAMES = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+];
 
-export default function YearlyScoreboard({ year }: Props) {
+export default function YearlyScoreboard() {
+  const now = new Date();
   const [scores, setScores] = useState<YearlyScoreEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedYear, setSelectedYear] = useState(year || new Date().getFullYear());
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const supabase = createClient();
 
-  // Generate available years (current year and 4 previous years)
-  const currentYear = new Date().getFullYear();
-  const availableYears = Array.from({ length: 5 }, (_, i) => currentYear - i);
+  const currentYear = now.getFullYear();
+  const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
   useEffect(() => {
     fetchScores();
@@ -51,75 +51,66 @@ export default function YearlyScoreboard({ year }: Props) {
     setLoading(false);
   };
 
-  const getRankBadge = (index: number) => {
+  const getMedalIcon = (index: number) => {
     if (index === 0) return '🥇';
     if (index === 1) return '🥈';
     if (index === 2) return '🥉';
-    return `#${index + 1}`;
+    return '🏅';
   };
 
-  if (loading) {
-    return <div className="animate-pulse bg-gray-800 h-64 rounded-lg"></div>;
-  }
-
   return (
-    <div className="bg-gray-900 rounded-lg shadow p-4 sm:p-6 border border-gray-800">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-4">
-        <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2 text-white">
-          <TrophyIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-          Yearly Scoreboard
-        </h3>
+    <div className="flex flex-col">
+      {/* Header with filter - OUTSIDE the table */}
+      <div className="flex items-center justify-between mb-2">
+        <div>
+          <h3 className="text-white text-[14px] font-semibold">Yearly scoreboard</h3>
+          <p className="text-gray-500 text-[11px]">{MONTH_NAMES[now.getMonth()]} {selectedYear}</p>
+        </div>
         <select
           value={selectedYear}
           onChange={(e) => setSelectedYear(Number(e.target.value))}
-          className="border border-gray-700 rounded-lg px-3 py-1.5 text-xs sm:text-sm bg-gray-800 text-white w-full sm:w-auto"
+          className="bg-transparent text-white text-[12px] border-none focus:outline-none cursor-pointer"
         >
-          {availableYears.map((y) => (
-            <option key={y} value={y}>
+          {years.map((y) => (
+            <option key={y} value={y} className="bg-black">
               {y}
             </option>
           ))}
         </select>
       </div>
 
-      {scores.length === 0 ? (
-        <p className="text-gray-400 text-center py-4 sm:py-6 text-sm sm:text-base">No scores yet for {selectedYear}</p>
-      ) : (
-        <div className="space-y-2 sm:space-y-3">
-          {scores.map((entry, index) => (
-            <Link
-              key={entry.id}
-              href={`/user/${entry.employee_id}`}
-              className={`flex items-center justify-between p-2.5 sm:p-3 rounded-lg transition-all hover:shadow-md hover:scale-[1.01] cursor-pointer ${
-                index < 3 ? 'bg-gradient-to-r from-yellow-900/30 to-orange-900/30 border border-yellow-800/30' : 'bg-gray-800/50 border border-gray-700/50'
-              }`}
-            >
-              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                <span
-                  className={`text-base sm:text-lg font-bold min-w-[2rem] sm:min-w-[2.5rem] ${
-                    index < 3 ? 'text-yellow-500' : 'text-gray-400'
-                  }`}
-                >
-                  {getRankBadge(index)}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <span className="font-medium hover:text-blue-400 transition-colors text-sm sm:text-base block truncate text-white">{entry.employee_name}</span>
-                  <span className="text-xs text-gray-400">
-                    ({entry.project_count} tasks)
-                  </span>
+      {/* Table Container */}
+      <div className="rounded-[25px] border border-[#424242] bg-black p-4 flex-1">
+        {loading ? (
+          <div className="animate-pulse h-[300px]"></div>
+        ) : scores.length === 0 ? (
+          <p className="text-gray-400 text-center py-8 text-[12px]">
+            No scores yet
+          </p>
+        ) : (
+          <div className="space-y-1">
+            {scores.map((entry, index) => (
+              <Link
+                key={entry.id}
+                href={`/user/${entry.employee_id}`}
+                className="flex items-center justify-between py-2 hover:bg-white/5 rounded-lg px-2 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-[14px]">{getMedalIcon(index)}</span>
+                  <div>
+                    <span className="text-white text-[13px] font-semibold">{entry.employee_name}</span>
+                    <span className="text-gray-400 text-[11px] ml-1">({entry.project_count} projects)</span>
+                  </div>
                 </div>
-              </div>
-              <div className="text-right flex-shrink-0 ml-2">
-                <span className="font-bold text-blue-400 text-sm sm:text-base sm:text-lg">
-                  {entry.total_points}
-                </span>
-                <span className="text-xs sm:text-sm text-gray-400 ml-1">pts</span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
+                <div className="flex items-center">
+                  <span className="text-purple-400 text-[13px] font-bold">{entry.total_points}</span>
+                  <span className="text-gray-500 text-[10px] ml-1">pts</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
-

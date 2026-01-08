@@ -12,22 +12,55 @@ interface Project {
   type: { name: string } | null;
 }
 
-export default function ProjectsTable() {
+interface ProjectsTableProps {
+  filterMonth?: number;
+  filterYear?: number;
+}
+
+export default function ProjectsTable({ filterMonth = 0, filterYear = 0 }: ProjectsTableProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
   useEffect(() => {
     fetchProjects();
-  }, []);
+  }, [filterMonth, filterYear]);
 
   const fetchProjects = async () => {
     setLoading(true);
     
-    const { data } = await supabase
+    let query = supabase
       .from('projects')
       .select('id, name, created_at, assignee:employees!assigned_to(name), brand:brands(name), type:project_types(name)')
       .order('created_at', { ascending: false });
+
+    // Apply date filters if specified
+    if (filterYear > 0) {
+      const startOfYear = `${filterYear}-01-01`;
+      const endOfYear = `${filterYear}-12-31`;
+      
+      if (filterMonth > 0) {
+        // Filter by specific month and year
+        const startOfMonth = `${filterYear}-${String(filterMonth).padStart(2, '0')}-01`;
+        const lastDay = new Date(filterYear, filterMonth, 0).getDate();
+        const endOfMonth = `${filterYear}-${String(filterMonth).padStart(2, '0')}-${lastDay}`;
+        
+        query = query.gte('created_at', startOfMonth).lte('created_at', endOfMonth + 'T23:59:59');
+      } else {
+        // Filter by year only
+        query = query.gte('created_at', startOfYear).lte('created_at', endOfYear + 'T23:59:59');
+      }
+    } else if (filterMonth > 0) {
+      // Filter by month only (current year)
+      const currentYear = new Date().getFullYear();
+      const startOfMonth = `${currentYear}-${String(filterMonth).padStart(2, '0')}-01`;
+      const lastDay = new Date(currentYear, filterMonth, 0).getDate();
+      const endOfMonth = `${currentYear}-${String(filterMonth).padStart(2, '0')}-${lastDay}`;
+      
+      query = query.gte('created_at', startOfMonth).lte('created_at', endOfMonth + 'T23:59:59');
+    }
+
+    const { data } = await query;
 
     const transform = (items: typeof data) => (items || []).map(p => ({
       ...p,
@@ -42,71 +75,72 @@ export default function ProjectsTable() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
+    return date.toLocaleDateString('en-GB', { 
+      day: '2-digit',
+      month: 'short',
       year: 'numeric'
     });
   };
 
   if (loading) {
     return (
-      <div className="bg-gray-800 rounded-lg p-4">
-        <div className="animate-pulse space-y-3">
-          <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-          <div className="h-4 bg-gray-700 rounded w-1/2"></div>
-        </div>
+      <div className="space-y-3">
+        <div className="rounded-[20px] border border-[#424242] bg-black h-[50px] animate-pulse"></div>
+        <div className="rounded-[20px] border border-[#424242] bg-black h-[200px] animate-pulse"></div>
       </div>
     );
   }
 
   return (
-    <div className="bg-black rounded-lg overflow-hidden border border-gray-700">
-      {/* Table Header - slightly lighter gray background */}
-      <div className="bg-gray-700 px-4 py-3 grid grid-cols-5 gap-4 rounded-t-lg">
-        <div className="text-white text-sm font-semibold">Client Name</div>
-        <div className="text-white text-sm font-semibold">Project Title</div>
-        <div className="text-white text-sm font-semibold">Name</div>
-        <div className="text-white text-sm font-semibold">Assigned On</div>
-        <div className="text-white text-sm font-semibold">Content Type</div>
+    <div className="space-y-3">
+      {/* Table Header */}
+      <div className="rounded-[20px] border border-[#424242] bg-black px-5 h-[50px] flex items-center">
+        <div className="grid grid-cols-5 gap-2 w-full">
+          <div className="text-white text-[13px] font-semibold">Client Name</div>
+          <div className="text-white text-[13px] font-semibold">Project Title</div>
+          <div className="text-white text-[13px] font-semibold">Name</div>
+          <div className="text-white text-[13px] font-semibold">Assigned On</div>
+          <div className="text-white text-[13px] font-semibold">Content Type</div>
+        </div>
       </div>
 
-      {/* Table Rows */}
-      {projects.length === 0 ? (
-        <div className="bg-black px-4 py-8 text-center">
-          <p className="text-white text-sm">No projects found</p>
-        </div>
-      ) : (
-        <div className="bg-black">
-          {/* Separator line right after header */}
-          <div className="h-px bg-gray-700"></div>
-          {projects.map((project, index) => (
-            <div key={project.id}>
-              <div className="bg-black px-4 py-3 grid grid-cols-5 gap-4">
-                <div className="text-white text-sm">
-                  {project.brand?.name || '-'}
-                </div>
-                <div className="text-white text-sm">
-                  {project.name}
-                </div>
-                <div className="text-white text-sm">
-                  {project.assignee?.name || 'Unassigned'}
-                </div>
-                <div className="text-white text-sm">
-                  {formatDate(project.created_at)}
-                </div>
-                <div className="text-white text-sm">
-                  {project.type?.name || '-'}
+      {/* Table Body */}
+      <div className="rounded-[20px] border border-[#424242] bg-black overflow-hidden py-2">
+        {projects.length === 0 ? (
+          <div className="px-5 py-8 text-center">
+            <p className="text-gray-400 text-[13px] font-semibold">No projects found</p>
+          </div>
+        ) : (
+          <div>
+            {projects.map((project, index) => (
+              <div 
+                key={project.id} 
+                className={`px-5 py-3 ${
+                  index !== projects.length - 1 ? 'border-b border-[#424242]/30' : ''
+                }`}
+              >
+                <div className="grid grid-cols-5 gap-4 w-full">
+                  <div className="text-white text-[13px] font-medium break-words">
+                    {project.brand?.name || '-'}
+                  </div>
+                  <div className="text-white text-[13px] font-medium break-words">
+                    {project.name}
+                  </div>
+                  <div className="text-white text-[13px] font-medium break-words">
+                    {project.assignee?.name || 'Unassigned'}
+                  </div>
+                  <div className="text-white text-[13px] font-medium">
+                    {formatDate(project.created_at)}
+                  </div>
+                  <div className="text-white text-[13px] font-medium break-words">
+                    {project.type?.name || '-'}
+                  </div>
                 </div>
               </div>
-              {/* Separator line between all rows */}
-              {index < projects.length - 1 && (
-                <div className="h-px bg-gray-600"></div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

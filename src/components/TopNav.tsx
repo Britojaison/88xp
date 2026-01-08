@@ -56,16 +56,12 @@ export default function TopNav({ isAdmin = false, userRank = null, userName = 'U
     router.refresh();
   };
 
-  const baseEmployeeItems = [
+  const employeeItems = [
     { href: '/home', label: 'Dashboard' },
     { href: '/projects', label: 'Task' },
     { href: '/profile', label: 'Profile' },
+    { href: '/targets', label: 'Targets' },
   ];
-
-  // Add Targets link for Rank 1 users
-  const employeeItems = userRank === 1
-    ? [...baseEmployeeItems, { href: '/targets', label: 'Targets' }]
-    : baseEmployeeItems;
 
   const navItems = isAdmin
     ? [
@@ -89,35 +85,14 @@ export default function TopNav({ isAdmin = false, userRank = null, userName = 'U
 
   return (
     <>
-      {/* Top Navigation Bar */}
-      <nav className="fixed top-0 left-0 right-0 z-40 bg-black text-white border-b border-gray-800">
+      {/* Top Navigation Bar - Border #5E5E5E */}
+      <nav className="fixed top-0 left-0 right-0 z-40 bg-black text-white border-b border-[#5E5E5E]">
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-[80px]">
             {/* Logo/Brand */}
             <Link href={isAdmin ? '/admin' : '/home'} className="flex items-center gap-3">
-              {/* Circular logo with gb monogram */}
-              <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-300 via-purple-400 to-pink-400"></div>
-                <div className="relative z-10 flex items-center justify-center w-full h-full">
-                  <span className="text-white font-bold text-xs leading-none" style={{ fontFamily: 'sans-serif', letterSpacing: '-0.5px' }}>
-                    g<span className="relative">
-                      b
-                      {/* Small flower icon centered within the 'b' */}
-                      <svg 
-                        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 text-black" 
-                        viewBox="0 0 8 8" 
-                        fill="currentColor"
-                      >
-                        <circle cx="4" cy="4" r="1.2" />
-                        <circle cx="2" cy="2" r="0.6" />
-                        <circle cx="6" cy="2" r="0.6" />
-                        <circle cx="2" cy="6" r="0.6" />
-                        <circle cx="6" cy="6" r="0.6" />
-                      </svg>
-                    </span>
-                  </span>
-                </div>
-              </div>
+              {/* Logo */}
+              <img src="/image 6.png" alt="88 XP" className="w-10 h-10" />
               <span className="text-white font-medium text-lg">88 XP</span>
             </Link>
 
@@ -127,21 +102,26 @@ export default function TopNav({ isAdmin = false, userRank = null, userName = 'U
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`px-4 py-2 rounded-full transition-all ${
+                  className={`px-5 h-[38px] rounded-[20px] transition-all flex items-center justify-center ${
                     pathname === item.href
-                      ? 'bg-gradient-to-r from-blue-300 via-purple-400 to-pink-400 text-white'
+                      ? 'text-white'
                       : 'text-white hover:bg-gray-900'
                   }`}
+                  style={pathname === item.href ? {
+                    backgroundImage: 'url(/Rectangle%2010.png)',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center'
+                  } : {}}
                 >
-                  <span className="font-medium">{item.label}</span>
+                  <span className="font-medium text-[16px]">{item.label}</span>
                 </Link>
               ))}
               {/* Logout link */}
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 rounded-full text-white hover:bg-gray-900 transition-all"
+                className="px-5 h-[38px] rounded-[20px] text-white hover:bg-gray-900 transition-all flex items-center justify-center"
               >
-                <span className="font-medium">Logout</span>
+                <span className="font-medium text-[16px]">Logout</span>
               </button>
             </div>
 
@@ -230,11 +210,16 @@ export default function TopNav({ isAdmin = false, userRank = null, userName = 'U
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`block px-4 py-3 rounded-full transition-all ${
+                  className={`block px-4 py-3 rounded-[20px] transition-all ${
                     pathname === item.href
-                      ? 'bg-gradient-to-r from-blue-300 via-purple-400 to-pink-400 text-white'
+                      ? 'text-white'
                       : 'text-white hover:bg-gray-900'
                   }`}
+                  style={pathname === item.href ? {
+                    backgroundImage: 'url(/Rectangle%2010.png)',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center'
+                  } : {}}
                 >
                   <span className="font-medium">{item.label}</span>
                 </Link>

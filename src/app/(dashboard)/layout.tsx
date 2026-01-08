@@ -35,7 +35,7 @@ export default async function DashboardLayout({
         userEmail={user.email || ''}
         userAvatar={user.user_metadata?.avatar_url || null}
       />
-      <main className="pt-20 px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8 max-w-7xl mx-auto flex flex-col min-h-screen">
+      <main className="pt-[100px] px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8 max-w-7xl mx-auto flex flex-col min-h-screen">
         <div className="flex-1">{children}</div>
         <Footer />
       </main>
