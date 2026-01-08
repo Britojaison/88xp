@@ -136,7 +136,7 @@ export default function PointsBreakdown({ employeeId, month, year }: Props) {
                 <tr key={project.id} className="hover:bg-[#333333]">
                   <td className="px-4 py-3 font-medium text-white">{project.name}</td>
                   <td className="px-4 py-3">
-                    <span className="text-[#003B65] text-xs px-2 py-1 rounded capitalize">
+                    <span className="text-white text-xs px-2 py-1 rounded capitalize bg-[#003B65]">
                       {project.type?.name || 'Unknown'}
                     </span>
                   </td>
