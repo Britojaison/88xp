@@ -36,6 +36,7 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
   const [customPoints, setCustomPoints] = useState('');
   const [deadlineDate, setDeadlineDate] = useState('');
   const [deadlineTime, setDeadlineTime] = useState('23:59');
+  const [dueDateInput, setDueDateInput] = useState('');
   const [types, setTypes] = useState<ProjectType[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -73,7 +74,10 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
     setEmployees(assignable);
 
     if (sortedTypes.length) setTypeId(sortedTypes[0].id);
-    if (brandsRes.data?.length) setBrandId(brandsRes.data[0].id);
+    // Set default brand if available (not shown in Figma but required by backend)
+    if (brandsRes.data?.length) {
+      setBrandId(brandsRes.data[0].id);
+    }
     setAssignTo(currentUserId);
   };
 
@@ -139,139 +143,189 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
     onClose();
   };
 
+  // Parse dd-mm-yyyy to date string
+  const parseDateFromInput = (dateString: string) => {
+    if (!dateString) return '';
+    const [day, month, year] = dateString.split('-');
+    if (day && month && year) {
+      return `${year}-${month}-${day}`;
+    }
+    return '';
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <h2 className="text-xl font-bold mb-4">Create Task</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <div 
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div 
+        className="rounded-[25px] w-[412px] h-[553px] flex flex-col relative overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          backgroundColor: 'rgba(110, 110, 110, 0.2)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(110, 110, 110, 0.1)',
+          borderStyle: 'solid'
+        }}
+      >
+        {/* Title */}
+        <div className="p-6 pb-4">
+          <h2 className="text-white text-xl font-bold mb-2">Create Task</h2>
+          <div className="h-px bg-gradient-to-r from-purple-400 to-pink-400"></div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 px-6 pb-6 overflow-y-auto">
+          <div className="space-y-5 flex-1">
+          {/* Task Title */}
           <div>
-            <label className="block text-sm font-medium mb-1">Task Name</label>
+            <label className="block text-white text-sm font-medium mb-2">Task Title</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full border rounded-lg px-3 py-2"
+              placeholder="Enter Task Title"
+              className="w-full h-[40px] rounded-[5px] px-3 py-2 bg-white text-black placeholder:text-gray-400"
+              style={{
+                border: '1px solid #D3FEE4',
+                borderStyle: 'solid'
+              }}
               required
             />
           </div>
+
+          {/* Assignee */}
           <div>
-            <label className="block text-sm font-medium mb-1">Brand</label>
+            <label className="block text-white text-sm font-medium mb-2">Assignee</label>
             <select
-              value={brandId}
-              onChange={(e) => setBrandId(e.target.value)}
-              className="w-full border rounded-lg px-3 py-2"
-              required
+              value={assignTo}
+              onChange={(e) => setAssignTo(e.target.value)}
+              className="w-full h-[40px] rounded-[5px] px-3 py-2 bg-white text-black"
+              style={{
+                border: '1px solid #D3FEE4',
+                borderStyle: 'solid'
+              }}
             >
-              <option value="">Select a brand...</option>
-              {brands.map((brand) => (
-                <option key={brand.id} value={brand.id}>
-                  {brand.name}
+              {employees.map((emp) => (
+                <option key={emp.id} value={emp.id}>
+                  {emp.name}
                 </option>
               ))}
             </select>
           </div>
+
+          {/* Content Type */}
           <div>
-            <label className="block text-sm font-medium mb-1">Type</label>
+            <label className="block text-white text-sm font-medium mb-2">Content Type</label>
             <select
               value={typeId}
               onChange={(e) => setTypeId(e.target.value)}
-              className="w-full border rounded-lg px-3 py-2"
+              className="w-full h-[40px] rounded-[5px] px-3 py-2 bg-white text-black"
+              style={{
+                border: '1px solid #D3FEE4',
+                borderStyle: 'solid'
+              }}
             >
               {types.map((type) => (
                 <option key={type.id} value={type.id}>
-                  {type.name} ({type.points} pts)
+                  {type.name}
                 </option>
               ))}
             </select>
           </div>
-          {types.find(t => t.id === typeId)?.name === 'Other' && (
-            <div>
-              <label className="block text-sm font-medium mb-1">Custom Points *</label>
+
+          {/* Points */}
+          <div>
+            <label className="block text-white text-sm font-medium mb-2">Points</label>
+            {types.find(t => t.id === typeId)?.name === 'Other' ? (
               <input
                 type="number"
                 min="1"
                 value={customPoints}
                 onChange={(e) => setCustomPoints(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2"
-                placeholder="Enter points for this task"
+                placeholder="Enter Points"
+                className="w-full h-[40px] rounded-[5px] px-3 py-2 bg-white text-black placeholder:text-gray-400"
+                style={{
+                  border: '1px solid #D3FEE4',
+                  borderStyle: 'solid'
+                }}
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Since this is "Other" type, you must specify the points manually.
-              </p>
-            </div>
-          )}
-          <div>
-            <label className="block text-sm font-medium mb-1">Assign To</label>
-            <select
-              value={assignTo}
-              onChange={(e) => setAssignTo(e.target.value)}
-              className="w-full border rounded-lg px-3 py-2"
-            >
-              {employees.map((emp) => (
-                <option key={emp.id} value={emp.id}>
-                  {emp.name} (Rank {emp.rank})
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Deadline (optional)
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1.5">Date</label>
-                <input
-                  type="date"
-                  value={deadlineDate}
-                  onChange={(e) => setDeadlineDate(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                  min={new Date().toISOString().split('T')[0]}
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1.5">Time</label>
-                <input
-                  type="time"
-                  value={deadlineTime}
-                  onChange={(e) => setDeadlineTime(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                />
-              </div>
-            </div>
-            {deadlineDate && (
-              <button
-                type="button"
-                onClick={() => {
-                  setDeadlineDate('');
-                  setDeadlineTime('23:59');
+            ) : (
+              <input
+                type="number"
+                value={types.find(t => t.id === typeId)?.points || ''}
+                disabled
+                placeholder="Enter Points"
+                className="w-full h-[40px] rounded-[5px] px-3 py-2 bg-white text-black placeholder:text-gray-400 opacity-60"
+                style={{
+                  border: '1px solid #D3FEE4',
+                  borderStyle: 'solid'
                 }}
-                className="mt-2 text-xs text-red-600 hover:text-red-700 font-medium"
-              >
-                Clear deadline
-              </button>
+              />
             )}
           </div>
+
+          {/* Due Date */}
+          <div>
+            <label className="block text-white text-sm font-medium mb-2">Due Date</label>
+            <input
+              type="text"
+              value={dueDateInput}
+              onChange={(e) => {
+                const value = e.target.value;
+                setDueDateInput(value);
+                // Parse and set deadlineDate
+                if (value.match(/^\d{2}-\d{2}-\d{4}$/)) {
+                  const parsed = parseDateFromInput(value);
+                  if (parsed) {
+                    setDeadlineDate(parsed);
+                    setDeadlineTime('23:59');
+                  }
+                } else if (!value) {
+                  setDeadlineDate('');
+                  setDeadlineTime('23:59');
+                }
+              }}
+              placeholder="dd-mm-yyyy"
+              className="w-full h-[40px] rounded-[5px] px-3 py-2 bg-white text-black placeholder:text-gray-400"
+              style={{
+                border: '1px solid #D3FEE4',
+                borderStyle: 'solid'
+              }}
+            />
+          </div>
+
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            <div className="bg-red-500/20 border border-red-500/50 text-red-300 px-4 py-3 rounded-lg text-sm">
               {error}
             </div>
           )}
-          <div className="flex gap-3 justify-end">
+          </div>
+
+          {/* Action Buttons - Always visible at bottom */}
+          <div className="flex gap-3 justify-end pt-4 mt-auto">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+              className="h-[40px] w-[101px] rounded-[5px] bg-white text-black font-medium hover:opacity-90 transition-opacity"
+              style={{
+                border: '1px solid #D3FEE4',
+                borderStyle: 'solid'
+              }}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="h-[40px] w-[101px] rounded-[5px] text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+              style={{
+                backgroundColor: '#307B2D',
+                border: '1px solid #D3FEE4',
+                borderStyle: 'solid'
+              }}
             >
-              {loading ? 'Creating...' : 'Create'}
+              {loading ? 'Creating...' : 'Create Task'}
             </button>
           </div>
         </form>
