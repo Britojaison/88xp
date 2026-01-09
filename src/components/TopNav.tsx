@@ -213,8 +213,12 @@ export default function TopNav({ isAdmin = false, userName = 'User', userEmail =
             <div className="flex items-center gap-4">
               <button
                 onClick={handleLogout}
-                className="w-[160px] h-[40px] rounded-[15px] text-white font-semibold text-[14px] transition-opacity hover:opacity-90"
-                style={{ background: 'linear-gradient(90deg, #4ECDC4 0%, #44A8B3 50%, #3B82A2 100%)' }}
+                className="w-[120px] h-[40px] rounded-[10px] text-white font-semibold text-[14px] transition-opacity hover:opacity-90"
+                style={{ 
+                  backgroundImage: 'url(/Rectangle%20758.png)',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                }}
               >
                 Log Out
               </button>
