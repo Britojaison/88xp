@@ -1,44 +1,26 @@
 @import "tailwindcss";
 
 :root {
-  --background: #1E1E1E;
-  --foreground: #FFFFFF;
+  --background: #f8fafc;
+  --foreground: #1e293b;
+  --font-manrope: 'Manrope', sans-serif;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-manrope);
   --font-mono: var(--font-geist-mono);
+  --font-manrope: var(--font-manrope);
 }
 
 /* Dark theme with white text */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-manrope), 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
-/* Ensure text visibility across all components */
-h1, h2, h3, h4, h5, h6 {
-  color: #FFFFFF;
-}
-
-p {
-  color: #FFFFFF;
-}
-
-/* Ensure form inputs have proper text color */
-input, select, textarea {
-  color: #FFFFFF;
-  background-color: #2A2A2A;
-}
-
-/* Ensure table text is visible */
-table {
-  color: #FFFFFF;
-}
-
-td, th {
-  color: inherit;
+.font-manrope {
+  font-family: var(--font-manrope), sans-serif;
 }
