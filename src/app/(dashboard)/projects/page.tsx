@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import CreateProjectModal from '@/components/CreateProjectModal';
 import CompletionModal from '@/components/CompletionModal';
 import BrandManagement from '@/components/BrandManagement';
-import { CheckIcon, CheckCircleIcon, PencilIcon, TrashIcon } from 'lucide-react';
+import { CheckIcon, CheckCircleIcon, PencilIcon, TrashIcon, LayoutGridIcon } from 'lucide-react';
 import EditTaskModal from '@/components/EditTaskModal';
 import { canEditTask } from '@/lib/rank-utils';
 
@@ -295,101 +295,131 @@ export default function TasksPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="space-y-2">
-        <p className="text-white text-sm">Manage all task in one place</p>
+        <p className="text-white text-[14px]">Manage all task in one place</p>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold text-white">Tasks</h1>
-            {/* Gradient underline */}
-            <div className="h-1 bg-gradient-to-r from-blue-300 via-purple-400 to-pink-400 rounded-full mt-2"></div>
+            {/* Gradient underline - spans full width of Tasks text */}
+            <div className="h-1 w-full bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 rounded-full mt-2"></div>
           </div>
-          {/* Create Task Button - Positioned as in Figma */}
+          {/* Create Task Button - adjusted size to fit text better */}
           <button
             onClick={() => setShowModal(true)}
-            className="rounded-[25px] text-white font-medium h-[62px] w-[191px] flex items-center justify-center transition-opacity hover:opacity-90 relative overflow-hidden"
+            className="rounded-[25px] h-[50px] px-6 flex items-center justify-center transition-opacity hover:opacity-90 relative overflow-hidden"
+            style={{
+              backgroundImage: 'url(/Rectangle%2022.png)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            }}
           >
-            <div
-              className="absolute inset-0 rounded-[25px]"
-              style={{
-                backgroundImage: 'url(/Rectangle 19.png)',
-                backgroundSize: 'cover',
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'center',
-                opacity: 0.5
-              }}
-            />
-            <span className="relative z-10 text-white font-medium">+ Create Task</span>
+            <span className="text-white font-semibold text-[16px]">+ Create Task</span>
           </button>
         </div>
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-4">
+        {/* Employee Filter - W 122, H 50, radius 15, stroke image */}
         <div className="flex items-center gap-2">
-          <span className="text-white text-sm font-medium">Employee</span>
-          <select
-            value={employeeFilter}
-            onChange={(e) => setEmployeeFilter(e.target.value)}
-            className="rounded-[15px] border border-[#424242] bg-black text-white px-4 py-2.5 text-sm h-[50px] min-w-[122px]"
-          >
-            <option value="all">All</option>
-            {employees.map((e) => (
-              <option key={e.id} value={e.id}>{e.name}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="text-white text-sm font-medium">Status</span>
+          <span className="text-white text-[14px] font-medium">Employee</span>
           <div 
-            className="rounded-[15px] h-[50px] relative"
-            style={{ 
-              width: '370px',
-              backgroundImage: 'url(/Rectangle 19.png)',
+            className="relative h-[50px] w-[122px] rounded-[15px]"
+            style={{
+              backgroundImage: 'url(/Rectangle%2019.png)',
               backgroundSize: '100% 100%',
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'center'
+              backgroundRepeat: 'no-repeat'
             }}
           >
-            <div 
-              className="flex rounded-[15px] bg-black overflow-hidden absolute inset-[1px]"
+            <select
+              value={employeeFilter}
+              onChange={(e) => setEmployeeFilter(e.target.value)}
+              className="absolute inset-[1px] rounded-[15px] bg-black text-white px-4 text-[14px] appearance-none cursor-pointer focus:outline-none"
             >
+              <option value="all">All</option>
+              {employees.map((e) => (
+                <option key={e.id} value={e.id}>{e.name}</option>
+              ))}
+            </select>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+              <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
+                <path d="M1 1.5L6 6.5L11 1.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Status Filter - W 370, H 50, stroke image (Rectangle 19) */}
+        <div className="flex items-center gap-2">
+          <span className="text-white text-[14px] font-medium">Status</span>
+          <div 
+            className="relative h-[50px] w-[370px] rounded-[15px]"
+            style={{
+              backgroundImage: 'url(/Rectangle%2019.png)',
+              backgroundSize: '100% 100%',
+              backgroundRepeat: 'no-repeat'
+            }}
+          >
+            <div className="absolute inset-[1px] rounded-[15px] bg-black flex items-center">
               {(['all', 'ongoing', 'completed'] as StatusFilter[]).map((s) => (
                 <button
                   key={s}
                   onClick={() => setStatusFilter(s)}
-                  className={`px-4 py-2.5 text-sm capitalize transition-all ${
-                    statusFilter === s 
-                      ? 'bg-gray-700 text-white' 
-                      : 'bg-transparent text-white hover:bg-gray-900'
+                  className={`h-full flex-1 rounded-[15px] text-[14px] font-medium transition-all relative ${
+                    statusFilter === s ? 'text-white' : 'text-white hover:bg-white/5'
                   }`}
                 >
-                  {s === 'all' ? 'All' : s === 'ongoing' ? 'Ongoing' : 'Completed'}
+                  {statusFilter === s && (
+                    <div 
+                      className="absolute inset-0 rounded-[15px]"
+                      style={{
+                        backgroundImage: 'url(/Rectangle%2023.png)',
+                        backgroundSize: '100% 100%',
+                        backgroundRepeat: 'no-repeat'
+                      }}
+                    />
+                  )}
+                  <span className="relative z-10">{s === 'all' ? 'All' : s === 'ongoing' ? 'Ongoing' : 'Completed'}</span>
                 </button>
               ))}
             </div>
           </div>
         </div>
 
+        {/* Year Filter - W 122, H 50, radius 15, stroke image */}
         <div className="flex items-center gap-2">
-          <span className="text-white text-sm font-medium">Year</span>
-          <select
-            value={yearFilter}
-            onChange={(e) => setYearFilter(e.target.value)}
-            className="rounded-[15px] border border-[#424242] bg-black text-white px-4 py-2.5 text-sm h-[50px] min-w-[122px]"
+          <span className="text-white text-[14px] font-medium">Year</span>
+          <div 
+            className="relative h-[50px] w-[122px] rounded-[15px]"
+            style={{
+              backgroundImage: 'url(/Rectangle%2019.png)',
+              backgroundSize: '100% 100%',
+              backgroundRepeat: 'no-repeat'
+            }}
           >
-            <option value="all">All</option>
-            {availableYears.map((y) => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
+            <select
+              value={yearFilter}
+              onChange={(e) => setYearFilter(e.target.value)}
+              className="absolute inset-[1px] rounded-[15px] bg-black text-white px-4 text-[14px] appearance-none cursor-pointer focus:outline-none"
+            >
+              <option value="all">All</option>
+              {availableYears.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+              <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
+                <path d="M1 1.5L6 6.5L11 1.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Ongoing Tasks Table - Only show when filter is 'all' or 'ongoing' */}
       {(statusFilter === 'all' || statusFilter === 'ongoing') && (
         <div className="rounded-[25px] border border-[#424242] bg-black overflow-hidden">
-          <div className="px-5 py-4 border-b border-[#424242]">
-            <h2 className="text-white text-lg font-semibold">Ongoing Task</h2>
+          <div className="px-6 py-4">
+            <h2 className="text-white text-[20px] font-bold">Ongoing Task</h2>
           </div>
           {ongoingTasks.length === 0 ? (
             <div className="p-8 text-center text-gray-400 text-sm">No ongoing tasks</div>
@@ -397,55 +427,60 @@ export default function TasksPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-[#424242]">
-                    <th className="px-5 py-3 text-left text-white text-xs font-semibold uppercase">PROJECT TITLE</th>
-                    <th className="px-5 py-3 text-left text-white text-xs font-semibold uppercase">ASSIGNED TO</th>
-                    <th className="px-5 py-3 text-left text-white text-xs font-semibold uppercase">CREATED BY</th>
-                    <th className="px-5 py-3 text-left text-white text-xs font-semibold uppercase">STATUS</th>
-                    <th className="px-5 py-3 text-left text-white text-xs font-semibold uppercase">TYPE</th>
-                    <th className="px-5 py-3 text-left text-white text-xs font-semibold uppercase">POINTS</th>
-                    <th className="px-5 py-3 text-left text-white text-xs font-semibold uppercase">ASSIGNED DATE</th>
-                    <th className="px-5 py-3 text-center text-white text-xs font-semibold uppercase">ACTION</th>
+                  <tr>
+                    <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">PROJECT TITLE</th>
+                    <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">ASSIGNED TO</th>
+                    <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">CREATED BY</th>
+                    <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">STATUS</th>
+                    <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">TYPE</th>
+                    <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">POINTS</th>
+                    <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">ASSIGNED DATE</th>
+                    <th className="px-6 py-3 text-center text-[#747474] text-[13px] font-medium whitespace-nowrap">ACTION</th>
                   </tr>
                 </thead>
                 <tbody>
                   {ongoingTasks.map((task, index) => (
-                    <tr key={task.id} className={index !== ongoingTasks.length - 1 ? 'border-b border-[#424242]/30' : ''}>
-                      <td className="px-5 py-3 text-white text-sm font-medium">{task.name}</td>
-                      <td className="px-5 py-3 text-white text-sm">{task.assignee?.name || '-'}</td>
-                      <td className="px-5 py-3 text-white text-sm">{task.creator?.name || '-'}</td>
-                      <td className="px-5 py-3">{getStatusBadge(task.status)}</td>
-                      <td className="px-5 py-3 text-white text-sm">{task.type?.name || '-'}</td>
-                      <td className="px-5 py-3 text-blue-400 text-sm font-medium">{getPoints(task)} pts</td>
-                      <td className="px-5 py-3 text-white text-sm">{formatDateShort(task.created_at)}</td>
-                      <td className="px-5 py-3 text-center">
-                        <div className="flex items-center justify-center gap-2">
+                    <tr key={task.id}>
+                      <td className="px-6 py-4 text-white text-[14px] font-medium">{task.name}</td>
+                      <td className="px-6 py-4 text-white text-[14px]">{task.assignee?.name || '-'}</td>
+                      <td className="px-6 py-4 text-white text-[14px]">{task.creator?.name || '-'}</td>
+                      <td className="px-6 py-4">
+                        <span className="text-purple-400 text-[14px] font-medium">Pending</span>
+                      </td>
+                      <td className="px-6 py-4 text-white text-[14px]">{task.type?.name || '-'}</td>
+                      <td className="px-6 py-4 text-blue-400 text-[14px] font-medium">{getPoints(task)} pts</td>
+                      <td className="px-6 py-4 text-white text-[14px]">{formatDateShort(task.created_at)}</td>
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex items-center justify-center gap-4">
                           {canEdit(task) && (
                             <button
                               onClick={() => setEditingTask(task)}
-                              className="text-white hover:opacity-80 transition-opacity"
+                              className="hover:opacity-80 transition-opacity"
                               title="Edit"
                             >
-                              <PencilIcon className="w-4 h-4" />
+                              <img src="/pencil.png" alt="Edit" className="w-4 h-4" />
                             </button>
                           )}
                           {canMarkComplete(task) && (
                             <button
                               onClick={() => setCompletingTask(task)}
-                              className="text-white hover:opacity-80 transition-opacity"
+                              className="hover:opacity-80 transition-opacity"
                               title="Complete"
                             >
-                              <CheckIcon className="w-4 h-4" />
+                              <img src="/tick.png" alt="Complete" className="w-4 h-4" />
                             </button>
                           )}
                           {canDelete(task) && (
                             <button
                               onClick={() => handleDelete(task.id)}
-                              className="text-white hover:opacity-80 transition-opacity"
+                              className="hover:opacity-80 transition-opacity"
                               title="Delete"
                             >
-                              <TrashIcon className="w-4 h-4" />
+                              <img src="/trash.png" alt="Delete" className="w-3 h-4" />
                             </button>
+                          )}
+                          {!canEdit(task) && !canMarkComplete(task) && !canDelete(task) && (
+                            <span className="text-gray-500 text-[12px]">-</span>
                           )}
                         </div>
                       </td>
@@ -461,8 +496,8 @@ export default function TasksPage() {
       {/* Completed Tasks Table - Only show when filter is 'all' or 'completed' */}
       {(statusFilter === 'all' || statusFilter === 'completed') && (
       <div className="rounded-[25px] border border-[#424242] bg-black overflow-hidden">
-        <div className="px-5 py-4 border-b border-[#424242]">
-          <h2 className="text-white text-lg font-semibold">Completed</h2>
+        <div className="px-6 py-4">
+          <h2 className="text-white text-[20px] font-bold">Completed</h2>
         </div>
         {completedTasks.length === 0 ? (
           <div className="p-8 text-center text-gray-400 text-sm">No completed tasks</div>
@@ -470,33 +505,35 @@ export default function TasksPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[#424242]">
-                  <th className="px-5 py-3 text-left text-white text-xs font-semibold uppercase">PROJECT TITLE</th>
-                  <th className="px-5 py-3 text-left text-white text-xs font-semibold uppercase">COMPLETED BY</th>
-                  <th className="px-5 py-3 text-left text-white text-xs font-semibold uppercase">CREATED BY</th>
-                  <th className="px-5 py-3 text-left text-white text-xs font-semibold uppercase">STATUS</th>
-                  <th className="px-5 py-3 text-left text-white text-xs font-semibold uppercase">TYPE</th>
-                  <th className="px-5 py-3 text-left text-white text-xs font-semibold uppercase">POINTS</th>
-                  <th className="px-5 py-3 text-left text-white text-xs font-semibold uppercase">FINISHED ON</th>
-                  <th className="px-5 py-3 text-center text-white text-xs font-semibold uppercase">ACTION</th>
+                <tr>
+                  <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">PROJECT TITLE</th>
+                  <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">COMPLETED BY</th>
+                  <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">CREATED BY</th>
+                  <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">STATUS</th>
+                  <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">TYPE</th>
+                  <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">POINTS</th>
+                  <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">FINISHED ON</th>
+                  <th className="px-6 py-3 text-center text-[#747474] text-[13px] font-medium whitespace-nowrap">ACTION</th>
                 </tr>
               </thead>
               <tbody>
                 {completedTasks.map((task, index) => (
-                  <tr key={task.id} className={index !== completedTasks.length - 1 ? 'border-b border-[#424242]/30' : ''}>
-                    <td className="px-5 py-3 text-white text-sm font-medium">{task.name}</td>
-                    <td className="px-5 py-3 text-white text-sm">{task.assignee?.name || '-'}</td>
-                    <td className="px-5 py-3 text-white text-sm">{task.creator?.name || '-'}</td>
-                    <td className="px-5 py-3">{getStatusBadge(task.status)}</td>
-                    <td className="px-5 py-3 text-white text-sm">{task.type?.name || '-'}</td>
-                    <td className="px-5 py-3">
+                  <tr key={task.id}>
+                    <td className="px-6 py-4 text-white text-[14px] font-medium">{task.name}</td>
+                    <td className="px-6 py-4 text-white text-[14px]">{task.assignee?.name || '-'}</td>
+                    <td className="px-6 py-4 text-white text-[14px]">{task.creator?.name || '-'}</td>
+                    <td className="px-6 py-4">
+                      <span className="text-white text-[14px] font-medium">Completed</span>
+                    </td>
+                    <td className="px-6 py-4 text-white text-[14px]">{task.type?.name || '-'}</td>
+                    <td className="px-6 py-4">
                       {editingTaskId === task.id ? (
                         <div className="flex items-center gap-1">
                           <input
                             type="number"
                             value={overridePoints}
                             onChange={(e) => setOverridePoints(Number(e.target.value))}
-                            className="w-16 border border-[#424242] rounded px-2 py-1 text-center text-sm bg-black text-white"
+                            className="w-16 border border-[#424242] rounded px-2 py-1 text-center text-[14px] bg-black text-white"
                             min={0}
                             autoFocus
                           />
@@ -515,40 +552,43 @@ export default function TasksPage() {
                           </button>
                         </div>
                       ) : (
-                        <span className="text-emerald-400 text-sm font-medium">
+                        <span className="text-emerald-400 text-[14px] font-medium">
                           +{getPoints(task)} pts
                         </span>
                       )}
                     </td>
-                    <td className="px-5 py-3 text-white text-sm">
+                    <td className="px-6 py-4 text-white text-[14px]">
                       {task.completed_at ? formatDateShort(task.completed_at) : '-'}
                     </td>
-                    <td className="px-5 py-3 text-center">
-                      <div className="flex items-center justify-center gap-2">
+                    <td className="px-6 py-4 text-center">
+                      <div className="flex items-center justify-center gap-3">
                         {isRank1 && editingTaskId !== task.id && (
                           <button
                             onClick={() => startEditing(task)}
-                            className="text-white text-sm font-medium h-[45px] w-[111px] rounded-[50px] relative overflow-hidden"
+                            className="h-[45px] w-[111px] rounded-[50px] relative overflow-hidden"
                             style={{
-                              backgroundImage: 'url(/Rectangle 19.png)',
+                              backgroundImage: 'url(/Rectangle%20393.png)',
                               backgroundSize: '100% 100%',
                               backgroundRepeat: 'no-repeat',
                               backgroundPosition: 'center'
                             }}
                           >
                             <div className="absolute inset-[1px] rounded-[50px] bg-black flex items-center justify-center">
-                              <span className="text-white text-sm font-medium">Override</span>
+                              <span className="text-white text-[14px] font-medium">Override</span>
                             </div>
                           </button>
                         )}
                         {canDelete(task) && (
                           <button
                             onClick={() => handleDelete(task.id)}
-                            className="text-white hover:opacity-80 transition-opacity"
+                            className="hover:opacity-80 transition-opacity"
                             title="Delete"
                           >
-                            <TrashIcon className="w-4 h-4" />
+                            <img src="/trash.png" alt="Delete" className="w-4 h-5" />
                           </button>
+                        )}
+                        {!isRank1 && !canDelete(task) && (
+                          <span className="text-gray-500 text-[12px]">-</span>
                         )}
                       </div>
                     </td>
@@ -612,7 +652,7 @@ export default function TasksPage() {
         }`}>
           <div className="flex items-center gap-2">
             {toast.type === 'success' ? (
-              <CheckCircleIcon className="w-5 h-5" />
+              <CheckCircleIcon className="w-4 h-4" />
             ) : (
               <span className="text-xl">⚠️</span>
             )}

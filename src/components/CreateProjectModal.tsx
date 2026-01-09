@@ -155,39 +155,35 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
 
   return (
     <div 
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm"
+      className="fixed inset-0 flex items-start justify-end z-50 pt-[120px] pr-[40px] pointer-events-none"
       onClick={onClose}
     >
       <div 
-        className="rounded-[25px] w-[412px] h-[553px] flex flex-col relative overflow-hidden"
+        className="rounded-[25px] w-[365px] flex flex-col relative pointer-events-auto overflow-visible"
         onClick={(e) => e.stopPropagation()}
         style={{
-          backgroundColor: 'rgba(110, 110, 110, 0.2)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(110, 110, 110, 0.1)',
-          borderStyle: 'solid'
+          backgroundColor: 'rgba(40, 40, 40, 0.95)',
+          border: '1px solid rgba(110, 110, 110, 0.3)',
         }}
       >
         {/* Title */}
-        <div className="p-6 pb-4">
-          <h2 className="text-white text-xl font-bold mb-2">Create Task</h2>
-          <div className="h-px bg-gradient-to-r from-purple-400 to-pink-400"></div>
+        <div className="px-6 pt-4 pb-2">
+          <h2 className="text-white text-[18px] font-bold">Create Task</h2>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 px-6 pb-6 overflow-y-auto">
-          <div className="space-y-5 flex-1">
+        <form onSubmit={handleSubmit} className="flex flex-col px-6 pb-4">
+          <div className="space-y-2.5">
           {/* Task Title */}
           <div>
-            <label className="block text-white text-sm font-medium mb-2">Task Title</label>
+            <label className="block text-white text-[13px] font-medium mb-1">Task Title</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter Task Title"
-              className="w-full h-[40px] rounded-[5px] px-3 py-2 bg-white text-black placeholder:text-gray-400"
+              className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black placeholder:text-gray-400 text-[13px]"
               style={{
                 border: '1px solid #D3FEE4',
-                borderStyle: 'solid'
               }}
               required
             />
@@ -195,14 +191,13 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
 
           {/* Assignee */}
           <div>
-            <label className="block text-white text-sm font-medium mb-2">Assignee</label>
+            <label className="block text-white text-[13px] font-medium mb-1">Assignee</label>
             <select
               value={assignTo}
               onChange={(e) => setAssignTo(e.target.value)}
-              className="w-full h-[40px] rounded-[5px] px-3 py-2 bg-white text-black"
+              className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black text-[13px]"
               style={{
                 border: '1px solid #D3FEE4',
-                borderStyle: 'solid'
               }}
             >
               {employees.map((emp) => (
@@ -215,14 +210,13 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
 
           {/* Content Type */}
           <div>
-            <label className="block text-white text-sm font-medium mb-2">Content Type</label>
+            <label className="block text-white text-[13px] font-medium mb-1">Content Type</label>
             <select
               value={typeId}
               onChange={(e) => setTypeId(e.target.value)}
-              className="w-full h-[40px] rounded-[5px] px-3 py-2 bg-white text-black"
+              className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black text-[13px]"
               style={{
                 border: '1px solid #D3FEE4',
-                borderStyle: 'solid'
               }}
             >
               {types.map((type) => (
@@ -235,7 +229,7 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
 
           {/* Points */}
           <div>
-            <label className="block text-white text-sm font-medium mb-2">Points</label>
+            <label className="block text-white text-[13px] font-medium mb-1">Points</label>
             {types.find(t => t.id === typeId)?.name === 'Other' ? (
               <input
                 type="number"
@@ -243,10 +237,9 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
                 value={customPoints}
                 onChange={(e) => setCustomPoints(e.target.value)}
                 placeholder="Enter Points"
-                className="w-full h-[40px] rounded-[5px] px-3 py-2 bg-white text-black placeholder:text-gray-400"
+                className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black placeholder:text-gray-400 text-[13px]"
                 style={{
                   border: '1px solid #D3FEE4',
-                  borderStyle: 'solid'
                 }}
                 required
               />
@@ -256,10 +249,9 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
                 value={types.find(t => t.id === typeId)?.points || ''}
                 disabled
                 placeholder="Enter Points"
-                className="w-full h-[40px] rounded-[5px] px-3 py-2 bg-white text-black placeholder:text-gray-400 opacity-60"
+                className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-gray-200 text-gray-600 placeholder:text-gray-400 text-[13px]"
                 style={{
                   border: '1px solid #D3FEE4',
-                  borderStyle: 'solid'
                 }}
               />
             )}
@@ -267,14 +259,13 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
 
           {/* Due Date */}
           <div>
-            <label className="block text-white text-sm font-medium mb-2">Due Date</label>
+            <label className="block text-white text-[13px] font-medium mb-1">Due Date</label>
             <input
               type="text"
               value={dueDateInput}
               onChange={(e) => {
                 const value = e.target.value;
                 setDueDateInput(value);
-                // Parse and set deadlineDate
                 if (value.match(/^\d{2}-\d{2}-\d{4}$/)) {
                   const parsed = parseDateFromInput(value);
                   if (parsed) {
@@ -287,30 +278,28 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
                 }
               }}
               placeholder="dd-mm-yyyy"
-              className="w-full h-[40px] rounded-[5px] px-3 py-2 bg-white text-black placeholder:text-gray-400"
+              className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black placeholder:text-gray-400 text-[13px]"
               style={{
                 border: '1px solid #D3FEE4',
-                borderStyle: 'solid'
               }}
             />
           </div>
 
           {error && (
-            <div className="bg-red-500/20 border border-red-500/50 text-red-300 px-4 py-3 rounded-lg text-sm">
+            <div className="bg-red-500/20 border border-red-500/50 text-red-300 px-2.5 py-1.5 rounded-lg text-xs">
               {error}
             </div>
           )}
           </div>
 
-          {/* Action Buttons - Always visible at bottom */}
-          <div className="flex gap-3 justify-end pt-4 mt-auto">
+          {/* Action Buttons */}
+          <div className="flex gap-2.5 justify-end pt-3">
             <button
               type="button"
               onClick={onClose}
-              className="h-[40px] w-[101px] rounded-[5px] bg-white text-black font-medium hover:opacity-90 transition-opacity"
+              className="h-[36px] px-4 rounded-[5px] bg-white text-black font-medium text-[13px] hover:opacity-90 transition-opacity"
               style={{
                 border: '1px solid #D3FEE4',
-                borderStyle: 'solid'
               }}
             >
               Cancel
@@ -318,11 +307,10 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
             <button
               type="submit"
               disabled={loading}
-              className="h-[40px] w-[101px] rounded-[5px] text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="h-[36px] px-4 rounded-[5px] text-white font-medium text-[13px] hover:opacity-90 transition-opacity disabled:opacity-50"
               style={{
                 backgroundColor: '#307B2D',
                 border: '1px solid #D3FEE4',
-                borderStyle: 'solid'
               }}
             >
               {loading ? 'Creating...' : 'Create Task'}
