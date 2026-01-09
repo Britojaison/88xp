@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { TargetIcon, SaveIcon, CheckCircleIcon } from 'lucide-react';
+import { CheckCircleIcon } from 'lucide-react';
 
 interface Employee {
   id: string;
@@ -176,123 +176,99 @@ export default function TargetsPage() {
   }
 
   return (
-    <div className="max-w-4xl space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
-            <TargetIcon className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-600" />
-            Monthly Targets
-          </h1>
-          <p className="text-sm sm:text-base text-gray-500 mt-1">
-            Set point targets for {MONTH_NAMES[currentMonth - 1]} {currentYear}
-          </p>
+          <p className="text-white text-[14px] font-light">Set point target for {MONTH_NAMES[currentMonth - 1]} {currentYear}</p>
+          <h1 className="text-[55px] font-light text-white mt-1">Monthly Target</h1>
+          {/* Gradient underline */}
+          <div className="h-1 w-full bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 rounded-full"></div>
         </div>
 
         <button
           onClick={handleSave}
           disabled={saving || !hasChanges}
-          className={`flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-medium transition-all text-sm sm:text-base ${
-            hasChanges
-              ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200'
-              : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-          }`}
+          className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity mt-8"
         >
           {saving ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-              Saving...
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+              <span className="text-[16px]">Saving...</span>
             </>
           ) : saved ? (
             <>
               <CheckCircleIcon className="w-5 h-5" />
-              Saved!
+              <span className="text-[16px]">Saved!</span>
             </>
           ) : (
             <>
-              <SaveIcon className="w-5 h-5" />
-              Save Changes
+              <img src="/tdesign_save-filled.png" alt="Save" className="w-5 h-5" />
+              <span className="text-[16px]">Save changes</span>
             </>
           )}
         </button>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
+        <div className="bg-red-500/20 border border-red-500/50 text-red-300 px-4 py-3 rounded-lg">
           {error}
         </div>
       )}
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gradient-to-r from-slate-50 to-gray-50 border-b border-gray-100">
-              <tr>
-                <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Employee
-                </th>
-                <th className="px-4 sm:px-6 py-3 sm:py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Target Points
-                </th>
-                <th className="px-4 sm:px-6 py-3 sm:py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {targets.map((target) => {
-                const isChanged = target.target_points !== target.original_target;
-                return (
-                  <tr
-                    key={target.employee_id}
-                    className={`transition-colors ${isChanged ? 'bg-indigo-50/50' : 'hover:bg-gray-50'}`}
-                  >
-                    <td className="px-4 sm:px-6 py-3 sm:py-4">
-                      <div className="flex items-center gap-2 sm:gap-3">
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold shadow-sm flex-shrink-0">
-                          {target.employee_name.charAt(0).toUpperCase()}
-                        </div>
-                        <span className="font-medium text-gray-900 text-sm sm:text-base truncate">{target.employee_name}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 sm:px-6 py-3 sm:py-4">
-                      <div className="flex justify-center">
-                        <input
-                          type="number"
-                          value={target.target_points}
-                          onChange={(e) => handleTargetChange(target.employee_id, Number(e.target.value))}
-                          className={`w-20 sm:w-24 text-center border rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 font-semibold text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${
-                            isChanged
-                              ? 'border-indigo-300 bg-white text-indigo-700'
-                              : 'border-gray-200 text-gray-700'
-                          }`}
-                          min={0}
-                          step={10}
-                        />
-                      </div>
-                    </td>
-                    <td className="px-4 sm:px-6 py-3 sm:py-4 text-center">
-                    {isChanged ? (
-                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 bg-indigo-100 px-2.5 py-1 rounded-full">
-                        <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse"></span>
-                        Modified
-                      </span>
-                    ) : (
-                      <span className="text-xs text-gray-400">No changes</span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-            </tbody>
-          </table>
+      {/* Header Row - Separate box */}
+      <div className="rounded-[25px] border border-[#424242] h-[66px] flex items-center px-6">
+        <div className="grid grid-cols-3 w-full">
+          <span className="text-white text-[14px] font-semibold">Employee</span>
+          <span className="text-white text-[14px] font-semibold text-center">Target Points</span>
+          <span className="text-white text-[14px] font-semibold text-right">Status</span>
         </div>
       </div>
 
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 sm:p-4">
-        <p className="text-xs sm:text-sm text-amber-800">
-          <strong>Note:</strong> Targets are carried forward automatically to the next month. 
-          You only need to update them when an employee&apos;s target changes.
-        </p>
+      {/* Data Rows - Separate box */}
+      <div className="rounded-[25px] border border-[#424242]">
+        {targets.map((target) => {
+          const isChanged = target.target_points !== target.original_target;
+          return (
+            <div
+              key={target.employee_id}
+              className="grid grid-cols-3 items-center px-6 py-4"
+            >
+              {/* Employee */}
+              <div className="flex items-center gap-3">
+                <div className="w-[30px] h-[30px] bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex items-center justify-center overflow-hidden">
+                  <img 
+                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(target.employee_name)}&background=random&size=30`}
+                    alt={target.employee_name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <span className="text-white text-[14px]">{target.employee_name}</span>
+              </div>
+
+              {/* Target Points - Plain text, editable */}
+              <div className="flex justify-center">
+                <input
+                  type="number"
+                  value={target.target_points}
+                  onChange={(e) => handleTargetChange(target.employee_id, Number(e.target.value))}
+                  className="w-16 text-center bg-transparent text-white text-[14px] focus:outline-none focus:bg-white/10 rounded cursor-text"
+                  min={0}
+                  step={10}
+                />
+              </div>
+
+              {/* Status */}
+              <div className="text-right">
+                {isChanged ? (
+                  <span className="text-purple-400 text-[13px]">Modified</span>
+                ) : (
+                  <span className="text-gray-500 text-[13px]">No changes</span>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

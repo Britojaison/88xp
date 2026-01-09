@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase/client';
 import { redirect } from 'next/navigation';
 import ProfilePointsSection from './ProfilePointsSection';
 import ContributionGraph from '@/components/ContributionGraph';
-import { MonthlyTarget } from '@/types';
 
 export default function ProfilePage() {
   const [employee, setEmployee] = useState<any>(null);
@@ -24,21 +23,18 @@ export default function ProfilePage() {
   const fetchData = async () => {
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Match by email since employee.id may differ from auth user.id
     const { data: employeeData } = await supabase
       .from('employees')
       .select('id, name, email, rank, is_admin, created_at')
       .ilike('email', user?.email || '')
       .single();
 
-    // Admin doesn't have profile
     if (employeeData?.is_admin) {
       redirect('/admin');
     }
 
     setEmployee(employeeData);
 
-    // Get monthly score for current month
     const now = new Date();
     const currentMonth = now.getMonth() + 1;
     const currentYear = now.getFullYear();
@@ -53,7 +49,6 @@ export default function ProfilePage() {
 
     setMonthlyScore(monthlyScoreData);
 
-    // Get yearly score
     const { data: yearlyScoreData } = await supabase
       .from('yearly_scores')
       .select('total_points, project_count')
@@ -63,7 +58,6 @@ export default function ProfilePage() {
 
     setYearlyScore(yearlyScoreData);
 
-    // Fetch available years from projects
     const { data: projects } = await supabase
       .from('projects')
       .select('completed_at')
@@ -73,25 +67,21 @@ export default function ProfilePage() {
       .order('completed_at', { ascending: false });
 
     if (projects && projects.length > 0) {
-      // Extract unique years from completed projects
       const years = new Set<number>();
       projects.forEach((project) => {
         const year = new Date(project.completed_at).getFullYear();
         years.add(year);
       });
       
-      // Convert to sorted array (newest first)
       const sortedYears = Array.from(years).sort((a, b) => b - a);
       setAvailableYears(sortedYears);
       
-      // Set selected year to current year if it exists in data, otherwise most recent year
       if (sortedYears.includes(currentYear)) {
         setSelectedYear(currentYear);
       } else if (sortedYears.length > 0) {
         setSelectedYear(sortedYears[0]);
       }
     } else {
-      // No projects yet, just show current year
       setAvailableYears([currentYear]);
       setSelectedYear(currentYear);
     }
@@ -103,92 +93,99 @@ export default function ProfilePage() {
     return <div className="animate-pulse bg-gray-700 h-96 rounded-lg"></div>;
   }
 
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+  };
+
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-5">
       {/* Header */}
-      <div className="mb-2">
-        <p className="text-xs text-white uppercase tracking-wider mb-1">Your Activity & Performance</p>
-        <h1 className="text-2xl sm:text-3xl font-bold text-white border-b-2 border-white inline-block pb-1">Profile</h1>
+      <div>
+        <p className="text-white text-[13px] font-light">Your Activity & Performance</p>
+        <h1 className="text-[40px] font-light text-white leading-none">Profile</h1>
+        <div className="h-1 w-[120px] bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 rounded-full mt-1"></div>
       </div>
 
-      {/* Profile Card + Activity Timeline Row */}
-      <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
-        {/* Left - Profile Card (Vertical Layout) */}
-        <div className="w-full lg:w-64 flex-shrink-0">
-          <div className="bg-gradient-to-b from-[#2A3A4A] to-[#1E2A3A] rounded-2xl shadow-lg border border-gray-700 p-6 text-center">
+      {/* Main Content Row */}
+      <div className="flex gap-4">
+        {/* Left - Profile Card */}
+        <div className="w-[280px] flex-shrink-0">
+          <div 
+            className="rounded-[20px] p-5 flex flex-col"
+            style={{
+              backgroundImage: 'url(/Rectangle%2069.png)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            }}
+          >
             {/* Avatar */}
-            <div className="flex justify-center mb-4">
-              <div className="relative w-24 h-24 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg ring-4 ring-[#3A4A5A]">
-                {employee?.name?.charAt(0).toUpperCase()}
-                <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-purple-500 rounded-full border-3 border-[#2A3A4A] flex items-center justify-center">
-                  <span className="text-white text-xs">●</span>
+            <div className="flex justify-center mb-3">
+              <div className="relative">
+                <div className="w-[80px] h-[80px] bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center text-white text-3xl font-bold">
+                  {employee?.name?.charAt(0).toUpperCase()}
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-purple-500 rounded-full border-2 border-[#2A3A4A] flex items-center justify-center">
+                  <span className="text-white text-[8px]">●</span>
                 </div>
               </div>
             </div>
 
-            {/* Name & Email */}
-            <h2 className="text-xl font-semibold text-white mb-1">{employee?.name}</h2>
-            <p className="text-sm text-white mb-1">{employee?.email}</p>
-            <p className="text-xs text-white mb-6">
-              Member Since: {new Date(employee?.created_at).toLocaleDateString()}
-            </p>
+            {/* Name & Info */}
+            <div className="text-center mb-4">
+              <h2 className="text-[18px] font-semibold text-white">{employee?.name}</h2>
+              <p className="text-[11px] text-cyan-400">{employee?.email}</p>
+              <p className="text-[10px] text-gray-400">Member Since: {formatDate(employee?.created_at)}</p>
+            </div>
 
-            {/* Stats - Vertical Layout */}
-            <div className="space-y-4 text-left">
-              <div className="flex justify-between items-center py-3 border-t border-gray-700">
-                <span className="text-white font-medium">This month</span>
-                <span className="text-white font-bold text-lg">{monthlyScore?.total_points || 0} pts</span>
+            {/* Stats - No horizontal lines */}
+            <div className="space-y-0">
+              <div className="flex justify-between items-center py-2.5">
+                <span className="text-white text-[13px]">Rank</span>
+                <span className="text-white text-[13px] font-semibold">#{employee?.rank || '-'}</span>
               </div>
-              <div className="flex justify-between items-center py-3 border-t border-gray-700">
-                <span className="text-white font-medium">This year</span>
-                <span className="text-white font-bold text-lg">{yearlyScore?.total_points || 0} pts</span>
+              <div className="flex justify-between items-center py-2.5">
+                <span className="text-white text-[13px]">This month</span>
+                <span className="text-white text-[13px] font-semibold">{monthlyScore?.total_points || 0} pts</span>
               </div>
-              <div className="flex justify-between items-center py-3 border-t border-gray-700">
-                <span className="text-white font-medium">Annual Projects</span>
-                <span className="text-white font-bold text-lg">{yearlyScore?.project_count || 0}</span>
+              <div className="flex justify-between items-center py-2.5">
+                <span className="text-white text-[13px]">This year</span>
+                <span className="text-white text-[13px] font-semibold">{yearlyScore?.total_points || 0} pts</span>
+              </div>
+              <div className="flex justify-between items-center py-2.5">
+                <span className="text-white text-[13px]">Annual Projects</span>
+                <span className="text-white text-[13px] font-semibold">{yearlyScore?.project_count || 0}</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right - Activity Timeline (with max width) */}
-        <div className="flex-1 max-w-4xl flex items-center gap-4">
-          <div className="flex-1 space-y-6">
-            <ContributionGraph 
-              employeeId={employee?.id || ''} 
-              selectedYear={selectedYear}
-              onYearChange={setSelectedYear}
-            />
-            
-            {/* Badges Section */}
-            <div className="bg-[#2A2A2A] rounded-xl p-8 border border-gray-700 shadow-lg">
-              <h3 className="text-base font-semibold text-white mb-4">Badges</h3>
-              <div className="flex items-center justify-center py-12">
-                <p className="text-gray-400 text-sm">No badges yet</p>
+        {/* Right - Activity Timeline + Badges */}
+        <div className="flex-1 space-y-4">
+          {/* Activity Timeline - Year selector is now inside */}
+          <ContributionGraph 
+            employeeId={employee?.id || ''} 
+            selectedYear={selectedYear}
+            onYearChange={setSelectedYear}
+          />
+          
+          {/* Badges Section - Below Activity Timeline, wider */}
+          <div>
+            <h3 className="text-white text-[14px] font-semibold mb-2">Badges</h3>
+            <div className="rounded-[20px] border border-white/10 p-5">
+              <div className="flex items-center justify-around">
+                {/* Empty badge placeholders - blank circles */}
+                <div className="w-[55px] h-[55px] rounded-full bg-gray-700/30 border border-gray-600"></div>
+                <div className="w-[55px] h-[55px] rounded-full bg-gray-700/30 border border-gray-600"></div>
+                <div className="w-[55px] h-[55px] rounded-full bg-gray-700/30 border border-gray-600"></div>
+                <div className="w-[55px] h-[55px] rounded-full bg-gray-700/30 border border-gray-600"></div>
               </div>
             </div>
-          </div>
-          
-          {/* Year Selector - Vertical */}
-          <div className="flex flex-col gap-2 ml-4">
-            {availableYears.map((year) => (
-              <button
-                key={year}
-                onClick={() => setSelectedYear(year)}
-                className={`px-4 py-3 rounded-xl font-semibold text-lg transition-all ${
-                  selectedYear === year
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'bg-[#2A2A2A] text-white hover:bg-[#333333] border border-gray-700'
-                }`}
-              >
-                {year}
-              </button>
-            ))}
           </div>
         </div>
       </div>
 
-      {/* Points breakdown with month/year filtering */}
+      {/* Points History */}
       <ProfilePointsSection employeeId={employee?.id || ''} />
     </div>
   );

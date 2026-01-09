@@ -208,7 +208,7 @@ export default function ContributionGraph({ employeeId, showLegend = true, selec
   }
 
   return (
-    <div className="bg-[#2A2A2A] rounded-xl p-8 border border-gray-700 shadow-lg">
+    <div className="bg-[#2A2A2A] rounded-xl p-5 border border-gray-700 shadow-lg">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-base font-semibold text-white">Activity Timeline</h3>
         <div className="text-sm text-gray-400">
@@ -216,8 +216,10 @@ export default function ContributionGraph({ employeeId, showLegend = true, selec
           <span className="font-semibold text-blue-400 ml-1">{totalPoints}</span> pts
         </div>
       </div>
-
-      <div ref={containerRef} className="overflow-x-hidden">
+      
+      {/* Main content with year selector inside */}
+      <div className="flex gap-3">
+        <div ref={containerRef} className="flex-1 overflow-x-hidden">
         <div className="w-full">
           <div className="flex mb-1" style={{ marginLeft: DAY_LABEL_WIDTH }}>
             <svg width={gridWidth + 2} height={16} viewBox={`-1 0 ${gridWidth + 2} 16`} overflow="visible">
@@ -298,6 +300,24 @@ export default function ContributionGraph({ employeeId, showLegend = true, selec
             </div>
           )}
         </div>
+      </div>
+      
+      {/* Year Selector - Inside Activity Timeline */}
+      <div className="flex flex-col gap-1.5">
+        {[2024, 2025, 2026].map((year) => (
+          <button
+            key={year}
+            onClick={() => onYearChange?.(year)}
+            className={`w-[50px] h-[28px] rounded-[8px] text-[12px] font-medium transition-all ${
+              selectedYear === year
+                ? 'bg-[#3A4A5A] text-white border border-cyan-400'
+                : 'bg-transparent text-gray-400 hover:text-white'
+            }`}
+          >
+            {year}
+          </button>
+        ))}
+      </div>
       </div>
     </div>
   );
