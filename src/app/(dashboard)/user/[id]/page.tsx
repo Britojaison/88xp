@@ -51,65 +51,77 @@ export default async function PublicProfilePage({ params }: Props) {
     .eq('assigned_to', employee.id)
     .in('status', ['completed', 'approved']);
 
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+  };
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Back link */}
       <Link 
         href="/home" 
-        className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors"
+        className="inline-flex items-center text-sm text-gray-400 hover:text-white transition-colors"
       >
         ← Back to Home
       </Link>
 
       {/* Profile Header */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+      <div 
+        className="rounded-[20px] p-6"
+        style={{
+          backgroundImage: 'url(/Rectangle%2069.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
+      >
         <div className="flex items-start gap-6">
           {/* Avatar */}
-          <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg flex-shrink-0">
+          <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg flex-shrink-0">
             {employee.name?.charAt(0).toUpperCase()}
           </div>
           
           {/* Info */}
           <div className="flex-1">
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-gray-900">{employee.name}</h1>
+              <h1 className="text-2xl font-bold text-white">{employee.name}</h1>
               <span className="inline-block bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs font-bold px-3 py-1 rounded-full">
                 Rank #{employee.rank}
               </span>
             </div>
-            <p className="text-gray-500 mt-1">{employee.email}</p>
-            <p className="text-sm text-gray-400 mt-2">
-              Member since {new Date(employee.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            <p className="text-cyan-400 text-sm mt-1">{employee.email}</p>
+            <p className="text-xs text-gray-400 mt-1">
+              Member Since: {formatDate(employee.created_at)}
             </p>
           </div>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-          <div className="bg-gradient-to-br from-slate-50 to-gray-100 rounded-xl p-4 border border-gray-100">
-            <p className="text-sm text-gray-500 font-medium">Rank</p>
-            <p className="text-3xl font-bold text-gray-900">#{employee.rank}</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+          <div className="py-3">
+            <p className="text-sm text-gray-400 font-medium">Rank</p>
+            <p className="text-2xl font-bold text-white">#{employee.rank}</p>
           </div>
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
-            <p className="text-sm text-blue-600 font-medium">This Month</p>
-            <p className="text-3xl font-bold text-blue-700">
+          <div className="py-3 border-l border-gray-600 pl-4">
+            <p className="text-sm text-gray-400 font-medium">This Month</p>
+            <p className="text-2xl font-bold text-white">
               {monthlyScore?.total_points || 0}
-              <span className="text-sm text-blue-400 ml-1">pts</span>
+              <span className="text-sm text-gray-400 ml-1">pts</span>
             </p>
-            <p className="text-xs text-blue-500 mt-1">{monthlyScore?.project_count || 0} projects</p>
+            <p className="text-xs text-gray-500">{monthlyScore?.project_count || 0} projects</p>
           </div>
-          <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl p-4 border border-emerald-100">
-            <p className="text-sm text-emerald-600 font-medium">This Year</p>
-            <p className="text-3xl font-bold text-emerald-700">
+          <div className="py-3 border-l border-gray-600 pl-4">
+            <p className="text-sm text-gray-400 font-medium">This Year</p>
+            <p className="text-2xl font-bold text-white">
               {yearlyScore?.total_points || 0}
-              <span className="text-sm text-emerald-400 ml-1">pts</span>
+              <span className="text-sm text-gray-400 ml-1">pts</span>
             </p>
-            <p className="text-xs text-emerald-500 mt-1">{yearlyScore?.project_count || 0} projects</p>
+            <p className="text-xs text-gray-500">{yearlyScore?.project_count || 0} projects</p>
           </div>
-          <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl p-4 border border-violet-100">
-            <p className="text-sm text-violet-600 font-medium">All Time</p>
-            <p className="text-3xl font-bold text-violet-700">{allTimeStats?.length || 0}</p>
-            <p className="text-xs text-violet-500 mt-1">projects completed</p>
+          <div className="py-3 border-l border-gray-600 pl-4">
+            <p className="text-sm text-gray-400 font-medium">All Time</p>
+            <p className="text-2xl font-bold text-white">{allTimeStats?.length || 0}</p>
+            <p className="text-xs text-gray-500">projects completed</p>
           </div>
         </div>
       </div>
@@ -122,4 +134,3 @@ export default async function PublicProfilePage({ params }: Props) {
     </div>
   );
 }
-

@@ -12,6 +12,9 @@ export default async function HomePage() {
     .ilike('email', user?.email || '')
     .single();
 
+  const userName = employee?.name || 'User';
+  const welcomeText = `Welcome Back, ${userName}`;
+
   return (
     <div className="space-y-6">
       {/* Welcome Section and Scoreboard */}
@@ -21,10 +24,10 @@ export default async function HomePage() {
           <p className="text-gray-400 text-[14px] font-medium tracking-wide">
             Ready to conquer your project
           </p>
-          <h1 className="text-[32px] font-light text-white">
-            Welcome Back, {employee?.name || 'User'}
+          <h1 className="text-[32px] font-light text-white inline-block">
+            {welcomeText}
           </h1>
-          <div className="h-[2px] w-[200px] bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 rounded-full mt-1"></div>
+          <div className="h-[2px] w-full bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 rounded-full mt-1"></div>
         </div>
 
         {/* Last Month Scoreboard */}
