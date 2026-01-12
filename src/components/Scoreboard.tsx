@@ -107,7 +107,7 @@ export default function Scoreboard() {
       </div>
 
       {/* Table Container */}
-      <div className="rounded-[25px] border border-[#424242] bg-black p-4 flex-1">
+      <div className="rounded-[25px] border border-[#424242] bg-black p-5 flex-1">
         {loading ? (
           <div className="animate-pulse h-[300px]"></div>
         ) : scores.length === 0 ? (
