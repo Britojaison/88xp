@@ -58,7 +58,7 @@ export default function LastMonthScoreboard() {
   const placeholderSlots = [
     { rank: 2, badgeColor: 'bg-gray-400', badgeTextColor: 'text-black' },
     { rank: 1, badgeColor: 'bg-yellow-500', badgeTextColor: 'text-black' },
-    { rank: 3, badgeColor: 'bg-amber-700', badgeTextColor: 'text-white' }
+    { rank: 3, badgeColor: 'bg-orange-500', badgeTextColor: 'text-white' }
   ];
 
   const orderedScores = scores.length >= 2 
@@ -68,7 +68,7 @@ export default function LastMonthScoreboard() {
   if (loading) {
     return (
       <div 
-        className="w-[380px] h-[160px] p-4 relative overflow-hidden"
+        className="w-[480px] h-[220px] p-5 relative overflow-hidden"
         style={{ borderRadius: '30px 10px 30px 10px' }}
       >
         <div 
@@ -76,12 +76,12 @@ export default function LastMonthScoreboard() {
           style={{ backgroundImage: 'url(/Rectangle%20391.png)' }}
         />
         <div className="relative z-10">
-          <h3 className="text-white text-sm font-semibold mb-3">Last Month Scoreboard</h3>
-          <div className="flex justify-center gap-4">
+          <h3 className="text-white text-lg font-semibold mb-4">Last Month Scoreboard</h3>
+          <div className="flex justify-center gap-5">
             {[0, 1, 2].map((i) => (
               <div key={i} className="animate-pulse">
-                <div className="w-[40px] h-[40px] mx-auto rounded-full bg-gray-500/50 mb-1"></div>
-                <div className="h-2 bg-gray-500/50 rounded w-12 mx-auto"></div>
+                <div className="w-[60px] h-[60px] mx-auto rounded-full bg-gray-500/50 mb-2"></div>
+                <div className="h-3 bg-gray-500/50 rounded w-16 mx-auto"></div>
               </div>
             ))}
           </div>
@@ -92,7 +92,7 @@ export default function LastMonthScoreboard() {
 
   return (
     <div 
-      className="w-[380px] h-[160px] px-4 py-3 relative overflow-hidden"
+      className="w-[480px] h-[220px] px-5 py-4 relative overflow-hidden"
       style={{ borderRadius: '30px 10px 30px 10px' }}
     >
       <div 
@@ -101,44 +101,44 @@ export default function LastMonthScoreboard() {
       />
       
       <div className="relative z-10">
-        <h3 className="text-white text-sm font-semibold mb-3">Last Month Scoreboard</h3>
+        <h3 className="text-white text-lg font-semibold mb-4">Last Month Scoreboard</h3>
         
-        <div className="flex justify-center gap-3">
+        <div className="flex justify-center gap-4">
           {placeholderSlots.map((slot, displayIndex) => {
             const entry = orderedScores[displayIndex];
             
             return (
               <div 
                 key={displayIndex} 
-                className="w-[100px] h-[100px] rounded-[20px] flex flex-col items-center justify-center relative"
+                className="w-[130px] h-[140px] rounded-[20px] flex flex-col items-center justify-center relative"
                 style={{
                   backgroundColor: 'rgba(199, 199, 199, 0.41)',
                   border: '1px solid rgba(199, 199, 199, 0.10)'
                 }}
               >
-                <div className="relative mb-1">
-                  <div className={`absolute -top-1 -right-1 ${slot.badgeColor} ${slot.badgeTextColor} text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center z-10`}>
+                <div className="relative mb-2">
+                  <div className={`absolute -top-1 -right-2 ${slot.badgeColor} ${slot.badgeTextColor} text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center z-10`}>
                     #{slot.rank}
                   </div>
                   
                   {entry ? (
-                    <div className="w-[40px] h-[40px] rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white font-semibold text-xs border border-white/30">
+                    <div className="w-[60px] h-[60px] rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white font-semibold text-base border border-white/30">
                       {getInitials(entry.employee_name)}
                     </div>
                   ) : (
-                    <div className="w-[40px] h-[40px] rounded-full bg-gray-600/50 border border-gray-500/50"></div>
+                    <div className="w-[60px] h-[60px] rounded-full bg-gray-600/50 border border-gray-500/50"></div>
                   )}
                 </div>
                 
-                <p className="text-white text-[10px] font-medium text-center w-[80px] truncate">
+                <p className="text-white text-[13px] font-medium text-center w-[110px] truncate">
                   {entry?.employee_name || '—'}
                 </p>
                 
-                <p className="text-center">
-                  <span className="text-purple-300 font-bold text-xs">
+                <p className="text-center mt-1">
+                  <span className="text-purple-300 font-bold text-base">
                     {entry ? entry.total_points : '—'}
                   </span>
-                  <span className="text-gray-300 text-[8px] ml-0.5">pts</span>
+                  <span className="text-gray-300 text-[10px] ml-0.5">pts</span>
                 </p>
               </div>
             );
