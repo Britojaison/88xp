@@ -37,7 +37,7 @@ const MONTHS = [
 ];
 
 export default function DashboardToggle() {
-  const [activeView, setActiveView] = useState<View>('tasks');
+  const [activeView, setActiveView] = useState<View>('scoreboard');
   const currentYear = new Date().getFullYear();
   const [selectedMonth, setSelectedMonth] = useState<number>(0); // 0 = All months
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);

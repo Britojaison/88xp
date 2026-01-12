@@ -14,7 +14,7 @@ interface TopNavProps {
   userAvatar?: string | null;
 }
 
-export default function TopNav({ isAdmin = false, userName = 'User', userEmail = '', userAvatar = null }: TopNavProps) {
+export default function TopNav({ isAdmin = false, userRank = null, userName = 'User', userEmail = '', userAvatar = null }: TopNavProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -59,11 +59,13 @@ export default function TopNav({ isAdmin = false, userName = 'User', userEmail =
     setIsMobileMenuOpen(false);
   };
 
+  // Base employee items
   const employeeItems = [
     { href: '/home', label: 'Dashboard' },
     { href: '/projects', label: 'Task' },
     { href: '/profile', label: 'Profile' },
-    { href: '/targets', label: 'Targets' },
+    // Only show Targets for rank 1 users
+    ...(userRank === 1 ? [{ href: '/targets', label: 'Targets' }] : []),
   ];
 
   const navItems = isAdmin

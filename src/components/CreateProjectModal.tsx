@@ -155,15 +155,17 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
 
   return (
     <div 
-      className="fixed inset-0 flex items-start justify-end z-50 pt-[120px] pr-[40px] pointer-events-none"
+      className="fixed inset-0 flex items-start justify-end z-50 pt-[120px] pr-[40px]"
       onClick={onClose}
     >
       <div 
-        className="rounded-[25px] w-[365px] flex flex-col relative pointer-events-auto overflow-visible"
+        className="rounded-[25px] w-[412px] flex flex-col relative pointer-events-auto overflow-visible"
         onClick={(e) => e.stopPropagation()}
         style={{
-          backgroundColor: 'rgba(40, 40, 40, 0.95)',
-          border: '1px solid rgba(110, 110, 110, 0.3)',
+          backgroundColor: 'rgba(110, 110, 110, 0.2)',
+          border: '1px solid rgba(110, 110, 110, 0.1)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
         }}
       >
         {/* Title */}
