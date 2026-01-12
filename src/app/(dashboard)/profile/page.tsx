@@ -125,7 +125,7 @@ export default function ProfilePage() {
         </div>
         
         {/* Monthly Target Widget - Top right near navbar, no border */}
-        <div className="p-4 w-[220px]">
+        <div className=" w-[220px]">
           <h3 className="text-white text-[16px] font-semibold text-center mb-3">Monthly Target</h3>
           <div className="flex items-center gap-4">
             {/* Circular Progress */}

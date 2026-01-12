@@ -40,9 +40,8 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Use getSession for faster auth check (doesn't hit Supabase API if session exists in cookie)
-  const { data: { session } } = await supabase.auth.getSession();
-  const user = session?.user;
+  // Use getUser for secure auth check
+  const { data: { user } } = await supabase.auth.getUser();
 
   // Redirect unauthenticated users to login
   if (!user && !path.startsWith('/login')) {

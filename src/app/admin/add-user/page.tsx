@@ -22,10 +22,10 @@ export default function AddUserPage() {
     setSuccess('');
 
     try {
-      // Get current session for authorization
-      const { data: { session } } = await supabase.auth.getSession();
+      // Get current user for authorization
+      const { data: { user } } = await supabase.auth.getUser();
       
-      if (!session) {
+      if (!user) {
         setError('Not authenticated');
         setLoading(false);
         return;

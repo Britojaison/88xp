@@ -42,9 +42,9 @@ export default function AdminPage() {
     if (!confirm('Are you sure you want to delete this employee? This action cannot be undone.')) return;
     
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { user } } = await supabase.auth.getUser();
       
-      if (!session) {
+      if (!user) {
         alert('Session expired. Please log in again.');
         return;
       }
@@ -310,9 +310,9 @@ function ResetPasswordModal({
     setLoading(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { user } } = await supabase.auth.getUser();
       
-      if (!session) {
+      if (!user) {
         setError('Session expired. Please log in again.');
         setLoading(false);
         return;

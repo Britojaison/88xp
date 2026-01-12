@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 
 interface ScoreEntry {
   id: string;
@@ -14,6 +15,7 @@ export default function LastMonthScoreboard() {
   const [scores, setScores] = useState<ScoreEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
+  const router = useRouter();
 
   useEffect(() => {
     fetchLastMonthScores();
@@ -53,6 +55,10 @@ export default function LastMonthScoreboard() {
       return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
+  };
+
+  const handleCardClick = (employeeId: string) => {
+    router.push(`/user/${employeeId}`);
   };
 
   const placeholderSlots = [
@@ -110,11 +116,14 @@ export default function LastMonthScoreboard() {
             return (
               <div 
                 key={displayIndex} 
-                className="w-[130px] h-[140px] rounded-[20px] flex flex-col items-center justify-center relative"
+                className={`w-[130px] h-[140px] rounded-[20px] flex flex-col items-center justify-center relative ${
+                  entry ? 'cursor-pointer hover:scale-105 transition-transform duration-200' : ''
+                }`}
                 style={{
                   backgroundColor: 'rgba(199, 199, 199, 0.41)',
                   border: '1px solid rgba(199, 199, 199, 0.10)'
                 }}
+                onClick={() => entry && handleCardClick(entry.employee_id)}
               >
                 <div className="relative mb-2">
                   <div className={`absolute -top-1 -right-2 ${slot.badgeColor} ${slot.badgeTextColor} text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center z-10`}>
