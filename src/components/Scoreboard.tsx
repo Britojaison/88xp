@@ -44,7 +44,19 @@ export default function Scoreboard() {
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
   useEffect(() => {
-    fetchScores();
+    let isMounted = true;
+    
+    const loadScores = async () => {
+      if (isMounted) {
+        await fetchScores();
+      }
+    };
+    
+    loadScores();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [month, year]);
 
   const fetchScores = async () => {

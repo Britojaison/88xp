@@ -33,7 +33,19 @@ export default function ActiveProjects() {
   const availableYears = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
   useEffect(() => {
-    fetchTasks();
+    let isMounted = true;
+    
+    const loadTasks = async () => {
+      if (isMounted) {
+        await fetchTasks();
+      }
+    };
+    
+    loadTasks();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [selectedMonth, selectedYear]);
 
   const fetchTasks = async () => {

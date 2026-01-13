@@ -4,6 +4,27 @@ import { NextResponse, type NextRequest } from 'next/server';
 // Simple in-memory cache for role lookups (edge runtime compatible)
 const roleCache = new Map<string, { isAdmin: boolean; timestamp: number }>();
 const CACHE_TTL = 60000; // 1 minute cache
+const MAX_CACHE_SIZE = 1000; // Prevent memory leak
+
+// Cleanup old cache entries periodically
+function cleanupCache() {
+  const now = Date.now();
+  const entries = Array.from(roleCache.entries());
+  
+  // Remove expired entries
+  for (const [key, value] of entries) {
+    if (now - value.timestamp > CACHE_TTL) {
+      roleCache.delete(key);
+    }
+  }
+  
+  // If still too large, remove oldest entries
+  if (roleCache.size > MAX_CACHE_SIZE) {
+    const sortedEntries = entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
+    const toRemove = sortedEntries.slice(0, roleCache.size - MAX_CACHE_SIZE);
+    toRemove.forEach(([key]) => roleCache.delete(key));
+  }
+}
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -60,6 +81,11 @@ export async function middleware(request: NextRequest) {
       let isAdmin = false;
       const cacheKey = user.email.toLowerCase();
       const cached = roleCache.get(cacheKey);
+      
+      // Cleanup cache periodically (every 100 requests approximately)
+      if (Math.random() < 0.01) {
+        cleanupCache();
+      }
       
       // Use cached value if fresh
       if (cached && Date.now() - cached.timestamp < CACHE_TTL) {

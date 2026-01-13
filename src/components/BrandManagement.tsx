@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Loader2 } from 'lucide-react';
 
@@ -23,10 +23,18 @@ export default function BrandManagement({ onClose, isModal = false }: Props) {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const successTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
     fetchBrands();
+    
+    // Cleanup timeout on unmount
+    return () => {
+      if (successTimeoutRef.current) {
+        clearTimeout(successTimeoutRef.current);
+      }
+    };
   }, []);
 
   const fetchBrands = async () => {
@@ -80,7 +88,10 @@ export default function BrandManagement({ onClose, isModal = false }: Props) {
     fetchBrands();
 
     // Clear success message after 3 seconds
-    setTimeout(() => setSuccess(null), 3000);
+    if (successTimeoutRef.current) {
+      clearTimeout(successTimeoutRef.current);
+    }
+    successTimeoutRef.current = setTimeout(() => setSuccess(null), 3000);
   };
 
   const handleDeleteBrand = async (brand: Brand) => {
@@ -109,7 +120,10 @@ export default function BrandManagement({ onClose, isModal = false }: Props) {
     fetchBrands();
 
     // Clear success message after 3 seconds
-    setTimeout(() => setSuccess(null), 3000);
+    if (successTimeoutRef.current) {
+      clearTimeout(successTimeoutRef.current);
+    }
+    successTimeoutRef.current = setTimeout(() => setSuccess(null), 3000);
   };
 
   const content = (

@@ -33,7 +33,9 @@ export default function TopNav({ isAdmin = false, userRank = null, userName = 'U
         setIsProfileDropdownOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
+    
+    // Use passive listener for better performance
+    document.addEventListener('mousedown', handleClickOutside, { passive: true });
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 

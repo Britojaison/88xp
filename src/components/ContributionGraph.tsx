@@ -17,6 +17,13 @@ interface Props {
   onYearChange?: (year: number) => void;
 }
 
+interface Project {
+  id: string;
+  completed_at: string;
+  points_override: number | null;
+  type: { points: number } | { points: number }[] | null;
+}
+
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 // Visual sizing
@@ -47,7 +54,19 @@ export default function ContributionGraph({ employeeId, showLegend = true, selec
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    fetchContributions();
+    let isMounted = true;
+    
+    const loadData = async () => {
+      if (isMounted) {
+        await fetchContributions();
+      }
+    };
+    
+    loadData();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [employeeId, selectedYear]);
 
   const fetchContributions = async () => {
@@ -90,7 +109,7 @@ export default function ContributionGraph({ employeeId, showLegend = true, selec
     const contributionMap = new Map<string, { count: number; points: number }>();
     let totalPts = 0;
     
-    (projects || []).forEach((project) => {
+    (projects || []).forEach((project: Project) => {
       const dateKey = project.completed_at.split('T')[0];
       const typeData = Array.isArray(project.type) ? project.type[0] : project.type;
       const points = project.points_override ?? typeData?.points ?? 0;
@@ -191,9 +210,15 @@ export default function ContributionGraph({ employeeId, showLegend = true, selec
     };
 
     update();
-    const ro = new ResizeObserver(update);
+    let ro: ResizeObserver | null = new ResizeObserver(update);
     ro.observe(el);
-    return () => ro.disconnect();
+    
+    return () => {
+      if (ro) {
+        ro.disconnect();
+        ro = null;
+      }
+    };
   }, []);
 
   if (loading) {

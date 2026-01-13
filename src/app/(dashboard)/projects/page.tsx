@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import CreateProjectModal from '@/components/CreateProjectModal';
@@ -70,9 +70,19 @@ export default function TasksPage() {
   
   // Toast notification state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const router = useRouter();
   const supabase = createClient();
+
+  // Cleanup toast timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -142,7 +152,10 @@ export default function TasksPage() {
   const handleTaskUpdated = () => {
     fetchData();
     setToast({ message: 'Task updated successfully', type: 'success' });
-    setTimeout(() => setToast(null), 3000);
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    toastTimeoutRef.current = setTimeout(() => setToast(null), 3000);
   };
 
   const handleOverridePoints = async (taskId: string) => {
