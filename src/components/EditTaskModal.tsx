@@ -24,6 +24,8 @@ interface Task {
   type: { id: string; name: string; points: number } | null;
   deadline: string | null;
   remarks?: string | null;
+  points_override?: number | null;
+  created_at?: string | null;
 }
 
 interface Props {
@@ -48,17 +50,13 @@ export default function EditTaskModal({
   const [name, setName] = useState(task.name);
   const [typeId, setTypeId] = useState(task.type?.id || '');
   const [assignTo, setAssignTo] = useState(task.assigned_to);
-  const [deadlineDate, setDeadlineDate] = useState(() => {
-    if (!task.deadline) return '';
-    const date = new Date(task.deadline);
-    return date.toISOString().split('T')[0];
-  });
-  const [deadlineTime, setDeadlineTime] = useState(() => {
-    if (!task.deadline) return '23:59';
-    const date = new Date(task.deadline);
-    return date.toTimeString().slice(0, 5);
-  });
+  const [deadlineDate, setDeadlineDate] = useState('');
+  const [dueDateInput, setDueDateInput] = useState('');
+  const [creationDate, setCreationDate] = useState('');
+  const [creationDateInput, setCreationDateInput] = useState('');
+  const [deadlineTime, setDeadlineTime] = useState('23:59');
   const [remarks, setRemarks] = useState(task.remarks || '');
+  const [customPoints, setCustomPoints] = useState(task.points_override?.toString() || '');
   const [types, setTypes] = useState<ProjectType[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
@@ -67,6 +65,38 @@ export default function EditTaskModal({
 
   useEffect(() => {
     fetchData();
+    
+    // Initialize due date from task
+    if (task.deadline) {
+      const date = new Date(task.deadline);
+      const formatted = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+      const iso = date.toISOString().split('T')[0];
+      setDueDateInput(formatted);
+      setDeadlineDate(iso);
+    } else {
+      // Default to today
+      const today = new Date();
+      const todayFormatted = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
+      const todayISO = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+      setDueDateInput(todayFormatted);
+      setDeadlineDate(todayISO);
+    }
+    
+    // Initialize creation date from task
+    if (task.created_at) {
+      const date = new Date(task.created_at);
+      const formatted = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+      const iso = date.toISOString().split('T')[0];
+      setCreationDateInput(formatted);
+      setCreationDate(iso);
+    } else {
+      // Default to today
+      const today = new Date();
+      const todayFormatted = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
+      const todayISO = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+      setCreationDateInput(todayFormatted);
+      setCreationDate(todayISO);
+    }
   }, []);
 
   const fetchData = async () => {
@@ -98,18 +128,24 @@ export default function EditTaskModal({
     setLoading(true);
     setError(null);
 
+    // Check if "Other" type is selected
+    const selectedType = types.find(t => t.id === typeId);
+    const isOtherType = selectedType?.name === 'Other';
+
+    // Validate custom points for "Other" type
+    if (isOtherType) {
+      const points = parseInt(customPoints);
+      if (!customPoints || isNaN(points) || points <= 0) {
+        setError('Please enter a valid number of points (greater than 0) for "Other" type tasks.');
+        setLoading(false);
+        return;
+      }
+    }
+
     // Combine date and time for deadline
     let deadlineValue = null;
     if (deadlineDate) {
       deadlineValue = `${deadlineDate}T${deadlineTime || '23:59'}:00.000Z`;
-      const deadlineDateTime = new Date(deadlineValue);
-      const now = new Date();
-      
-      if (deadlineDateTime < now) {
-        setError('Deadline cannot be in the past');
-        setLoading(false);
-        return;
-      }
     }
 
     // For completed tasks, only allow deadline changes if admin
@@ -135,6 +171,8 @@ export default function EditTaskModal({
       assigned_to: assignTo,
       deadline: deadlineValue,
       remarks: remarks || null,
+      points_override: isOtherType && customPoints ? parseInt(customPoints) : null,
+      created_at: creationDate ? `${creationDate}T00:00:00.000Z` : undefined,
     };
 
     const { error: updateError } = await supabase
@@ -231,33 +269,198 @@ export default function EditTaskModal({
               </select>
             </div>
 
-            {/* Points (read-only) */}
+            {/* Points */}
             <div>
               <label className="block text-white text-[13px] font-medium mb-1">Points</label>
+              {types.find(t => t.id === typeId)?.name === 'Other' ? (
+                <input
+                  type="number"
+                  min="1"
+                  value={customPoints}
+                  onChange={(e) => setCustomPoints(e.target.value)}
+                  placeholder="Enter Points"
+                  className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black placeholder:text-gray-400 text-[13px]"
+                  style={{
+                    border: '1px solid #D3FEE4',
+                  }}
+                  required
+                />
+              ) : (
+                <input
+                  type="number"
+                  value={types.find(t => t.id === typeId)?.points || ''}
+                  disabled
+                  placeholder="Points"
+                  className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-gray-200 text-gray-600 placeholder:text-gray-400 text-[13px]"
+                  style={{
+                    border: '1px solid #D3FEE4',
+                  }}
+                />
+              )}
+            </div>
+
+            {/* Creation Date - Past dates only */}
+            <div>
+              <label className="block text-white text-[13px] font-medium mb-1">Creation Date</label>
               <input
-                type="number"
-                value={types.find(t => t.id === typeId)?.points || ''}
-                disabled
-                placeholder="Points"
-                className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-gray-200 text-gray-600 placeholder:text-gray-400 text-[13px]"
+                type="text"
+                value={creationDateInput}
+                onChange={(e) => {
+                  const inputValue = e.target.value;
+                  const currentValue = creationDateInput;
+                  
+                  // If deleting (input is shorter than current)
+                  if (inputValue.length < currentValue.length) {
+                    setCreationDateInput(inputValue);
+                    
+                    const cleanValue = inputValue.replace(/\//g, '');
+                    if (cleanValue.length >= 6) {
+                      const day = inputValue.substring(0, 2);
+                      const month = inputValue.substring(3, 5);
+                      let year = inputValue.substring(6);
+                      if (year.length === 2) year = '20' + year;
+                      if (year.length === 4) {
+                        const parsed = `${year}-${month}-${day}`;
+                        const selectedDate = new Date(parsed);
+                        const today = new Date();
+                        today.setHours(23, 59, 59, 999);
+                        if (selectedDate <= today && !isNaN(selectedDate.getTime())) {
+                          setCreationDate(parsed);
+                        }
+                      }
+                    }
+                    return;
+                  }
+                  
+                  let digits = inputValue.replace(/\D/g, '');
+                  
+                  let formatted = '';
+                  if (digits.length > 0) {
+                    formatted = digits.substring(0, 2);
+                  }
+                  if (digits.length > 2) {
+                    formatted += '/' + digits.substring(2, 4);
+                  }
+                  if (digits.length > 4) {
+                    formatted += '/' + digits.substring(4, 8);
+                  }
+                  
+                  setCreationDateInput(formatted);
+                  
+                  if (digits.length >= 6) {
+                    const day = digits.substring(0, 2);
+                    const month = digits.substring(2, 4);
+                    let year = digits.substring(4);
+                    
+                    if (year.length === 2) {
+                      year = '20' + year;
+                    }
+                    
+                    if (year.length === 4) {
+                      const parsed = `${year}-${month}-${day}`;
+                      const selectedDate = new Date(parsed);
+                      const today = new Date();
+                      today.setHours(23, 59, 59, 999);
+                      
+                      if (selectedDate <= today && !isNaN(selectedDate.getTime())) {
+                        setCreationDate(parsed);
+                      } else if (selectedDate > today) {
+                        const todayFormatted = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
+                        const todayISO = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+                        setCreationDateInput(todayFormatted);
+                        setCreationDate(todayISO);
+                        setError('Creation date cannot be in the future');
+                        setTimeout(() => setError(null), 2000);
+                      }
+                    }
+                  } else if (!digits) {
+                    setCreationDate('');
+                  }
+                }}
+                placeholder="dd/mm/yyyy"
+                maxLength={10}
+                className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black placeholder:text-gray-400 text-[13px]"
                 style={{
                   border: '1px solid #D3FEE4',
                 }}
               />
             </div>
 
-            {/* Due Date */}
+            {/* Due Date - Any date allowed */}
             <div>
               <label className="block text-white text-[13px] font-medium mb-1">Due Date</label>
               <input
-                type="date"
-                value={deadlineDate}
-                onChange={(e) => setDeadlineDate(e.target.value)}
+                type="text"
+                value={dueDateInput}
+                onChange={(e) => {
+                  const inputValue = e.target.value;
+                  const currentValue = dueDateInput;
+                  
+                  // If deleting (input is shorter than current)
+                  if (inputValue.length < currentValue.length) {
+                    setDueDateInput(inputValue);
+                    
+                    const cleanValue = inputValue.replace(/\//g, '');
+                    if (cleanValue.length >= 6) {
+                      const day = inputValue.substring(0, 2);
+                      const month = inputValue.substring(3, 5);
+                      let year = inputValue.substring(6);
+                      if (year.length === 2) year = '20' + year;
+                      if (year.length === 4) {
+                        const parsed = `${year}-${month}-${day}`;
+                        const selectedDate = new Date(parsed);
+                        if (!isNaN(selectedDate.getTime())) {
+                          setDeadlineDate(parsed);
+                        }
+                      }
+                    }
+                    return;
+                  }
+                  
+                  let digits = inputValue.replace(/\D/g, '');
+                  
+                  let formatted = '';
+                  if (digits.length > 0) {
+                    formatted = digits.substring(0, 2);
+                  }
+                  if (digits.length > 2) {
+                    formatted += '/' + digits.substring(2, 4);
+                  }
+                  if (digits.length > 4) {
+                    formatted += '/' + digits.substring(4, 8);
+                  }
+                  
+                  setDueDateInput(formatted);
+                  
+                  if (digits.length >= 6) {
+                    const day = digits.substring(0, 2);
+                    const month = digits.substring(2, 4);
+                    let year = digits.substring(4);
+                    
+                    if (year.length === 2) {
+                      year = '20' + year;
+                    }
+                    
+                    if (year.length === 4) {
+                      const parsed = `${year}-${month}-${day}`;
+                      const selectedDate = new Date(parsed);
+                      
+                      if (!isNaN(selectedDate.getTime())) {
+                        setDeadlineDate(parsed);
+                        setDeadlineTime('23:59');
+                      }
+                    }
+                  } else if (!digits) {
+                    setDeadlineDate('');
+                    setDeadlineTime('23:59');
+                  }
+                }}
+                placeholder="dd/mm/yyyy"
+                maxLength={10}
                 className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black placeholder:text-gray-400 text-[13px]"
                 style={{
                   border: '1px solid #D3FEE4',
                 }}
-                min={new Date().toISOString().split('T')[0]}
                 disabled={(task.status === 'completed' || task.status === 'approved') && !isAdmin}
               />
             </div>
