@@ -233,19 +233,19 @@ export default function ContributionGraph({ employeeId, showLegend = true, selec
   }
 
   return (
-    <div className="bg-[#2A2A2A] rounded-xl p-5 border border-gray-700 shadow-lg">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-base font-semibold text-white">Activity Timeline</h3>
-        <div className="text-sm text-gray-400">
+    <div className="bg-[#2A2A2A] rounded-xl p-3 sm:p-5 border border-gray-700 shadow-lg">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 sm:mb-3 gap-2">
+        <h3 className="text-sm sm:text-base font-semibold text-white">Activity Timeline</h3>
+        <div className="text-xs sm:text-sm text-gray-400">
           <span className="font-semibold text-blue-400">{totalProjects}</span> projects • 
           <span className="font-semibold text-blue-400 ml-1">{totalPoints}</span> pts
         </div>
       </div>
       
       {/* Main content with year selector inside */}
-      <div className="flex gap-3">
-        <div ref={containerRef} className="flex-1 overflow-x-hidden">
-        <div className="w-full">
+      <div className="flex gap-2 sm:gap-3">
+        <div ref={containerRef} className="flex-1 overflow-x-auto">
+        <div className="w-full min-w-[300px]">
           <div className="flex mb-1" style={{ marginLeft: DAY_LABEL_WIDTH }}>
             <svg width={gridWidth + 2} height={16} viewBox={`-1 0 ${gridWidth + 2} 16`} overflow="visible">
               {monthLabels.map((label, idx) => (
@@ -265,11 +265,11 @@ export default function ContributionGraph({ employeeId, showLegend = true, selec
           <div className="flex">
             <div className="flex flex-col justify-between pr-1" style={{ height: gridHeight, width: DAY_LABEL_WIDTH }}>
               <span></span>
-              <span className="text-[10px] text-gray-400 leading-none">Mon</span>
+              <span className="text-[8px] sm:text-[10px] text-gray-400 leading-none">Mon</span>
               <span></span>
-              <span className="text-[10px] text-gray-400 leading-none">Wed</span>
+              <span className="text-[8px] sm:text-[10px] text-gray-400 leading-none">Wed</span>
               <span></span>
-              <span className="text-[10px] text-gray-400 leading-none">Fri</span>
+              <span className="text-[8px] sm:text-[10px] text-gray-400 leading-none">Fri</span>
               <span></span>
             </div>
 
@@ -314,7 +314,7 @@ export default function ContributionGraph({ employeeId, showLegend = true, selec
           </div>
 
           {showLegend && (
-            <div className="flex items-center justify-end mt-3 gap-1 text-[10px] text-gray-400">
+            <div className="flex items-center justify-end mt-2 sm:mt-3 gap-1 text-[8px] sm:text-[10px] text-gray-400">
               <span>Less</span>
               <div className="rounded-sm bg-slate-200" style={{ width: cellSize, height: cellSize }} />
               <div className="rounded-sm bg-blue-200" style={{ width: cellSize, height: cellSize }} />
@@ -328,12 +328,12 @@ export default function ContributionGraph({ employeeId, showLegend = true, selec
       </div>
       
       {/* Year Selector - Inside Activity Timeline */}
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-1 sm:gap-1.5">
         {[2024, 2025, 2026].map((year) => (
           <button
             key={year}
             onClick={() => onYearChange?.(year)}
-            className={`w-[50px] h-[28px] rounded-[8px] text-[12px] font-medium transition-all ${
+            className={`w-[40px] sm:w-[50px] h-[24px] sm:h-[28px] rounded-[6px] sm:rounded-[8px] text-[10px] sm:text-[12px] font-medium transition-all ${
               selectedYear === year
                 ? 'bg-[#3A4A5A] text-white border border-cyan-400'
                 : 'bg-transparent text-gray-400 hover:text-white'

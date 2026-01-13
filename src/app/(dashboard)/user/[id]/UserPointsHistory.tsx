@@ -81,7 +81,7 @@ export default function UserPointsHistory({ employeeId }: Props) {
       return;
     }
 
-    const transformed = (data || []).map(p => ({
+    const transformed = (data || []).map((p: Record<string, unknown>) => ({
       ...p,
       type: Array.isArray(p.type) ? p.type[0] : p.type,
     })) as Project[];
@@ -101,15 +101,15 @@ export default function UserPointsHistory({ employeeId }: Props) {
   return (
     <div className="space-y-3">
       {/* Header Row */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <h3 className="text-white text-[18px] font-semibold">Points History</h3>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+          <h3 className="text-white text-[16px] sm:text-[18px] font-semibold">Points History</h3>
           
           {/* View Type Toggle - Using Rectangle 762.png for active state */}
           <div className="inline-flex rounded-[20px] bg-[#3C3C3C] p-1">
             <button
               onClick={() => setViewType('annually')}
-              className={`px-5 py-1.5 rounded-[15px] text-[12px] font-medium transition-all ${
+              className={`px-3 sm:px-5 py-1 sm:py-1.5 rounded-[15px] text-[10px] sm:text-[12px] font-medium transition-all ${
                 viewType === 'annually'
                   ? 'text-white'
                   : 'text-gray-400 hover:text-white'
@@ -124,7 +124,7 @@ export default function UserPointsHistory({ employeeId }: Props) {
             </button>
             <button
               onClick={() => setViewType('monthly')}
-              className={`px-5 py-1.5 rounded-[15px] text-[12px] font-medium transition-all ${
+              className={`px-3 sm:px-5 py-1 sm:py-1.5 rounded-[15px] text-[10px] sm:text-[12px] font-medium transition-all ${
                 viewType === 'monthly'
                   ? 'text-white'
                   : 'text-gray-400 hover:text-white'
@@ -140,7 +140,7 @@ export default function UserPointsHistory({ employeeId }: Props) {
           </div>
 
           {/* Stats - stacked vertically */}
-          <div className="flex flex-col text-[12px]">
+          <div className="flex flex-col text-[10px] sm:text-[12px]">
             <div>
               <span className="text-gray-400">Total projects </span>
               <span className="text-white font-semibold">: {projects.length} Projects</span>
@@ -154,7 +154,7 @@ export default function UserPointsHistory({ employeeId }: Props) {
 
         {/* Month/Year Selector - with Rectangle 11 background */}
         <div 
-          className="flex items-center gap-2 px-4 py-2 rounded-[15px]"
+          className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-[15px]"
           style={{
             backgroundImage: 'url(/Rectangle%2011.png)',
             backgroundSize: 'cover',
@@ -165,7 +165,7 @@ export default function UserPointsHistory({ employeeId }: Props) {
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(Number(e.target.value))}
-              className="bg-transparent text-white text-[13px] focus:outline-none cursor-pointer"
+              className="bg-transparent text-white text-[11px] sm:text-[13px] focus:outline-none cursor-pointer"
             >
               {MONTHS.map((m) => (
                 <option key={m.value} value={m.value} className="bg-[#2A2A2A]">{m.label}</option>
@@ -175,7 +175,7 @@ export default function UserPointsHistory({ employeeId }: Props) {
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="bg-transparent text-white text-[13px] focus:outline-none cursor-pointer"
+            className="bg-transparent text-white text-[11px] sm:text-[13px] focus:outline-none cursor-pointer"
           >
             {years.map((y) => (
               <option key={y} value={y} className="bg-[#2A2A2A]">{y}</option>
@@ -185,9 +185,9 @@ export default function UserPointsHistory({ employeeId }: Props) {
       </div>
 
       {/* Table */}
-      <div className="rounded-[25px] border border-[#424242] overflow-hidden p-4">
-        {/* Table Header */}
-        <div className="grid grid-cols-4 px-4 py-3 text-[13px] font-medium border-b border-[#424242]">
+      <div className="rounded-[20px] sm:rounded-[25px] border border-[#424242] overflow-hidden p-2 sm:p-4">
+        {/* Table Header - Hidden on mobile */}
+        <div className="hidden sm:grid grid-cols-4 px-3 sm:px-4 py-2 sm:py-3 text-[11px] sm:text-[13px] font-medium border-b border-[#424242]">
           <div className="text-white">Project</div>
           <div className="text-white">Type</div>
           <div className="text-white">Points</div>
@@ -196,17 +196,32 @@ export default function UserPointsHistory({ employeeId }: Props) {
         
         {/* Table Data */}
         {loading ? (
-          <div className="p-8 text-center text-gray-400">Loading...</div>
+          <div className="p-6 sm:p-8 text-center text-gray-400">Loading...</div>
         ) : projects.length === 0 ? (
-          <div className="p-8 text-center text-gray-400">No completed projects found</div>
+          <div className="p-6 sm:p-8 text-center text-gray-400">No completed projects found</div>
         ) : (
           <div>
             {projects.map((project) => (
-              <div key={project.id} className="grid grid-cols-4 px-4 py-3 text-[13px] items-center">
-                <div className="text-white">{project.name}</div>
-                <div className="text-gray-400">{project.type?.name || 'Unknown'}</div>
-                <div className="text-cyan-400 font-semibold">{getPoints(project)} pts</div>
-                <div className="text-gray-400">{formatDate(project.completed_at!)}</div>
+              <div key={project.id}>
+                {/* Mobile Card View */}
+                <div className="sm:hidden p-3 border-b border-[#424242]/30 last:border-b-0">
+                  <div className="flex justify-between items-start mb-1">
+                    <div className="text-white text-[12px] font-medium flex-1 pr-2">{project.name}</div>
+                    <span className="text-cyan-400 text-[12px] font-semibold">{getPoints(project)} pts</span>
+                  </div>
+                  <div className="flex gap-2 text-[10px]">
+                    <span className="text-gray-400">{project.type?.name || 'Unknown'}</span>
+                    <span className="text-gray-400">• {formatDate(project.completed_at!)}</span>
+                  </div>
+                </div>
+                
+                {/* Desktop Table Row */}
+                <div className="hidden sm:grid grid-cols-4 px-3 sm:px-4 py-2 sm:py-3 text-[11px] sm:text-[13px] items-center">
+                  <div className="text-white">{project.name}</div>
+                  <div className="text-gray-400">{project.type?.name || 'Unknown'}</div>
+                  <div className="text-cyan-400 font-semibold">{getPoints(project)} pts</div>
+                  <div className="text-gray-400">{formatDate(project.completed_at!)}</div>
+                </div>
               </div>
             ))}
           </div>

@@ -87,10 +87,10 @@ export default function ProfilePointsSection({ employeeId }: Props) {
   return (
     <div className="space-y-3">
       {/* Header Row */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
         <div>
-          <h3 className="text-white text-[18px] font-semibold">Points History</h3>
-          <p className="text-[13px]">
+          <h3 className="text-white text-[16px] sm:text-[18px] font-semibold">Points History</h3>
+          <p className="text-[12px] sm:text-[13px]">
             <span className="text-gray-400">Total : </span>
             <span className="text-purple-400 font-semibold">{totalPoints} pts</span>
             <span className="text-gray-400"> ({projects.length} projects)</span>
@@ -99,7 +99,7 @@ export default function ProfilePointsSection({ employeeId }: Props) {
         
         {/* Month/Year Filters - with image background */}
         <div 
-          className="flex items-center gap-2 px-4 py-2 rounded-[15px]"
+          className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-[15px]"
           style={{
             backgroundImage: 'url(/Rectangle%2011.png)',
             backgroundSize: 'cover',
@@ -109,7 +109,7 @@ export default function ProfilePointsSection({ employeeId }: Props) {
           <select
             value={month}
             onChange={(e) => setMonth(Number(e.target.value))}
-            className="bg-transparent text-white text-[13px] focus:outline-none cursor-pointer"
+            className="bg-transparent text-white text-[12px] sm:text-[13px] focus:outline-none cursor-pointer"
           >
             {MONTHS.map((m, idx) => (
               <option key={m} value={idx + 1} className="bg-[#2A2A2A]">{m}</option>
@@ -118,7 +118,7 @@ export default function ProfilePointsSection({ employeeId }: Props) {
           <select
             value={year}
             onChange={(e) => setYear(Number(e.target.value))}
-            className="bg-transparent text-white text-[13px] focus:outline-none cursor-pointer"
+            className="bg-transparent text-white text-[12px] sm:text-[13px] focus:outline-none cursor-pointer"
           >
             {Array.from({ length: 5 }, (_, i) => now.getFullYear() - i).map((y) => (
               <option key={y} value={y} className="bg-[#2A2A2A]">{y}</option>
@@ -128,9 +128,9 @@ export default function ProfilePointsSection({ employeeId }: Props) {
       </div>
 
       {/* Table - Header and Content in ONE container */}
-      <div className="rounded-[25px] border border-[#424242] overflow-hidden p-4">
-        {/* Table Header */}
-        <div className="grid grid-cols-7 px-5 py-3 text-[13px] font-medium" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr 1.2fr' }}>
+      <div className="rounded-[20px] sm:rounded-[25px] border border-[#424242] overflow-hidden p-2 sm:p-4">
+        {/* Table Header - Hidden on mobile, show on sm+ */}
+        <div className="hidden sm:grid grid-cols-7 px-3 sm:px-5 py-2 sm:py-3 text-[11px] sm:text-[13px] font-medium" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr 1.2fr' }}>
           <div className="text-white">Project</div>
           <div className="text-white">Type</div>
           <div className="text-center text-white">Base pts</div>
@@ -142,32 +142,48 @@ export default function ProfilePointsSection({ employeeId }: Props) {
         
         {/* Table Data */}
         {loading ? (
-          <div className="p-8 text-center text-gray-400">Loading...</div>
+          <div className="p-6 sm:p-8 text-center text-gray-400">Loading...</div>
         ) : projects.length === 0 ? (
-          <div className="p-8 text-center text-gray-400">No completed tasks found for this period</div>
+          <div className="p-6 sm:p-8 text-center text-gray-400">No completed tasks found for this period</div>
         ) : (
           <div>
             {projects.map((project) => (
-              <div key={project.id} className="grid grid-cols-7 px-5 py-3 text-[13px] items-center" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr 1.2fr' }}>
-                <div className="text-white font-medium pr-2 break-words">{project.name}</div>
-                <div>
-                  <span className="text-[13px] text-[#60A5FA]">
-                    {project.type?.name || 'Unknown'}
-                  </span>
+              <div key={project.id}>
+                {/* Mobile Card View */}
+                <div className="sm:hidden p-3 border-b border-[#424242]/30 last:border-b-0">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="text-white text-[12px] font-medium flex-1 pr-2">{project.name}</div>
+                    <span className="text-[#6885BC] text-[12px] font-semibold">{getPoints(project)} pts</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-[10px]">
+                    <span className="text-[#60A5FA]">{project.type?.name || 'Unknown'}</span>
+                    <span className="text-gray-400">• {project.creator?.name || 'Unknown'}</span>
+                    <span className="text-gray-400">• {formatDate(project.completed_at)}</span>
+                  </div>
                 </div>
-                <div className="text-center text-gray-400">{getBasePoints(project)}</div>
-                <div className="text-center">
-                  {getOverride(project) > 0 ? (
-                    <span className="text-purple-400 font-medium">{getOverride(project)} pts</span>
-                  ) : (
-                    <span className="text-gray-500">0 pts</span>
-                  )}
+                
+                {/* Desktop Table Row */}
+                <div className="hidden sm:grid grid-cols-7 px-3 sm:px-5 py-2 sm:py-3 text-[11px] sm:text-[13px] items-center" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr 1.2fr' }}>
+                  <div className="text-white font-medium pr-2 break-words">{project.name}</div>
+                  <div>
+                    <span className="text-[11px] sm:text-[13px] text-[#60A5FA]">
+                      {project.type?.name || 'Unknown'}
+                    </span>
+                  </div>
+                  <div className="text-center text-gray-400">{getBasePoints(project)}</div>
+                  <div className="text-center">
+                    {getOverride(project) > 0 ? (
+                      <span className="text-purple-400 font-medium">{getOverride(project)} pts</span>
+                    ) : (
+                      <span className="text-gray-500">0 pts</span>
+                    )}
+                  </div>
+                  <div className="text-center">
+                    <span className="text-[#6885BC] font-semibold">{getPoints(project)} pts</span>
+                  </div>
+                  <div className="text-gray-400 truncate pr-2">{project.creator?.name || 'Unknown'}</div>
+                  <div className="text-gray-400">{formatDate(project.completed_at)}</div>
                 </div>
-                <div className="text-center">
-                  <span className="text-[#6885BC] font-semibold">{getPoints(project)} pts</span>
-                </div>
-                <div className="text-gray-400 truncate pr-2">{project.creator?.name || 'Unknown'}</div>
-                <div className="text-gray-400">{formatDate(project.completed_at)}</div>
               </div>
             ))}
           </div>

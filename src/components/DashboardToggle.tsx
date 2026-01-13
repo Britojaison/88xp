@@ -54,40 +54,40 @@ export default function DashboardToggle() {
   return (
     <div className="space-y-4">
       {/* Toggle and Filters Row */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         {/* Toggle Container */}
-        <div className="w-[280px] h-[50px] rounded-[15px] bg-[#2c2c2c] flex items-center justify-center gap-1 px-2">
+        <div className="w-full sm:w-[280px] h-[45px] sm:h-[50px] rounded-[15px] bg-[#2c2c2c] flex items-center justify-center gap-1 px-2">
           <button
             onClick={() => setActiveView('scoreboard')}
-            className={`w-[120px] h-[36px] rounded-[10px] transition-all duration-200 flex items-center justify-center ${
+            className={`flex-1 sm:w-[120px] h-[32px] sm:h-[36px] rounded-[10px] transition-all duration-200 flex items-center justify-center ${
               activeView === 'scoreboard'
                 ? 'bg-white text-black'
                 : 'bg-transparent text-white hover:text-gray-300'
             }`}
           >
-            <span className="text-[14px] font-bold">Scoreboard</span>
+            <span className="text-[12px] sm:text-[14px] font-bold">Scoreboard</span>
           </button>
           
           <button
             onClick={() => setActiveView('tasks')}
-            className={`w-[120px] h-[36px] rounded-[10px] transition-all duration-200 flex items-center justify-center ${
+            className={`flex-1 sm:w-[120px] h-[32px] sm:h-[36px] rounded-[10px] transition-all duration-200 flex items-center justify-center ${
               activeView === 'tasks'
                 ? 'bg-white text-black'
                 : 'bg-transparent text-white hover:text-gray-300'
             }`}
           >
-            <span className="text-[14px] font-bold">Projects</span>
+            <span className="text-[12px] sm:text-[14px] font-bold">Projects</span>
           </button>
         </div>
 
         {/* Filter Dropdowns - Only show when Projects tab is active */}
         {activeView === 'tasks' && (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Month Filter */}
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(Number(e.target.value))}
-              className="h-[40px] px-4 rounded-[10px] bg-[#2c2c2c] text-white text-[13px] font-medium border border-[#424242] focus:outline-none focus:border-[#5e5e5e] cursor-pointer"
+              className="h-[36px] sm:h-[40px] px-2 sm:px-4 rounded-[10px] bg-[#2c2c2c] text-white text-[11px] sm:text-[13px] font-medium border border-[#424242] focus:outline-none focus:border-[#5e5e5e] cursor-pointer"
             >
               {MONTHS.map((month) => (
                 <option key={month.value} value={month.value}>
@@ -100,7 +100,7 @@ export default function DashboardToggle() {
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="h-[40px] px-4 rounded-[10px] bg-[#2c2c2c] text-white text-[13px] font-medium border border-[#424242] focus:outline-none focus:border-[#5e5e5e] cursor-pointer"
+              className="h-[36px] sm:h-[40px] px-2 sm:px-4 rounded-[10px] bg-[#2c2c2c] text-white text-[11px] sm:text-[13px] font-medium border border-[#424242] focus:outline-none focus:border-[#5e5e5e] cursor-pointer"
             >
               {years.map((year) => (
                 <option key={year.value} value={year.value}>
@@ -113,7 +113,7 @@ export default function DashboardToggle() {
       </div>
 
       {activeView === 'scoreboard' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <Scoreboard />
           <YearlyScoreboard />
         </div>

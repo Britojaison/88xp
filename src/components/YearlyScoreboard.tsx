@@ -63,13 +63,13 @@ export default function YearlyScoreboard() {
       {/* Header with filter - OUTSIDE the table */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h3 className="text-white text-[14px] font-semibold">Yearly scoreboard</h3>
-          <p className="text-gray-500 text-[11px]">{MONTH_NAMES[now.getMonth()]} {selectedYear}</p>
+          <h3 className="text-white text-[13px] sm:text-[14px] font-semibold">Yearly scoreboard</h3>
+          <p className="text-gray-500 text-[10px] sm:text-[11px]">{MONTH_NAMES[now.getMonth()]} {selectedYear}</p>
         </div>
         <select
           value={selectedYear}
           onChange={(e) => setSelectedYear(Number(e.target.value))}
-          className="bg-transparent text-white text-[12px] border-none focus:outline-none cursor-pointer"
+          className="bg-transparent text-white text-[10px] sm:text-[12px] border-none focus:outline-none cursor-pointer"
         >
           {years.map((y) => (
             <option key={y} value={y} className="bg-black">
@@ -80,11 +80,11 @@ export default function YearlyScoreboard() {
       </div>
 
       {/* Table Container */}
-      <div className="rounded-[25px] border border-[#424242] bg-black p-5 flex-1">
+      <div className="rounded-[20px] sm:rounded-[25px] border border-[#424242] bg-black p-3 sm:p-5 flex-1">
         {loading ? (
-          <div className="animate-pulse h-[300px]"></div>
+          <div className="animate-pulse h-[200px] sm:h-[300px]"></div>
         ) : scores.length === 0 ? (
-          <p className="text-gray-400 text-center py-8 text-[12px]">
+          <p className="text-gray-400 text-center py-6 sm:py-8 text-[11px] sm:text-[12px]">
             No scores yet
           </p>
         ) : (
@@ -93,18 +93,18 @@ export default function YearlyScoreboard() {
               <Link
                 key={entry.id}
                 href={`/user/${entry.employee_id}`}
-                className="flex items-center justify-between py-2 hover:bg-white/5 rounded-lg px-2 transition-colors"
+                className="flex items-center justify-between py-1.5 sm:py-2 hover:bg-white/5 rounded-lg px-1 sm:px-2 transition-colors"
               >
-                <div className="flex items-center gap-3">
-                  <span className="text-[14px]">{getMedalIcon(index)}</span>
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <span className="text-[12px] sm:text-[14px]">{getMedalIcon(index)}</span>
                   <div>
-                    <span className="text-white text-[13px] font-semibold">{entry.employee_name}</span>
-                    <span className="text-gray-400 text-[11px] ml-1">({entry.project_count} projects)</span>
+                    <span className="text-white text-[11px] sm:text-[13px] font-semibold">{entry.employee_name}</span>
+                    <span className="text-gray-400 text-[9px] sm:text-[11px] ml-1">({entry.project_count} projects)</span>
                   </div>
                 </div>
                 <div className="flex items-center">
-                  <span className="text-purple-400 text-[13px] font-bold">{entry.total_points}</span>
-                  <span className="text-gray-500 text-[10px] ml-1">pts</span>
+                  <span className="text-purple-400 text-[11px] sm:text-[13px] font-bold">{entry.total_points}</span>
+                  <span className="text-gray-500 text-[8px] sm:text-[10px] ml-1">pts</span>
                 </div>
               </Link>
             ))}

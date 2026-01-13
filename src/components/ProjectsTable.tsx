@@ -62,7 +62,7 @@ export default function ProjectsTable({ filterMonth = 0, filterYear = 0 }: Proje
 
     const { data } = await query;
 
-    const transform = (items: typeof data) => (items || []).map(p => ({
+    const transform = (items: typeof data) => (items || []).map((p: Record<string, unknown>) => ({
       ...p,
       assignee: Array.isArray(p.assignee) ? p.assignee[0] : p.assignee,
       brand: Array.isArray(p.brand) ? p.brand[0] : p.brand,
@@ -94,45 +94,57 @@ export default function ProjectsTable({ filterMonth = 0, filterYear = 0 }: Proje
   return (
     <div className="space-y-3">
       {/* Table Header */}
-      <div className="rounded-[20px] border border-[#424242] bg-black px-5 h-[50px] flex items-center">
+      <div className="rounded-[15px] sm:rounded-[20px] border border-[#424242] bg-black px-3 sm:px-5 h-[40px] sm:h-[50px] hidden sm:flex items-center">
         <div className="grid grid-cols-5 gap-2 w-full">
-          <div className="text-white text-[13px] font-semibold">Client Name</div>
-          <div className="text-white text-[13px] font-semibold">Project Title</div>
-          <div className="text-white text-[13px] font-semibold">Name</div>
-          <div className="text-white text-[13px] font-semibold">Assigned On</div>
-          <div className="text-white text-[13px] font-semibold">Content Type</div>
+          <div className="text-white text-[11px] sm:text-[13px] font-semibold">Client Name</div>
+          <div className="text-white text-[11px] sm:text-[13px] font-semibold">Project Title</div>
+          <div className="text-white text-[11px] sm:text-[13px] font-semibold">Name</div>
+          <div className="text-white text-[11px] sm:text-[13px] font-semibold">Assigned On</div>
+          <div className="text-white text-[11px] sm:text-[13px] font-semibold">Content Type</div>
         </div>
       </div>
 
       {/* Table Body */}
-      <div className="rounded-[20px] border border-[#424242] bg-black overflow-hidden py-2">
+      <div className="rounded-[15px] sm:rounded-[20px] border border-[#424242] bg-black overflow-hidden py-2">
         {projects.length === 0 ? (
-          <div className="px-5 py-8 text-center">
-            <p className="text-gray-400 text-[13px] font-semibold">No projects found</p>
+          <div className="px-3 sm:px-5 py-6 sm:py-8 text-center">
+            <p className="text-gray-400 text-[11px] sm:text-[13px] font-semibold">No projects found</p>
           </div>
         ) : (
           <div>
             {projects.map((project, index) => (
               <div 
                 key={project.id} 
-                className={`px-5 py-3 ${
+                className={`px-3 sm:px-5 py-2 sm:py-3 ${
                   index !== projects.length - 1 ? 'border-b border-[#424242]/30' : ''
                 }`}
               >
-                <div className="grid grid-cols-5 gap-4 w-full">
-                  <div className="text-white text-[13px] font-medium break-words">
+                {/* Mobile Card View */}
+                <div className="sm:hidden">
+                  <div className="text-white text-[12px] font-medium mb-1">{project.name}</div>
+                  <div className="flex flex-wrap gap-2 text-[10px] text-gray-400">
+                    <span>{project.brand?.name || '-'}</span>
+                    <span>• {project.assignee?.name || 'Unassigned'}</span>
+                    <span>• {formatDate(project.created_at)}</span>
+                    <span>• {project.type?.name || '-'}</span>
+                  </div>
+                </div>
+                
+                {/* Desktop Table Row */}
+                <div className="hidden sm:grid grid-cols-5 gap-4 w-full">
+                  <div className="text-white text-[11px] sm:text-[13px] font-medium break-words">
                     {project.brand?.name || '-'}
                   </div>
-                  <div className="text-white text-[13px] font-medium break-words">
+                  <div className="text-white text-[11px] sm:text-[13px] font-medium break-words">
                     {project.name}
                   </div>
-                  <div className="text-white text-[13px] font-medium break-words">
+                  <div className="text-white text-[11px] sm:text-[13px] font-medium break-words">
                     {project.assignee?.name || 'Unassigned'}
                   </div>
-                  <div className="text-white text-[13px] font-medium">
+                  <div className="text-white text-[11px] sm:text-[13px] font-medium">
                     {formatDate(project.created_at)}
                   </div>
-                  <div className="text-white text-[13px] font-medium break-words">
+                  <div className="text-white text-[11px] sm:text-[13px] font-medium break-words">
                     {project.type?.name || '-'}
                   </div>
                 </div>
