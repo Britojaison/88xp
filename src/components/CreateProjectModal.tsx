@@ -162,7 +162,7 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
 
   return (
     <div 
-      className="fixed inset-0 flex items-start justify-end z-50 pt-[120px] pr-[40px]"
+      className="fixed inset-0 flex items-start justify-end z-50 pt-[20px] pr-[40px]"
       onClick={onClose}
     >
       <div 

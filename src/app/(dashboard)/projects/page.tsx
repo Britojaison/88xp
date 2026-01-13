@@ -37,6 +37,32 @@ type StatusFilter = 'all' | 'ongoing' | 'completed';
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+// Helper function to render remarks with clickable links
+const renderRemarks = (text: string) => {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+  
+  return parts.map((part, index) => {
+    if (urlRegex.test(part)) {
+      // Reset regex lastIndex since we're reusing it
+      urlRegex.lastIndex = 0;
+      return (
+        <a
+          key={index}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-400 hover:text-blue-300 underline break-all"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {part}
+        </a>
+      );
+    }
+    return <span key={index}>{part}</span>;
+  });
+};
+
 export default function TasksPage() {
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [employees, setEmployees] = useState<EmployeeOption[]>([]);
@@ -331,8 +357,8 @@ export default function TasksPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-4">
-        {/* Employee Filter - W 122, H 50, radius 15, stroke image */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        {/* Left side - Employee Filter */}
         <div className="flex items-center gap-2">
           <span className="text-white text-[14px] font-medium">Employee</span>
           <div 
@@ -361,68 +387,71 @@ export default function TasksPage() {
           </div>
         </div>
 
-        {/* Status Filter - W 370, H 50, stroke image (Rectangle 19) */}
-        <div className="flex items-center gap-2">
-          <span className="text-white text-[14px] font-medium">Status</span>
-          <div 
-            className="relative h-[50px] w-[370px] rounded-[15px]"
-            style={{
-              backgroundImage: 'url(/Rectangle%2019.png)',
-              backgroundSize: '100% 100%',
-              backgroundRepeat: 'no-repeat'
-            }}
-          >
-            <div className="absolute inset-[1px] rounded-[15px] bg-black flex items-center">
-              {(['all', 'ongoing', 'completed'] as StatusFilter[]).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setStatusFilter(s)}
-                  className={`h-full flex-1 rounded-[15px] text-[14px] font-medium transition-all relative ${
-                    statusFilter === s ? 'text-white' : 'text-white hover:bg-white/5'
-                  }`}
-                >
-                  {statusFilter === s && (
-                    <div 
-                      className="absolute inset-0 rounded-[15px]"
-                      style={{
-                        backgroundImage: 'url(/Rectangle%2023.png)',
-                        backgroundSize: '100% 100%',
-                        backgroundRepeat: 'no-repeat'
-                      }}
-                    />
-                  )}
-                  <span className="relative z-10">{s === 'all' ? 'All' : s === 'ongoing' ? 'Ongoing' : 'Completed'}</span>
-                </button>
-              ))}
+        {/* Right side - Status and Year Filters */}
+        <div className="flex items-center gap-4">
+          {/* Status Filter */}
+          <div className="flex items-center gap-2">
+            <span className="text-white text-[14px] font-medium">Status</span>
+            <div 
+              className="relative h-[50px] w-[370px] rounded-[15px]"
+              style={{
+                backgroundImage: 'url(/Rectangle%2019.png)',
+                backgroundSize: '100% 100%',
+                backgroundRepeat: 'no-repeat'
+              }}
+            >
+              <div className="absolute inset-[1px] rounded-[15px] bg-black flex items-center">
+                {(['all', 'ongoing', 'completed'] as StatusFilter[]).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setStatusFilter(s)}
+                    className={`h-full flex-1 rounded-[15px] text-[14px] font-medium transition-all relative ${
+                      statusFilter === s ? 'text-white' : 'text-white hover:bg-white/5'
+                    }`}
+                  >
+                    {statusFilter === s && (
+                      <div 
+                        className="absolute inset-0 rounded-[15px]"
+                        style={{
+                          backgroundImage: 'url(/Rectangle%2023.png)',
+                          backgroundSize: '100% 100%',
+                          backgroundRepeat: 'no-repeat'
+                        }}
+                      />
+                    )}
+                    <span className="relative z-10">{s === 'all' ? 'All' : s === 'ongoing' ? 'Ongoing' : 'Completed'}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Year Filter - W 122, H 50, radius 15, stroke image */}
-        <div className="flex items-center gap-2">
-          <span className="text-white text-[14px] font-medium">Year</span>
-          <div 
-            className="relative h-[50px] w-[122px] rounded-[15px]"
-            style={{
-              backgroundImage: 'url(/Rectangle%2019.png)',
-              backgroundSize: '100% 100%',
-              backgroundRepeat: 'no-repeat'
-            }}
-          >
-            <select
-              value={yearFilter}
-              onChange={(e) => setYearFilter(e.target.value)}
-              className="absolute inset-[1px] rounded-[15px] bg-black text-white px-4 text-[14px] appearance-none cursor-pointer focus:outline-none"
+          {/* Year Filter */}
+          <div className="flex items-center gap-2">
+            <span className="text-white text-[14px] font-medium">Year</span>
+            <div 
+              className="relative h-[50px] w-[122px] rounded-[15px]"
+              style={{
+                backgroundImage: 'url(/Rectangle%2019.png)',
+                backgroundSize: '100% 100%',
+                backgroundRepeat: 'no-repeat'
+              }}
             >
-              <option value="all">All</option>
-              {availableYears.map((y) => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-              <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
-                <path d="M1 1.5L6 6.5L11 1.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <select
+                value={yearFilter}
+                onChange={(e) => setYearFilter(e.target.value)}
+                className="absolute inset-[1px] rounded-[15px] bg-black text-white px-4 text-[14px] appearance-none cursor-pointer focus:outline-none"
+              >
+                <option value="all">All</option>
+                {availableYears.map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
+                  <path d="M1 1.5L6 6.5L11 1.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
             </div>
           </div>
         </div>
@@ -437,34 +466,39 @@ export default function TasksPage() {
           {ongoingTasks.length === 0 ? (
             <div className="p-8 text-center text-gray-400 text-sm">No ongoing tasks</div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="px-6">
               <table className="w-full">
                 <thead>
                   <tr>
-                    <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">PROJECT TITLE</th>
-                    <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">ASSIGNED TO</th>
-                    <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">CREATED BY</th>
-                    <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">STATUS</th>
-                    <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">TYPE</th>
-                    <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">POINTS</th>
-                    <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">ASSIGNED DATE</th>
-                    <th className="px-6 py-3 text-center text-[#747474] text-[13px] font-medium whitespace-nowrap">ACTION</th>
+                    <th className="px-2 py-3 text-left text-[#747474] text-[12px] font-medium whitespace-nowrap">PROJECT TITLE</th>
+                    <th className="px-2 py-3 text-left text-[#747474] text-[12px] font-medium whitespace-nowrap">ASSIGNED TO</th>
+                    <th className="px-2 py-3 text-left text-[#747474] text-[12px] font-medium whitespace-nowrap">CREATED BY</th>
+                    <th className="px-2 py-3 text-left text-[#747474] text-[12px] font-medium whitespace-nowrap">STATUS</th>
+                    <th className="px-2 py-3 text-left text-[#747474] text-[12px] font-medium whitespace-nowrap">TYPE</th>
+                    <th className="px-2 py-3 text-left text-[#747474] text-[12px] font-medium whitespace-nowrap">POINTS</th>
+                    <th className="px-2 py-3 text-left text-[#747474] text-[12px] font-medium whitespace-nowrap">ASSIGNED DATE</th>
+                    <th className="px-2 py-3 text-left text-[#747474] text-[12px] font-medium whitespace-nowrap">ACTION</th>
                   </tr>
                 </thead>
                 <tbody>
                   {ongoingTasks.map((task, index) => (
                     <tr key={task.id}>
-                      <td className="px-6 py-4 text-white text-[14px] font-medium">{task.name}</td>
-                      <td className="px-6 py-4 text-white text-[14px]">{task.assignee?.name || '-'}</td>
-                      <td className="px-6 py-4 text-white text-[14px]">{task.creator?.name || '-'}</td>
-                      <td className="px-6 py-4">
-                        <span className="text-purple-400 text-[14px] font-medium">Pending</span>
+                      <td className="px-2 py-4">
+                        <div className="text-white text-[13px] font-medium break-words">{task.name}</div>
+                        {task.remarks && (isRank1 || currentUser?.id === task.assigned_to) && (
+                          <div className="text-gray-400 text-[11px] mt-1 break-words">{renderRemarks(task.remarks)}</div>
+                        )}
                       </td>
-                      <td className="px-6 py-4 text-white text-[14px]">{task.type?.name || '-'}</td>
-                      <td className="px-6 py-4 text-blue-400 text-[14px] font-medium">{getPoints(task)} pts</td>
-                      <td className="px-6 py-4 text-white text-[14px]">{formatDateShort(task.created_at)}</td>
-                      <td className="px-6 py-4 text-center">
-                        <div className="flex items-center justify-center gap-4">
+                      <td className="px-2 py-4 text-white text-[13px]">{task.assignee?.name || '-'}</td>
+                      <td className="px-2 py-4 text-white text-[13px]">{task.creator?.name || '-'}</td>
+                      <td className="px-2 py-4">
+                        <span className="text-purple-400 text-[13px] font-medium">Pending</span>
+                      </td>
+                      <td className="px-2 py-4 text-white text-[13px]">{task.type?.name || '-'}</td>
+                      <td className="px-2 py-4 text-blue-400 text-[13px] font-medium">{getPoints(task)} pts</td>
+                      <td className="px-2 py-4 text-white text-[13px]">{formatDateShort(task.created_at)}</td>
+                      <td className="px-2 py-4">
+                        <div className="flex items-center gap-3">
                           {canEdit(task) && (
                             <button
                               onClick={() => setEditingTask(task)}
@@ -515,38 +549,43 @@ export default function TasksPage() {
         {completedTasks.length === 0 ? (
           <div className="p-8 text-center text-gray-400 text-sm">No completed tasks</div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="px-6">
             <table className="w-full">
               <thead>
                 <tr>
-                  <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">PROJECT TITLE</th>
-                  <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">COMPLETED BY</th>
-                  <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">CREATED BY</th>
-                  <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">STATUS</th>
-                  <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">TYPE</th>
-                  <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">POINTS</th>
-                  <th className="px-6 py-3 text-left text-[#747474] text-[13px] font-medium whitespace-nowrap">FINISHED ON</th>
-                  <th className="px-6 py-3 text-center text-[#747474] text-[13px] font-medium whitespace-nowrap">ACTION</th>
+                  <th className="px-2 py-3 text-left text-[#747474] text-[12px] font-medium whitespace-nowrap">PROJECT TITLE</th>
+                  <th className="px-2 py-3 text-left text-[#747474] text-[12px] font-medium whitespace-nowrap">COMPLETED BY</th>
+                  <th className="px-2 py-3 text-left text-[#747474] text-[12px] font-medium whitespace-nowrap">CREATED BY</th>
+                  <th className="px-2 py-3 text-left text-[#747474] text-[12px] font-medium whitespace-nowrap">STATUS</th>
+                  <th className="px-2 py-3 text-left text-[#747474] text-[12px] font-medium whitespace-nowrap">TYPE</th>
+                  <th className="px-2 py-3 text-left text-[#747474] text-[12px] font-medium whitespace-nowrap">POINTS</th>
+                  <th className="px-2 py-3 text-left text-[#747474] text-[12px] font-medium whitespace-nowrap">FINISHED ON</th>
+                  <th className="px-2 py-3 text-left text-[#747474] text-[12px] font-medium whitespace-nowrap">ACTION</th>
                 </tr>
               </thead>
               <tbody>
                 {completedTasks.map((task, index) => (
                   <tr key={task.id}>
-                    <td className="px-6 py-4 text-white text-[14px] font-medium">{task.name}</td>
-                    <td className="px-6 py-4 text-white text-[14px]">{task.assignee?.name || '-'}</td>
-                    <td className="px-6 py-4 text-white text-[14px]">{task.creator?.name || '-'}</td>
-                    <td className="px-6 py-4">
-                      <span className="text-white text-[14px] font-medium">Completed</span>
+                    <td className="px-2 py-4">
+                      <div className="text-white text-[13px] font-medium break-words">{task.name}</div>
+                      {task.remarks && (isRank1 || currentUser?.id === task.assigned_to) && (
+                        <div className="text-gray-400 text-[11px] mt-1 break-words">{renderRemarks(task.remarks)}</div>
+                      )}
                     </td>
-                    <td className="px-6 py-4 text-white text-[14px]">{task.type?.name || '-'}</td>
-                    <td className="px-6 py-4">
+                    <td className="px-2 py-4 text-white text-[13px]">{task.assignee?.name || '-'}</td>
+                    <td className="px-2 py-4 text-white text-[13px]">{task.creator?.name || '-'}</td>
+                    <td className="px-2 py-4">
+                      <span className="text-white text-[13px] font-medium">Completed</span>
+                    </td>
+                    <td className="px-2 py-4 text-white text-[13px]">{task.type?.name || '-'}</td>
+                    <td className="px-2 py-4">
                       {editingTaskId === task.id ? (
                         <div className="flex items-center gap-1">
                           <input
                             type="number"
                             value={overridePoints}
                             onChange={(e) => setOverridePoints(Number(e.target.value))}
-                            className="w-16 border border-[#424242] rounded px-2 py-1 text-center text-[14px] bg-black text-white"
+                            className="w-14 border border-[#424242] rounded px-1 py-1 text-center text-[12px] bg-black text-white"
                             min={0}
                             autoFocus
                           />
@@ -555,7 +594,7 @@ export default function TasksPage() {
                             disabled={saving}
                             className="text-white hover:opacity-80 transition-opacity"
                           >
-                            {saving ? '...' : <CheckIcon className="w-4 h-4" />}
+                            {saving ? '...' : <CheckIcon className="w-3 h-3" />}
                           </button>
                           <button
                             onClick={cancelEditing}
@@ -565,42 +604,44 @@ export default function TasksPage() {
                           </button>
                         </div>
                       ) : (
-                        <span className="text-emerald-400 text-[14px] font-medium">
+                        <span className="text-emerald-400 text-[13px] font-medium">
                           +{getPoints(task)} pts
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-white text-[14px]">
+                    <td className="px-2 py-4 text-white text-[13px]">
                       {task.completed_at ? formatDateShort(task.completed_at) : '-'}
                     </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center gap-3">
+                    <td className="px-2 py-4">
+                      <div className="flex items-center gap-2">
+                        {/* Toggle to move back to pending */}
+                        {(isRank1 || currentUser?.id === task.assigned_to) && (
+                          <button
+                            onClick={() => handleStatusChange(task.id, 'pending')}
+                            className="relative w-9 h-5 rounded-full bg-emerald-500 transition-colors flex-shrink-0"
+                            title="Move back to pending"
+                          >
+                            <div className="absolute right-0.5 top-0.5 w-4 h-4 rounded-full bg-white transition-transform" />
+                          </button>
+                        )}
                         {isRank1 && editingTaskId !== task.id && (
                           <button
                             onClick={() => startEditing(task)}
-                            className="h-[45px] w-[111px] rounded-[50px] relative overflow-hidden"
-                            style={{
-                              backgroundImage: 'url(/Rectangle%20393.png)',
-                              backgroundSize: '100% 100%',
-                              backgroundRepeat: 'no-repeat',
-                              backgroundPosition: 'center'
-                            }}
+                            className="text-blue-400 hover:text-blue-300 text-[11px] font-medium"
                           >
-                            <div className="absolute inset-[1px] rounded-[50px] bg-black flex items-center justify-center">
-                              <span className="text-white text-[14px] font-medium">Override</span>
-                            </div>
+                            Override
                           </button>
                         )}
                         {canDelete(task) && (
                           <button
                             onClick={() => handleDelete(task.id)}
-                            className="hover:opacity-80 transition-opacity"
+                            className="hover:opacity-80 transition-opacity flex-shrink-0"
                             title="Delete"
                           >
-                            <img src="/trash.png" alt="Delete" className="w-4 h-5" />
+                            <img src="/trash.png" alt="Delete" className="w-3 h-4" />
                           </button>
                         )}
-                        {!isRank1 && !canDelete(task) && (
+                        {!isRank1 && !canDelete(task) && !(currentUser?.id === task.assigned_to) && (
                           <span className="text-gray-500 text-[12px]">-</span>
                         )}
                       </div>
