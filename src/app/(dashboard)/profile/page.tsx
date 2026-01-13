@@ -78,7 +78,7 @@ export default function ProfilePage() {
 
     if (projects && projects.length > 0) {
       const years = new Set<number>();
-      projects.forEach((project) => {
+      projects.forEach((project: any) => {
         const year = new Date(project.completed_at).getFullYear();
         years.add(year);
       });

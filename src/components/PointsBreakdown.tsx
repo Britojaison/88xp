@@ -75,7 +75,7 @@ export default function PointsBreakdown({ employeeId, month, year }: Props) {
     }
 
     // Transform the data to handle Supabase's array response for joins
-    const transformed = (data || []).map(p => ({
+    const transformed = (data || []).map((p: any) => ({
       ...p,
       type: Array.isArray(p.type) ? p.type[0] : p.type,
       creator: Array.isArray(p.creator) ? p.creator[0] : p.creator,

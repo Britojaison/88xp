@@ -81,7 +81,7 @@ export default function ActiveProjects() {
       .lte('completed_at', endDateStr)
       .order('completed_at', { ascending: false });
 
-    const transform = (items: typeof ongoingData) => (items || []).map(p => ({
+    const transform = (items: typeof ongoingData) => (items || []).map((p: any) => ({
       ...p,
       assignee: Array.isArray(p.assignee) ? p.assignee[0] : p.assignee,
       type: Array.isArray(p.type) ? p.type[0] : p.type,

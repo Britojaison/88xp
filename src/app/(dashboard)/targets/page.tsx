@@ -81,7 +81,7 @@ export default function TargetsPage() {
     }
 
     // For each employee, get or create their target for current month
-    const targetPromises = employees.map(async (emp) => {
+    const targetPromises = employees.map(async (emp: any) => {
       const { data: targetData } = await supabase
         .rpc('get_or_create_monthly_target', {
           p_employee_id: emp.id,
