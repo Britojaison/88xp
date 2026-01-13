@@ -37,7 +37,7 @@ const getFillColor = (count: number): string => {
   return '#1d4ed8';
 };
 
-export default function ContributionGraph({ employeeId, showLegend = true, selectedYear }: Props) {
+export default function ContributionGraph({ employeeId, showLegend = true, selectedYear, onYearChange }: Props) {
   const [contributions, setContributions] = useState<Map<string, { count: number; points: number }>>(new Map());
   const [loading, setLoading] = useState(true);
   const [totalProjects, setTotalProjects] = useState(0);

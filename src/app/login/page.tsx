@@ -246,7 +246,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-[30px] sm:h-[32px] xl:h-[35px] text-white font-medium disabled:opacity-50 transition-all duration-200 text-xs sm:text-sm xl:text-base rounded-full"
+                className="px-8 sm:px-12 xl:px-16 h-[30px] sm:h-[32px] xl:h-[35px] text-white font-medium disabled:opacity-50 transition-all duration-200 text-xs sm:text-sm xl:text-base rounded-full"
                 style={{ 
                   backgroundColor: '#B57BC5'
                 }}
