@@ -16,6 +16,11 @@ interface Employee {
   rank: number;
 }
 
+interface Brand {
+  id: string;
+  name: string;
+}
+
 interface Task {
   id: string;
   name: string;
@@ -26,6 +31,7 @@ interface Task {
   remarks?: string | null;
   points_override?: number | null;
   created_at?: string | null;
+  brand_id?: string | null;
 }
 
 interface Props {
@@ -49,6 +55,7 @@ export default function EditTaskModal({
 }: Props) {
   const [name, setName] = useState(task.name);
   const [typeId, setTypeId] = useState(task.type?.id || '');
+  const [brandId, setBrandId] = useState(task.brand_id || '');
   const [assignTo, setAssignTo] = useState(task.assigned_to);
   const [deadlineDate, setDeadlineDate] = useState('');
   const [dueDateInput, setDueDateInput] = useState('');
@@ -58,6 +65,7 @@ export default function EditTaskModal({
   const [remarks, setRemarks] = useState(task.remarks || '');
   const [customPoints, setCustomPoints] = useState(task.points_override?.toString() || '');
   const [types, setTypes] = useState<ProjectType[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -100,9 +108,10 @@ export default function EditTaskModal({
   }, []);
 
   const fetchData = async () => {
-    const [typesRes, employeesRes] = await Promise.all([
+    const [typesRes, employeesRes, brandsRes] = await Promise.all([
       supabase.from('project_types').select('*').order('points'),
       supabase.from('employees').select('id, name, rank').eq('is_admin', false).order('rank'),
+      supabase.from('brands').select('id, name').order('name'),
     ]);
 
     // Sort types: Story first, Other last, rest in ascending order
@@ -115,6 +124,7 @@ export default function EditTaskModal({
     });
 
     setTypes(sortedTypes);
+    setBrands(brandsRes.data || []);
     
     // Filter employees that can be assigned to using centralized logic
     const assignable = (employeesRes.data || []).filter(
@@ -168,6 +178,7 @@ export default function EditTaskModal({
     const updates: Record<string, unknown> = {
       name,
       type_id: typeId || null,
+      brand_id: brandId || null,
       assigned_to: assignTo,
       deadline: deadlineValue,
       remarks: remarks || null,
@@ -243,6 +254,26 @@ export default function EditTaskModal({
                 {employees.map((emp) => (
                   <option key={emp.id} value={emp.id}>
                     {emp.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Brand Name */}
+            <div>
+              <label className="block text-white text-[13px] font-medium mb-1">Brand Name</label>
+              <select
+                value={brandId}
+                onChange={(e) => setBrandId(e.target.value)}
+                className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black text-[13px]"
+                style={{
+                  border: '1px solid #D3FEE4',
+                }}
+              >
+                <option value="">Select a brand...</option>
+                {brands.map((brand) => (
+                  <option key={brand.id} value={brand.id}>
+                    {brand.name}
                   </option>
                 ))}
               </select>

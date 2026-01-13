@@ -217,6 +217,26 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
             </select>
           </div>
 
+          {/* Brand Name */}
+          <div>
+            <label className="block text-white text-[13px] font-medium mb-1">Brand Name</label>
+            <select
+              value={brandId}
+              onChange={(e) => setBrandId(e.target.value)}
+              className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black text-[13px]"
+              style={{
+                border: '1px solid #D3FEE4',
+              }}
+            >
+              <option value="">Select a brand...</option>
+              {brands.map((brand) => (
+                <option key={brand.id} value={brand.id}>
+                  {brand.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Content Type */}
           <div>
             <label className="block text-white text-[13px] font-medium mb-1">Content Type</label>
