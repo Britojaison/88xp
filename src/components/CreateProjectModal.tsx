@@ -56,7 +56,7 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
     ]);
 
     // Sort types: Story first, Other last, rest in ascending order
-    const sortedTypes = (typesRes.data || []).sort((a, b) => {
+    const sortedTypes = (typesRes.data || []).sort((a: any, b: any) => {
       if (a.name === 'Story') return -1;
       if (b.name === 'Story') return 1;
       if (a.name === 'Other') return 1;
@@ -69,7 +69,7 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
     
     // Filter employees that can be assigned to using centralized logic
     const assignable = (employeesRes.data || []).filter(
-      (e) => canAssignTo(currentUserRank, e.rank, currentUserId, e.id)
+      (e: any) => canAssignTo(currentUserRank, e.rank, currentUserId, e.id)
     );
     setEmployees(assignable);
 

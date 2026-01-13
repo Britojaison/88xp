@@ -72,7 +72,7 @@ export default function RecentProjects({ employeeId, employeeName }: Props) {
       return;
     }
 
-    const transformed = (data || []).map(p => ({
+    const transformed = (data || []).map((p: any) => ({
       ...p,
       type: Array.isArray(p.type) ? p.type[0] : p.type,
     })) as Project[];

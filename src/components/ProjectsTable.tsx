@@ -62,7 +62,7 @@ export default function ProjectsTable({ filterMonth = 0, filterYear = 0 }: Proje
 
     const { data } = await query;
 
-    const transform = (items: typeof data) => (items || []).map(p => ({
+    const transform = (items: typeof data) => (items || []).map((p: any) => ({
       ...p,
       assignee: Array.isArray(p.assignee) ? p.assignee[0] : p.assignee,
       brand: Array.isArray(p.brand) ? p.brand[0] : p.brand,
