@@ -47,6 +47,44 @@ export default async function PublicProfilePage({ params }: Props) {
     .eq('assigned_to', employee.id)
     .in('status', ['completed', 'approved']);
 
+  const { data: targetData } = await supabase
+    .from('monthly_targets')
+    .select('target_points')
+    .eq('employee_id', employee.id)
+    .eq('month', currentMonth)
+    .eq('year', currentYear)
+    .single();
+
+  // Determine which badges are achieved
+  const totalPoints = yearlyScore?.total_points || 0;
+  const totalProjects = yearlyScore?.project_count || 0;
+  const monthlyPoints = monthlyScore?.total_points || 0;
+  const monthlyTarget = targetData?.target_points || 100;
+  
+  const achievedBadges = new Set<number>();
+  // Badge 1: Achieve 50 points (example)
+  if (totalPoints >= 50) achievedBadges.add(0);
+  // Badge 2: Complete 10 projects (example)
+  if (totalProjects >= 10) achievedBadges.add(1);
+  // Badge 3: Achieve monthly target (example)
+  if (monthlyPoints >= monthlyTarget) achievedBadges.add(2);
+  // Badge 4: Achieve 200 points (example)
+  if (totalPoints >= 200) achievedBadges.add(3);
+  // Badge 5: (customize condition)
+  // if (condition) achievedBadges.add(4);
+  // Badge 6: (customize condition)
+  // if (condition) achievedBadges.add(5);
+  // Badge 7: (customize condition)
+  // if (condition) achievedBadges.add(6);
+  // Badge 8: (customize condition)
+  // if (condition) achievedBadges.add(7);
+  // Badge 9: (customize condition)
+  // if (condition) achievedBadges.add(8);
+  // Badge 10: (customize condition)
+  // if (condition) achievedBadges.add(9);
+  // Badge 11: (customize condition)
+  // if (condition) achievedBadges.add(10);
+
   return (
     <div className="space-y-4 sm:space-y-5">
       {/* Back link */}
@@ -122,12 +160,66 @@ export default async function PublicProfilePage({ params }: Props) {
           {/* Badges Section - Below Activity Timeline */}
           <div>
             <h3 className="text-white text-[13px] sm:text-[14px] font-semibold mb-2">Badges</h3>
-            <div className="rounded-[20px] border border-white/10 p-3 sm:p-5">
-              <div className="flex items-center justify-around">
-                <div className="w-[40px] h-[40px] sm:w-[55px] sm:h-[55px] rounded-full bg-gray-700/30 border border-gray-600"></div>
-                <div className="w-[40px] h-[40px] sm:w-[55px] sm:h-[55px] rounded-full bg-gray-700/30 border border-gray-600"></div>
-                <div className="w-[40px] h-[40px] sm:w-[55px] sm:h-[55px] rounded-full bg-gray-700/30 border border-gray-600"></div>
-                <div className="w-[40px] h-[40px] sm:w-[55px] sm:h-[55px] rounded-full bg-gray-700/30 border border-gray-600"></div>
+            <div className="rounded-[20px] border border-white/10 p-0">
+              <div className="grid grid-cols-6 gap-1 sm:gap-1.5 items-start justify-items-center">
+                {[
+                  { img: '/1.png', name: 'Triple Crown Champion', desc: 'Highest scorer for 3 continuous months' },
+                  { img: '/2.png', name: 'Lightning Finisher', desc: 'Fastest target achiever' },
+                  { img: '/3.png', name: 'Annual Legend', desc: 'Highest score of the year' },
+                  { img: '/4.png', name: 'Consistency King', desc: 'Top 5 scorer for 4 consecutive months' },
+                  { img: '/5.png', name: 'The Unstoppable', desc: 'Hits target before 50% of the month ends' },
+                  { img: '/6.png', name: 'Dominator', desc: 'Ranked #1 for 3 different months (not continuous)' },
+                  { img: '/7.png', name: 'Beast Mode', desc: 'Exceeds target by 2x' },
+                  { img: '/8.png', name: 'The Record Breaker', desc: 'Breaks a platform record' },
+                  { img: '/9.png', name: 'Hall Of Fame', desc: 'Yearly top performers' },
+                  { img: '/10.png', name: 'The Immortal', desc: 'Never drops below Top 10 for a full year' },
+                  { img: '/11.png', name: 'Dynasty Builder', desc: 'Wins Annual Legend badge twice' },
+                  { img: '/12.png', name: 'The Juggernaut', desc: 'Exceeds target 3 months in a row' }
+                ].map((badge, index) => {
+                  const isAchieved = achievedBadges.has(index);
+                  return (
+                    <div key={index} className="relative w-full aspect-square flex items-center justify-center group">
+                      {/* Badge image in grayscale (always black and white) */}
+                      <div className="relative w-full h-full flex items-center justify-center">
+                        <img 
+                          src={badge.img} 
+                          alt={badge.name}
+                          className={`w-full h-full object-contain grayscale transition-opacity ${
+                            isAchieved ? 'opacity-100' : 'opacity-50'
+                          }`}
+                          style={{ maxWidth: '100%', maxHeight: '100%' }}
+                        />
+                        {/* Lock overlay - only show if not achieved */}
+                        {!isAchieved && (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="bg-gray-800/80 rounded-full p-1.5 sm:p-2">
+                              <svg 
+                                className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" 
+                                fill="currentColor" 
+                                viewBox="0 0 20 20"
+                              >
+                                <path 
+                                  fillRule="evenodd" 
+                                  d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" 
+                                  clipRule="evenodd" 
+                                />
+                              </svg>
+                            </div>
+                          </div>
+                        )}
+                        {/* Tooltip on hover */}
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-0 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 whitespace-nowrap">
+                          <div className="font-semibold mb-1">{badge.name}</div>
+                          <div className="text-gray-300 text-[10px]">{badge.desc}</div>
+                          {/* Tooltip arrow */}
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2">
+                            <div className="border-4 border-transparent border-t-gray-900"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
