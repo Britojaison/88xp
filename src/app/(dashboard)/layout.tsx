@@ -27,7 +27,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen" style={{ backgroundColor: '#000509' }}>
       <LeftSidebar 
         userRank={employee?.rank ?? null} 
         userName={employee?.name || 'User'}
