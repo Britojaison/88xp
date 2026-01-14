@@ -78,8 +78,10 @@ export default function ProfilePage() {
       .order('completed_at', { ascending: false });
 
     // Fetch historical data for badge checks
-    const allYears = Array.from({ length: 5 }, (_, i) => currentYear - i);
-    
+    // Only consider years from 2026 onwards
+    const startYear = 2026;
+    const allYears = Array.from({ length: Math.max(currentYear - startYear + 1, 1) }, (_, i) => currentYear - i).filter(y => y >= startYear);
+
     // Fetch all monthly scores for the employee
     const { data: allMonthlyScores } = await supabase
       .from('monthly_scores')
@@ -148,7 +150,7 @@ export default function ProfilePage() {
       });
 
       let accumulatedPoints = 0;
-      for (const project of monthProjects.sort((a: any, b: any) => 
+      for (const project of monthProjects.sort((a: any, b: any) =>
         new Date(a.completed_at).getTime() - new Date(b.completed_at).getTime()
       )) {
         const points = project.points_override ?? project.type?.points ?? 0;
@@ -165,31 +167,73 @@ export default function ProfilePage() {
     const achieved = new Set<number>();
     const employeeId = employeeData?.id;
 
+    // IMPORTANT: Badge timing rules
+    // - Monthly badges: Only consider COMPLETED months (exclude current month)
+    // - Yearly badges: Only consider COMPLETED years (exclude current year)
+
+    // Filter to only include completed months (not the current month)
+    const completedMonthlyScores = (allMonthlyScores || []).filter((s: any) => {
+      // Exclude current month of current year
+      if (s.year === currentYear && s.month === currentMonth) return false;
+      return true;
+    });
+
+    const completedEmployeesMonthlyScores = (allEmployeesMonthlyScores || []).filter((s: any) => {
+      // Exclude current month of current year
+      if (s.year === currentYear && s.month === currentMonth) return false;
+      return true;
+    });
+
+    // Filter to only include completed years (not the current year)
+    const completedYearlyScores = (allYearlyScores || []).filter((s: any) => {
+      return s.year < currentYear;
+    });
+
+    // Filter monthly targets to only completed months
+    const completedMonthlyTargets = (allMonthlyTargets || []).filter((t: any) => {
+      if (t.year === currentYear && t.month === currentMonth) return false;
+      return true;
+    });
+
+    // Helper function to get rank for a specific month/year (only for completed months)
+    const getRankForCompletedMonth = (month: number, year: number) => {
+      // Don't calculate rank for current month
+      if (year === currentYear && month === currentMonth) return null;
+
+      const monthScores = completedEmployeesMonthlyScores.filter(
+        (s: any) => s.month === month && s.year === year
+      );
+      const sorted = monthScores.sort((a: any, b: any) => b.total_points - a.total_points);
+      const index = sorted.findIndex((s: any) => s.employee_id === employeeData?.id);
+      return index >= 0 ? index + 1 : null;
+    };
+
     // Badge 1: Triple Crown Champion - Highest scorer for 3 continuous months
-    if (allMonthlyScores && allMonthlyScores.length >= 3) {
-      const sortedScores = [...allMonthlyScores].sort((a: any, b: any) => {
+    // Only considers COMPLETED months
+    if (completedMonthlyScores && completedMonthlyScores.length >= 3) {
+      const sortedScores = [...completedMonthlyScores].sort((a: any, b: any) => {
         if (a.year !== b.year) return b.year - a.year;
         return b.month - a.month;
       });
-      
+
       for (let i = 0; i <= sortedScores.length - 3; i++) {
         const month1 = sortedScores[i];
         const month2 = sortedScores[i + 1];
         const month3 = sortedScores[i + 2];
-        
+
         // Check if consecutive months
         const date1 = new Date(month1.year, month1.month - 1);
         const date2 = new Date(month2.year, month2.month - 1);
         const date3 = new Date(month3.year, month3.month - 1);
-        
+
         const diff1 = (date1.getTime() - date2.getTime()) / (1000 * 60 * 60 * 24);
         const diff2 = (date2.getTime() - date3.getTime()) / (1000 * 60 * 60 * 24);
-        
+
         if (Math.abs(diff1 - 30) < 5 && Math.abs(diff2 - 30) < 5) {
-          const rank1 = getRankForMonth(month1.month, month1.year);
-          const rank2 = getRankForMonth(month2.month, month2.year);
-          const rank3 = getRankForMonth(month3.month, month3.year);
-          
+          const rank1 = getRankForCompletedMonth(month1.month, month1.year);
+          const rank2 = getRankForCompletedMonth(month2.month, month2.year);
+          const rank3 = getRankForCompletedMonth(month3.month, month3.year);
+
           if (rank1 === 1 && rank2 === 1 && rank3 === 1) {
             achieved.add(0);
             break;
@@ -198,84 +242,100 @@ export default function ProfilePage() {
       }
     }
 
-    // Badge 2: Lightning Finisher - Fastest target achiever (check current month)
-    const currentTarget = targetRes.data?.target_points || 0;
-    if (currentTarget > 0 && monthlyScoreRes.data?.total_points >= currentTarget) {
-      const monthStart = new Date(currentYear, currentMonth - 1, 1);
-      const monthEnd = new Date(currentYear, currentMonth, 0);
-      const monthProjects = (completedProjects || []).filter((p: any) => {
-        const completed = new Date(p.completed_at);
-        return completed >= monthStart && completed <= monthEnd;
-      });
+    // Badge 2: Lightning Finisher - Fastest target achiever
+    // Only awarded at the END of a completed month (check previous month, not current)
+    const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+    const prevMonthYear = currentMonth === 1 ? currentYear - 1 : currentYear;
 
-      // Get all employees' completion times for this month
-      const { data: allEmployeesProjects } = await supabase
-        .from('projects')
-        .select('completed_at, points_override, type:project_types(points), assigned_to')
-        .in('status', ['completed', 'approved'])
-        .not('completed_at', 'is', null)
-        .gte('completed_at', monthStart.toISOString())
-        .lte('completed_at', monthEnd.toISOString());
+    // Only check if previous month is in 2026 or later
+    if (prevMonthYear >= 2026) {
+      const prevMonthStart = new Date(prevMonthYear, prevMonth - 1, 1);
+      const prevMonthEnd = new Date(prevMonthYear, prevMonth, 0);
 
-      // Calculate when each employee achieved target
-      const employeeTargetTimes: { [key: string]: Date | null } = {};
-      if (allEmployeesProjects) {
-        const employees = new Set(allEmployeesProjects.map((p: any) => p.assigned_to));
-        for (const empId of employees) {
-          const empIdStr = String(empId);
-          const empProjects = allEmployeesProjects
-            .filter((p: any) => p.assigned_to === empId)
-            .sort((a: any, b: any) => 
-              new Date(a.completed_at).getTime() - new Date(b.completed_at).getTime()
+      const prevMonthTarget = completedMonthlyTargets.find(
+        (t: any) => t.month === prevMonth && t.year === prevMonthYear && t.employee_id === employeeId
+      );
+
+      const prevMonthScore = completedMonthlyScores.find(
+        (s: any) => s.month === prevMonth && s.year === prevMonthYear
+      );
+
+      if (prevMonthTarget && prevMonthScore && prevMonthScore.total_points >= prevMonthTarget.target_points) {
+        // Get all employees' completion times for previous month
+        const { data: allEmployeesProjects } = await supabase
+          .from('projects')
+          .select('completed_at, points_override, type:project_types(points), assigned_to')
+          .in('status', ['completed', 'approved'])
+          .not('completed_at', 'is', null)
+          .gte('completed_at', prevMonthStart.toISOString())
+          .lte('completed_at', prevMonthEnd.toISOString());
+
+        // Calculate when each employee achieved target
+        const employeeTargetTimes: { [key: string]: Date | null } = {};
+        if (allEmployeesProjects) {
+          const employees = new Set(allEmployeesProjects.map((p: any) => p.assigned_to));
+          for (const empId of employees) {
+            const empIdStr = String(empId);
+            const empProjects = allEmployeesProjects
+              .filter((p: any) => p.assigned_to === empId)
+              .sort((a: any, b: any) =>
+                new Date(a.completed_at).getTime() - new Date(b.completed_at).getTime()
+              );
+
+            const empTarget = completedMonthlyTargets.find(
+              (t: any) => t.employee_id === empId && t.month === prevMonth && t.year === prevMonthYear
             );
-          
-          const empTarget = (allMonthlyTargets || []).find(
-            (t: any) => t.employee_id === empId && t.month === currentMonth && t.year === currentYear
-          );
-          if (!empTarget) continue;
+            if (!empTarget) continue;
 
-          let accumulated = 0;
-          for (const project of empProjects) {
-            const points = project.points_override ?? project.type?.points ?? 0;
-            accumulated += points;
-            if (accumulated >= empTarget.target_points) {
-              employeeTargetTimes[empIdStr] = new Date(project.completed_at);
-              break;
+            let accumulated = 0;
+            for (const project of empProjects) {
+              const points = project.points_override ?? project.type?.points ?? 0;
+              accumulated += points;
+              if (accumulated >= empTarget.target_points) {
+                employeeTargetTimes[empIdStr] = new Date(project.completed_at);
+                break;
+              }
             }
           }
         }
-      }
 
-      const userTargetTime = employeeTargetTimes[employeeId];
-      if (userTargetTime) {
-        const isFastest = Object.values(employeeTargetTimes).every((time) => 
-          !time || time >= userTargetTime
-        );
-        if (isFastest) achieved.add(1);
+        const userTargetTime = employeeTargetTimes[employeeId];
+        if (userTargetTime) {
+          const isFastest = Object.values(employeeTargetTimes).every((time) =>
+            !time || time >= userTargetTime
+          );
+          if (isFastest) achieved.add(1);
+        }
       }
     }
 
     // Badge 3: Annual Legend - Highest score of the year
-    if (yearlyScoreRes.data) {
-      const yearScores = (allYearlyScores || []).filter((s: any) => s.year === currentYear);
-      const sorted = yearScores.sort((a: any, b: any) => b.total_points - a.total_points);
-      if (sorted.length > 0 && sorted[0].employee_id === employeeId) {
-        achieved.add(2);
+    // Only awarded at the END of a completed year (check previous years, not current)
+    if (completedYearlyScores && completedYearlyScores.length > 0) {
+      // Check each completed year
+      for (const checkYear of allYears.filter(y => y < currentYear)) {
+        const yearScores = completedYearlyScores.filter((s: any) => s.year === checkYear);
+        const sorted = yearScores.sort((a: any, b: any) => b.total_points - a.total_points);
+        if (sorted.length > 0 && sorted[0].employee_id === employeeId) {
+          achieved.add(2);
+          break;
+        }
       }
     }
 
     // Badge 4: Consistency King - Top 5 scorer for 4 consecutive months
-    if (allMonthlyScores && allMonthlyScores.length >= 4) {
-      const sortedScores = [...allMonthlyScores].sort((a: any, b: any) => {
+    // Only considers COMPLETED months
+    if (completedMonthlyScores && completedMonthlyScores.length >= 4) {
+      const sortedScores = [...completedMonthlyScores].sort((a: any, b: any) => {
         if (a.year !== b.year) return b.year - a.year;
         return b.month - a.month;
       });
-      
+
       for (let i = 0; i <= sortedScores.length - 4; i++) {
         const months = sortedScores.slice(i, i + 4);
         let allConsecutive = true;
         let allTop5 = true;
-        
+
         for (let j = 0; j < months.length - 1; j++) {
           const date1 = new Date(months[j].year, months[j].month - 1);
           const date2 = new Date(months[j + 1].year, months[j + 1].month - 1);
@@ -285,10 +345,10 @@ export default function ProfilePage() {
             break;
           }
         }
-        
+
         if (allConsecutive) {
           for (const month of months) {
-            const rank = getRankForMonth(month.month, month.year);
+            const rank = getRankForCompletedMonth(month.month, month.year);
             if (!rank || rank > 5) {
               allTop5 = false;
               break;
@@ -303,14 +363,18 @@ export default function ProfilePage() {
     }
 
     // Badge 5: The Unstoppable - Hits target before 50% of the month ends
-    const unstoppableCheck = await checkUnstoppable(currentMonth, currentYear);
-    if (unstoppableCheck) achieved.add(4);
+    // Only check COMPLETED months (previous month)
+    if (prevMonthYear >= 2026) {
+      const unstoppableCheck = await checkUnstoppable(prevMonth, prevMonthYear);
+      if (unstoppableCheck) achieved.add(4);
+    }
 
     // Badge 6: Dominator - Ranked #1 for 3 different months (not continuous)
-    if (allMonthlyScores) {
+    // Only considers COMPLETED months
+    if (completedMonthlyScores) {
       const rank1Months = new Set<string>();
-      for (const score of allMonthlyScores) {
-        const rank = getRankForMonth(score.month, score.year);
+      for (const score of completedMonthlyScores) {
+        const rank = getRankForCompletedMonth(score.month, score.year);
         if (rank === 1) {
           rank1Months.add(`${score.year}-${score.month}`);
         }
@@ -319,52 +383,70 @@ export default function ProfilePage() {
     }
 
     // Badge 7: Beast Mode - Exceeds target by 2x
-    if (monthlyScoreRes.data && targetRes.data) {
-      if (monthlyScoreRes.data.total_points >= (targetRes.data.target_points * 2)) {
-        achieved.add(6);
+    // Only check COMPLETED months
+    if (completedMonthlyScores && completedMonthlyTargets) {
+      for (const score of completedMonthlyScores) {
+        const target = completedMonthlyTargets.find(
+          (t: any) => t.month === score.month && t.year === score.year
+        );
+        if (target && score.total_points >= (target.target_points * 2)) {
+          achieved.add(6);
+          break;
+        }
       }
     }
 
     // Badge 8: The Record Breaker - Breaks a platform record
-    // Check if employee has the highest single month score
-    if (allEmployeesMonthlyScores && allMonthlyScores) {
-      const maxScore = Math.max(...(allEmployeesMonthlyScores.map((s: any) => s.total_points)));
-      const employeeMaxScore = Math.max(...(allMonthlyScores.map((s: any) => s.total_points)));
-      if (employeeMaxScore === maxScore && allMonthlyScores.some((s: any) => s.total_points === maxScore)) {
+    // Check if employee has the highest single month score (only COMPLETED months)
+    if (completedEmployeesMonthlyScores && completedEmployeesMonthlyScores.length > 0 && completedMonthlyScores && completedMonthlyScores.length > 0) {
+      const maxScore = Math.max(...(completedEmployeesMonthlyScores.map((s: any) => s.total_points)));
+      const employeeMaxScore = Math.max(...(completedMonthlyScores.map((s: any) => s.total_points)));
+      if (employeeMaxScore === maxScore && completedMonthlyScores.some((s: any) => s.total_points === maxScore)) {
         achieved.add(7);
       }
     }
 
     // Badge 9: Hall Of Fame - Yearly top performers (top 3)
-    if (yearlyScoreRes.data) {
-      const yearScores = (allYearlyScores || []).filter((s: any) => s.year === currentYear);
-      const sorted = yearScores.sort((a: any, b: any) => b.total_points - a.total_points);
-      const top3 = sorted.slice(0, 3);
-      if (top3.some((s: any) => s.employee_id === employeeId)) {
-        achieved.add(8);
+    // Only awarded at the END of a completed year
+    if (completedYearlyScores && completedYearlyScores.length > 0) {
+      for (const checkYear of allYears.filter(y => y < currentYear)) {
+        const yearScores = completedYearlyScores.filter((s: any) => s.year === checkYear);
+        const sorted = yearScores.sort((a: any, b: any) => b.total_points - a.total_points);
+        const top3 = sorted.slice(0, 3);
+        if (top3.some((s: any) => s.employee_id === employeeId)) {
+          achieved.add(8);
+          break;
+        }
       }
     }
 
     // Badge 10: The Immortal - Never drops below Top 10 for a full year
-    if (allMonthlyScores) {
-      const yearScores = allMonthlyScores.filter((s: any) => s.year === currentYear);
-      if (yearScores.length >= 12) {
-        let allTop10 = true;
-        for (const score of yearScores) {
-          const rank = getRankForMonth(score.month, score.year);
-          if (!rank || rank > 10) {
-            allTop10 = false;
+    // Only check COMPLETED years (all 12 months must be completed)
+    if (completedMonthlyScores) {
+      for (const checkYear of allYears.filter(y => y < currentYear)) {
+        const yearScores = completedMonthlyScores.filter((s: any) => s.year === checkYear);
+        if (yearScores.length >= 12) {
+          let allTop10 = true;
+          for (const score of yearScores) {
+            const rank = getRankForCompletedMonth(score.month, score.year);
+            if (!rank || rank > 10) {
+              allTop10 = false;
+              break;
+            }
+          }
+          if (allTop10) {
+            achieved.add(9);
             break;
           }
         }
-        if (allTop10) achieved.add(9);
       }
     }
 
     // Badge 11: Dynasty Builder - Wins Annual Legend badge twice
+    // Only check COMPLETED years
     let annualLegendCount = 0;
-    for (const year of allYears) {
-      const yearScores = (allYearlyScores || []).filter((s: any) => s.year === year);
+    for (const checkYear of allYears.filter(y => y < currentYear)) {
+      const yearScores = completedYearlyScores.filter((s: any) => s.year === checkYear);
       if (yearScores.length > 0) {
         const sorted = yearScores.sort((a: any, b: any) => b.total_points - a.total_points);
         if (sorted[0].employee_id === employeeId) {
@@ -375,17 +457,18 @@ export default function ProfilePage() {
     if (annualLegendCount >= 2) achieved.add(10);
 
     // Badge 12: The Juggernaut - Exceeds target 3 months in a row
-    if (allMonthlyScores && allMonthlyTargets) {
-      const sortedScores = [...allMonthlyScores].sort((a: any, b: any) => {
+    // Only considers COMPLETED months
+    if (completedMonthlyScores && completedMonthlyScores.length >= 3 && completedMonthlyTargets) {
+      const sortedScores = [...completedMonthlyScores].sort((a: any, b: any) => {
         if (a.year !== b.year) return b.year - a.year;
         return b.month - a.month;
       });
-      
+
       for (let i = 0; i <= sortedScores.length - 3; i++) {
         const months = sortedScores.slice(i, i + 3);
         let allConsecutive = true;
         let allExceedTarget = true;
-        
+
         for (let j = 0; j < months.length - 1; j++) {
           const date1 = new Date(months[j].year, months[j].month - 1);
           const date2 = new Date(months[j + 1].year, months[j + 1].month - 1);
@@ -395,10 +478,10 @@ export default function ProfilePage() {
             break;
           }
         }
-        
+
         if (allConsecutive) {
           for (const month of months) {
-            const target = allMonthlyTargets.find(
+            const target = completedMonthlyTargets.find(
               (t: any) => t.month === month.month && t.year === month.year
             );
             if (!target || month.total_points < target.target_points) {
@@ -413,7 +496,7 @@ export default function ProfilePage() {
         }
       }
     }
-    
+
     setAchievedBadges(achieved);
 
     if (projects && projects.length > 0) {
@@ -422,10 +505,10 @@ export default function ProfilePage() {
         const year = new Date(project.completed_at).getFullYear();
         years.add(year);
       });
-      
+
       const sortedYears = Array.from(years).sort((a, b) => b - a);
       setAvailableYears(sortedYears);
-      
+
       if (sortedYears.includes(currentYear)) {
         setSelectedYear(currentYear);
       } else if (sortedYears.length > 0) {
@@ -463,7 +546,7 @@ export default function ProfilePage() {
           <h1 className="text-[28px] sm:text-[36px] lg:text-[40px] font-light text-white leading-none">Profile</h1>
           <div className="h-1 w-[100px] sm:w-[120px] bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 rounded-full mt-1"></div>
         </div>
-        
+
         {/* Monthly Target Widget - Top right near navbar, no border */}
         <div className="w-full sm:w-[220px]">
           <h3 className="text-white text-[14px] sm:text-[16px] font-semibold text-center mb-2 sm:mb-3">Monthly Target</h3>
@@ -491,7 +574,7 @@ export default function ProfilePage() {
                 <span className="text-gray-400 text-[7px] sm:text-[8px]">pts</span>
               </div>
             </div>
-            
+
             {/* Stats */}
             <div className="flex flex-col gap-1 sm:gap-2">
               <div>
@@ -511,7 +594,7 @@ export default function ProfilePage() {
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Left - Profile Card */}
         <div className="w-full lg:w-[280px] flex-shrink-0">
-          <div 
+          <div
             className="rounded-[20px] p-4 sm:p-5 flex flex-col"
             style={{
               backgroundImage: 'url(/Rectangle%2069.png)',
@@ -565,12 +648,12 @@ export default function ProfilePage() {
         {/* Right - Activity Timeline + Badges */}
         <div className="flex-1 flex flex-col gap-4">
           {/* Activity Timeline */}
-          <ContributionGraph 
-            employeeId={employee?.id || ''} 
+          <ContributionGraph
+            employeeId={employee?.id || ''}
             selectedYear={selectedYear}
             onYearChange={setSelectedYear}
           />
-          
+
           {/* Badges Section - Below Activity Timeline */}
           <div>
             <h3 className="text-white text-[13px] sm:text-[14px] font-semibold mb-2">Badges</h3>
@@ -591,7 +674,7 @@ export default function ProfilePage() {
                     { img: '/11.png', name: 'Dynasty Builder', desc: 'Wins Annual Legend badge twice', index: 10 },
                     { img: '/12.png', name: 'The Juggernaut', desc: 'Exceeds target 3 months in a row', index: 11 }
                   ];
-                  
+
                   // Sort badges: achieved first, then locked (maintaining original order within each group)
                   const sortedBadges = [...allBadges].sort((a, b) => {
                     const aAchieved = achievedBadges.has(a.index);
@@ -600,34 +683,33 @@ export default function ProfilePage() {
                     if (!aAchieved && bAchieved) return 1;
                     return a.index - b.index; // Maintain original order within each group
                   });
-                  
+
                   return sortedBadges.map((badge) => {
                     const isAchieved = achievedBadges.has(badge.index);
                     return (
                       <div key={badge.index} className="relative w-full aspect-square flex items-center justify-center group">
                         <div className="relative w-full h-full flex items-center justify-center">
                           {/* Badge image - grayscale when locked, full color when achieved */}
-                          <img 
-                            src={badge.img} 
+                          <img
+                            src={badge.img}
                             alt={badge.name}
-                            className={`w-full h-full object-contain transition-all duration-300 ${
-                              isAchieved ? 'opacity-100' : 'grayscale opacity-50'
-                            }`}
+                            className={`w-full h-full object-contain transition-all duration-300 ${isAchieved ? 'opacity-100' : 'grayscale opacity-50'
+                              }`}
                             style={{ maxWidth: '100%', maxHeight: '100%' }}
                           />
                           {/* Lock overlay - only show if not achieved */}
                           {!isAchieved && (
                             <div className="absolute inset-0 flex items-center justify-center">
                               <div className="bg-gray-800/80 rounded-full p-1.5 sm:p-2">
-                                <svg 
-                                  className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" 
-                                  fill="currentColor" 
+                                <svg
+                                  className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400"
+                                  fill="currentColor"
                                   viewBox="0 0 20 20"
                                 >
-                                  <path 
-                                    fillRule="evenodd" 
-                                    d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" 
-                                    clipRule="evenodd" 
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                                    clipRule="evenodd"
                                   />
                                 </svg>
                               </div>

@@ -45,15 +45,15 @@ export default function Scoreboard() {
 
   useEffect(() => {
     let isMounted = true;
-    
+
     const loadScores = async () => {
       if (isMounted) {
         await fetchScores();
       }
     };
-    
+
     loadScores();
-    
+
     return () => {
       isMounted = false;
     };
@@ -81,7 +81,7 @@ export default function Scoreboard() {
     if (index === 0) return '🥇';
     if (index === 1) return '🥈';
     if (index === 2) return '🥉';
-    return '🏅';
+    return '';
   };
 
   return (
@@ -89,14 +89,14 @@ export default function Scoreboard() {
       {/* Header with filters - OUTSIDE the table */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h3 className="text-white text-[13px] sm:text-[14px] font-semibold">Monthly scoreboard</h3>
-          <p className="text-gray-500 text-[10px] sm:text-[11px]">{MONTH_NAMES[month - 1]} {year}</p>
+          <h3 className="text-white text-[16px] sm:text-[18px] font-semibold">Monthly scoreboard</h3>
+          <p className="text-gray-500 text-[12px] sm:text-[14px]">{MONTH_NAMES[month - 1]} {year}</p>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
           <select
             value={month}
             onChange={(e) => setMonth(Number(e.target.value))}
-            className="bg-transparent text-white text-[10px] sm:text-[12px] border-none focus:outline-none cursor-pointer"
+            className="bg-transparent text-white text-[12px] sm:text-[14px] border-none focus:outline-none cursor-pointer"
           >
             {MONTHS.map((m) => (
               <option key={m.value} value={m.value} className="bg-black">
@@ -107,7 +107,7 @@ export default function Scoreboard() {
           <select
             value={year}
             onChange={(e) => setYear(Number(e.target.value))}
-            className="bg-transparent text-white text-[10px] sm:text-[12px] border-none focus:outline-none cursor-pointer"
+            className="bg-transparent text-white text-[12px] sm:text-[14px] border-none focus:outline-none cursor-pointer"
           >
             {years.map((y) => (
               <option key={y} value={y} className="bg-black">
@@ -123,7 +123,7 @@ export default function Scoreboard() {
         {loading ? (
           <div className="animate-pulse h-[200px] sm:h-[300px]"></div>
         ) : scores.length === 0 ? (
-          <p className="text-gray-400 text-center py-6 sm:py-8 text-[11px] sm:text-[12px]">
+          <p className="text-gray-400 text-center py-6 sm:py-8 text-[13px] sm:text-[15px]">
             No scores yet
           </p>
         ) : (
@@ -135,15 +135,15 @@ export default function Scoreboard() {
                 className="flex items-center justify-between py-1.5 sm:py-2 hover:bg-white/5 rounded-lg px-1 sm:px-2 transition-colors"
               >
                 <div className="flex items-center gap-2 sm:gap-3">
-                  <span className="text-[12px] sm:text-[14px]">{getMedalIcon(index)}</span>
+                  <span className="text-[16px] sm:text-[18px]">{getMedalIcon(index)}</span>
                   <div>
-                    <span className="text-white text-[11px] sm:text-[13px] font-semibold">{entry.employee_name}</span>
-                    <span className="text-gray-400 text-[9px] sm:text-[11px] ml-1">({entry.project_count} projects)</span>
+                    <span className="text-white text-[14px] sm:text-[16px] font-semibold">{entry.employee_name}</span>
+                    <span className="text-gray-400 text-[11px] sm:text-[13px] ml-1">({entry.project_count} projects)</span>
                   </div>
                 </div>
                 <div className="flex items-center">
-                  <span className="text-purple-400 text-[11px] sm:text-[13px] font-bold">{entry.total_points}</span>
-                  <span className="text-gray-500 text-[8px] sm:text-[10px] ml-1">pts</span>
+                  <span className="text-purple-400 text-[14px] sm:text-[16px] font-bold">{entry.total_points}</span>
+                  <span className="text-gray-500 text-[11px] sm:text-[13px] ml-1">pts</span>
                 </div>
               </Link>
             ))}

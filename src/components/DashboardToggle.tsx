@@ -56,7 +56,15 @@ export default function DashboardToggle() {
       {/* Toggle and Filters Row */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         {/* Toggle Container */}
-        <div className="w-full sm:w-[280px] h-[45px] sm:h-[50px] rounded-[15px] bg-[#2c2c2c] flex items-center justify-center gap-1 px-2">
+        <div 
+          className="w-full sm:w-[280px] h-[45px] sm:h-[50px] rounded-[15px] flex items-center justify-center gap-1 px-2"
+          style={{
+            backgroundColor: 'rgba(44, 44, 44, 0.4)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+          }}
+        >
           <button
             onClick={() => setActiveView('scoreboard')}
             className={`flex-1 sm:w-[120px] h-[32px] sm:h-[36px] rounded-[10px] transition-all duration-200 flex items-center justify-center ${
