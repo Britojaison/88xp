@@ -205,7 +205,7 @@ export default function EditTaskModal({
 
   return (
     <div 
-      className="fixed inset-0 flex items-start justify-end z-50 pt-[120px] pr-[40px] pointer-events-none"
+      className="fixed inset-0 flex items-start justify-end z-50 pt-[20px] pr-[40px] pointer-events-none"
       onClick={onClose}
     >
       <div 
@@ -493,6 +493,21 @@ export default function EditTaskModal({
                   border: '1px solid #D3FEE4',
                 }}
                 disabled={(task.status === 'completed' || task.status === 'approved') && !isAdmin}
+              />
+            </div>
+
+            {/* Remarks */}
+            <div>
+              <label className="block text-white text-[13px] font-medium mb-1">Remarks</label>
+              <textarea
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                placeholder="Add remarks..."
+                rows={2}
+                className="w-full rounded-[5px] px-3 py-1.5 bg-white text-black placeholder:text-gray-400 text-[13px] resize-none"
+                style={{
+                  border: '1px solid #D3FEE4',
+                }}
               />
             </div>
 
