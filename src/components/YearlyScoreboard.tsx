@@ -80,7 +80,7 @@ export default function YearlyScoreboard() {
       </div>
 
       {/* Table Container */}
-      <div className="rounded-[20px] sm:rounded-[25px] border border-[#424242] bg-black p-3 sm:p-5 flex-1">
+      <div className="rounded-[20px] sm:rounded-[25px] border border-[#424242] p-3 sm:p-5 flex-1" style={{ backgroundColor: '#141415' }}>
         {loading ? (
           <div className="animate-pulse h-[200px] sm:h-[300px]"></div>
         ) : scores.length === 0 ? (

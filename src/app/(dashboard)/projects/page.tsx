@@ -459,7 +459,7 @@ export default function TasksPage() {
 
       {/* Ongoing Tasks Table - Only show when filter is 'all' or 'ongoing' */}
       {(statusFilter === 'all' || statusFilter === 'ongoing') && (
-        <div className="rounded-[20px] sm:rounded-[25px] border border-[#424242] bg-black overflow-hidden">
+        <div className="rounded-[20px] sm:rounded-[25px] border border-[#424242] overflow-hidden" style={{ backgroundColor: ' #141415ff' }}>
           <div className="px-4 sm:px-6 py-3 sm:py-4">
             <h2 className="text-white text-[16px] sm:text-[20px] font-bold">Ongoing Task</h2>
           </div>

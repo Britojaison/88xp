@@ -128,7 +128,7 @@ export default function ProfilePointsSection({ employeeId }: Props) {
       </div>
 
       {/* Table - Header and Content in ONE container */}
-      <div className="rounded-[20px] sm:rounded-[25px] border border-[#424242] overflow-hidden p-2 sm:p-4">
+      <div className="rounded-[20px] sm:rounded-[25px] border border-[#424242] overflow-hidden p-2 sm:p-4" style={{ backgroundColor: '#141415' }}>
         {/* Table Header - Hidden on mobile, show on sm+ */}
         <div className="hidden sm:grid grid-cols-7 px-3 sm:px-5 py-2 sm:py-3 text-[11px] sm:text-[13px] font-medium" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr 1.2fr' }}>
           <div className="text-white">Project</div>

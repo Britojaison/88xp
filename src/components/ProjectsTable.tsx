@@ -85,8 +85,8 @@ export default function ProjectsTable({ filterMonth = 0, filterYear = 0 }: Proje
   if (loading) {
     return (
       <div className="space-y-3">
-        <div className="rounded-[20px] border border-[#424242] bg-black h-[50px] animate-pulse"></div>
-        <div className="rounded-[20px] border border-[#424242] bg-black h-[200px] animate-pulse"></div>
+        <div className="rounded-[20px] border border-[#424242] h-[50px] animate-pulse" style={{ backgroundColor: '#141415' }}></div>
+        <div className="rounded-[20px] border border-[#424242] h-[200px] animate-pulse" style={{ backgroundColor: '#141415' }}></div>
       </div>
     );
   }
@@ -94,7 +94,7 @@ export default function ProjectsTable({ filterMonth = 0, filterYear = 0 }: Proje
   return (
     <div className="space-y-3">
       {/* Table Header */}
-      <div className="rounded-[15px] sm:rounded-[20px] border border-[#424242] bg-black px-3 sm:px-5 h-[40px] sm:h-[50px] hidden sm:flex items-center">
+      <div className="rounded-[15px] sm:rounded-[20px] border border-[#424242] px-3 sm:px-5 h-[40px] sm:h-[50px] hidden sm:flex items-center" style={{ backgroundColor: '#141415' }}>
         <div className="grid grid-cols-5 gap-2 w-full">
           <div className="text-white text-[11px] sm:text-[13px] font-semibold">Client Name</div>
           <div className="text-white text-[11px] sm:text-[13px] font-semibold">Project Title</div>
@@ -105,7 +105,7 @@ export default function ProjectsTable({ filterMonth = 0, filterYear = 0 }: Proje
       </div>
 
       {/* Table Body */}
-      <div className="rounded-[15px] sm:rounded-[20px] border border-[#424242] bg-black overflow-hidden py-2">
+      <div className="rounded-[15px] sm:rounded-[20px] border border-[#424242] overflow-hidden py-2" style={{ backgroundColor: '#141415' }}>
         {projects.length === 0 ? (
           <div className="px-3 sm:px-5 py-6 sm:py-8 text-center">
             <p className="text-gray-400 text-[11px] sm:text-[13px] font-semibold">No projects found</p>

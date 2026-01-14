@@ -103,8 +103,8 @@ export default function PointsBreakdown({ employeeId, month, year }: Props) {
   }
 
   return (
-    <div className="bg-[#2A2A2A] rounded-lg shadow-lg overflow-hidden border border-gray-700">
-      <div className="p-4 border-b border-gray-700 bg-[#1E1E1E] flex justify-between items-center">
+    <div className="rounded-lg shadow-lg overflow-hidden border border-gray-700" style={{ backgroundColor: '#1e1b1d' }}>
+      <div className="p-4 border-b border-gray-700 flex justify-between items-center" style={{ backgroundColor: '#1e1b1d' }}>
         <h3 className="text-lg font-semibold text-white">Points History</h3>
         <div className="text-right">
           <span className="text-sm text-gray-400">Total: </span>
@@ -120,7 +120,7 @@ export default function PointsBreakdown({ employeeId, month, year }: Props) {
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-[#1E1E1E] text-gray-400">
+            <thead className="text-gray-400" style={{ backgroundColor: '#1e1b1d' }}>
               <tr>
                 <th className="px-4 py-3 text-left font-medium">Project</th>
                 <th className="px-4 py-3 text-left font-medium">Type</th>
