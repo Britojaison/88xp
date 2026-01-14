@@ -178,10 +178,10 @@ export default function TargetsPage() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
         <div>
-          <p className="text-white text-[14px] font-light">Set point target for {MONTH_NAMES[currentMonth - 1]} {currentYear}</p>
-          <h1 className="text-[55px] font-light text-white mt-1">Monthly Target</h1>
+          <p className="text-white text-[12px] sm:text-[14px] font-light">Set point target for {MONTH_NAMES[currentMonth - 1]} {currentYear}</p>
+          <h1 className="text-[32px] sm:text-[45px] lg:text-[55px] font-light text-white mt-1">Monthly Target</h1>
           {/* Gradient underline */}
           <div className="h-1 w-full bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 rounded-full"></div>
         </div>
@@ -189,82 +189,114 @@ export default function TargetsPage() {
         <button
           onClick={handleSave}
           disabled={saving || !hasChanges}
-          className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity mt-8"
+          className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity sm:mt-8"
         >
           {saving ? (
             <>
-              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-              <span className="text-[16px]">Saving...</span>
+              <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-2 border-white border-t-transparent"></div>
+              <span className="text-[14px] sm:text-[16px]">Saving...</span>
             </>
           ) : saved ? (
             <>
-              <CheckCircleIcon className="w-5 h-5" />
-              <span className="text-[16px]">Saved!</span>
+              <CheckCircleIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="text-[14px] sm:text-[16px]">Saved!</span>
             </>
           ) : (
             <>
-              <img src="/tdesign_save-filled.png" alt="Save" className="w-5 h-5" />
-              <span className="text-[16px]">Save changes</span>
+              <img src="/tdesign_save-filled.png" alt="Save" className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="text-[14px] sm:text-[16px]">Save changes</span>
             </>
           )}
         </button>
       </div>
 
       {error && (
-        <div className="bg-red-500/20 border border-red-500/50 text-red-300 px-4 py-3 rounded-lg">
+        <div className="bg-red-500/20 border border-red-500/50 text-red-300 px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-[12px] sm:text-[14px]">
           {error}
         </div>
       )}
 
-      {/* Header Row - Separate box */}
-      <div className="rounded-[25px] border border-[#424242] h-[66px] flex items-center px-6">
+      {/* Header Row - Separate box - Hidden on mobile */}
+      <div className="hidden sm:flex rounded-[20px] sm:rounded-[25px] border border-[#424242] h-[50px] sm:h-[66px] items-center px-4 sm:px-6">
         <div className="grid grid-cols-3 w-full">
-          <span className="text-white text-[14px] font-semibold">Employee</span>
-          <span className="text-white text-[14px] font-semibold text-center">Target Points</span>
-          <span className="text-white text-[14px] font-semibold text-right">Status</span>
+          <span className="text-white text-[12px] sm:text-[14px] font-semibold">Employee</span>
+          <span className="text-white text-[12px] sm:text-[14px] font-semibold text-center">Target Points</span>
+          <span className="text-white text-[12px] sm:text-[14px] font-semibold text-right">Status</span>
         </div>
       </div>
 
       {/* Data Rows - Separate box */}
-      <div className="rounded-[25px] border border-[#424242]">
+      <div className="rounded-[20px] sm:rounded-[25px] border border-[#424242]">
         {targets.map((target) => {
           const isChanged = target.target_points !== target.original_target;
           return (
             <div
               key={target.employee_id}
-              className="grid grid-cols-3 items-center px-6 py-4"
+              className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[#424242]/30 last:border-b-0"
             >
-              {/* Employee */}
-              <div className="flex items-center gap-3">
-                <div className="w-[30px] h-[30px] bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex items-center justify-center overflow-hidden">
-                  <img 
-                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(target.employee_name)}&background=random&size=30`}
-                    alt={target.employee_name}
-                    className="w-full h-full object-cover"
+              {/* Mobile Layout */}
+              <div className="sm:hidden flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-[28px] h-[28px] bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex items-center justify-center overflow-hidden">
+                    <img 
+                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(target.employee_name)}&background=random&size=28`}
+                      alt={target.employee_name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <span className="text-white text-[13px]">{target.employee_name}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    value={target.target_points}
+                    onChange={(e) => handleTargetChange(target.employee_id, Number(e.target.value))}
+                    className="w-14 text-center bg-transparent text-white text-[13px] focus:outline-none focus:bg-white/10 rounded cursor-text"
+                    min={0}
+                    step={10}
+                  />
+                  {isChanged ? (
+                    <span className="text-purple-400 text-[11px]">Modified</span>
+                  ) : (
+                    <span className="text-gray-500 text-[11px]">—</span>
+                  )}
+                </div>
+              </div>
+              
+              {/* Desktop Layout */}
+              <div className="hidden sm:grid grid-cols-3 items-center">
+                {/* Employee */}
+                <div className="flex items-center gap-3">
+                  <div className="w-[30px] h-[30px] bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex items-center justify-center overflow-hidden">
+                    <img 
+                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(target.employee_name)}&background=random&size=30`}
+                      alt={target.employee_name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <span className="text-white text-[14px]">{target.employee_name}</span>
+                </div>
+
+                {/* Target Points - Plain text, editable */}
+                <div className="flex justify-center">
+                  <input
+                    type="number"
+                    value={target.target_points}
+                    onChange={(e) => handleTargetChange(target.employee_id, Number(e.target.value))}
+                    className="w-16 text-center bg-transparent text-white text-[14px] focus:outline-none focus:bg-white/10 rounded cursor-text"
+                    min={0}
+                    step={10}
                   />
                 </div>
-                <span className="text-white text-[14px]">{target.employee_name}</span>
-              </div>
 
-              {/* Target Points - Plain text, editable */}
-              <div className="flex justify-center">
-                <input
-                  type="number"
-                  value={target.target_points}
-                  onChange={(e) => handleTargetChange(target.employee_id, Number(e.target.value))}
-                  className="w-16 text-center bg-transparent text-white text-[14px] focus:outline-none focus:bg-white/10 rounded cursor-text"
-                  min={0}
-                  step={10}
-                />
-              </div>
-
-              {/* Status */}
-              <div className="text-right">
-                {isChanged ? (
-                  <span className="text-purple-400 text-[13px]">Modified</span>
-                ) : (
-                  <span className="text-gray-500 text-[13px]">No changes</span>
-                )}
+                {/* Status */}
+                <div className="text-right">
+                  {isChanged ? (
+                    <span className="text-purple-400 text-[13px]">Modified</span>
+                  ) : (
+                    <span className="text-gray-500 text-[13px]">No changes</span>
+                  )}
+                </div>
               </div>
             </div>
           );

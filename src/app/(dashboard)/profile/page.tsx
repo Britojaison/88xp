@@ -115,21 +115,21 @@ export default function ProfilePage() {
   const pointsRemaining = Math.max(targetPoints - currentPoints, 0);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5">
       {/* Header Row with Monthly Target */}
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
         <div>
-          <p className="text-white text-[13px] font-light">Your Activity & Performance</p>
-          <h1 className="text-[40px] font-light text-white leading-none">Profile</h1>
-          <div className="h-1 w-[120px] bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 rounded-full mt-1"></div>
+          <p className="text-white text-[12px] sm:text-[13px] font-light">Your Activity & Performance</p>
+          <h1 className="text-[28px] sm:text-[36px] lg:text-[40px] font-light text-white leading-none">Profile</h1>
+          <div className="h-1 w-[100px] sm:w-[120px] bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 rounded-full mt-1"></div>
         </div>
         
         {/* Monthly Target Widget - Top right near navbar, no border */}
-        <div className=" w-[220px]">
-          <h3 className="text-white text-[16px] font-semibold text-center mb-3">Monthly Target</h3>
-          <div className="flex items-center gap-4">
+        <div className="w-full sm:w-[220px]">
+          <h3 className="text-white text-[14px] sm:text-[16px] font-semibold text-center mb-2 sm:mb-3">Monthly Target</h3>
+          <div className="flex items-center justify-center sm:justify-start gap-3 sm:gap-4">
             {/* Circular Progress */}
-            <div className="relative w-[90px] h-[90px] flex-shrink-0">
+            <div className="relative w-[70px] h-[70px] sm:w-[90px] sm:h-[90px] flex-shrink-0">
               <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="40" fill="none" stroke="#3A3A3A" strokeWidth="6" />
                 <circle
@@ -147,20 +147,20 @@ export default function ProfilePage() {
                 </defs>
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-white text-[11px] font-bold">{currentPoints}/{targetPoints}</span>
-                <span className="text-gray-400 text-[8px]">pts</span>
+                <span className="text-white text-[9px] sm:text-[11px] font-bold">{currentPoints}/{targetPoints}</span>
+                <span className="text-gray-400 text-[7px] sm:text-[8px]">pts</span>
               </div>
             </div>
             
             {/* Stats */}
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1 sm:gap-2">
               <div>
-                <span className="text-white text-[20px] font-bold">{completedPercentage}%</span>
-                <p className="text-gray-400 text-[10px]">Completed</p>
+                <span className="text-white text-[16px] sm:text-[20px] font-bold">{completedPercentage}%</span>
+                <p className="text-gray-400 text-[9px] sm:text-[10px]">Completed</p>
               </div>
               <div>
-                <span className="text-white text-[20px] font-bold">{pointsRemaining}</span>
-                <p className="text-gray-400 text-[10px]">points remaining</p>
+                <span className="text-white text-[16px] sm:text-[20px] font-bold">{pointsRemaining}</span>
+                <p className="text-gray-400 text-[9px] sm:text-[10px]">points remaining</p>
               </div>
             </div>
           </div>
@@ -168,11 +168,11 @@ export default function ProfilePage() {
       </div>
 
       {/* Main Content Row */}
-      <div className="flex gap-4">
+      <div className="flex flex-col lg:flex-row gap-4">
         {/* Left - Profile Card */}
-        <div className="w-[280px] flex-shrink-0">
+        <div className="w-full lg:w-[280px] flex-shrink-0">
           <div 
-            className="rounded-[20px] p-5 flex flex-col"
+            className="rounded-[20px] p-4 sm:p-5 flex flex-col"
             style={{
               backgroundImage: 'url(/Rectangle%2069.png)',
               backgroundSize: 'cover',
@@ -182,41 +182,41 @@ export default function ProfilePage() {
             {/* Avatar */}
             <div className="flex justify-center mb-3">
               <div className="relative">
-                <div className="w-[80px] h-[80px] bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center text-white text-3xl font-bold overflow-hidden border-2 border-white/20">
+                <div className="w-[60px] h-[60px] sm:w-[80px] sm:h-[80px] bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center text-white text-2xl sm:text-3xl font-bold overflow-hidden border-2 border-white/20">
                   {employee?.name?.charAt(0).toUpperCase()}
                 </div>
                 {/* Badge overlay using Ellipse 30.png and Vector.png */}
-                <div className="absolute -bottom-1 -right-1 w-[23px] h-[23px]">
+                <div className="absolute -bottom-1 -right-1 w-[20px] h-[20px] sm:w-[23px] sm:h-[23px]">
                   <img src="/Ellipse 30.png" alt="" className="w-full h-full" />
-                  <img src="/Vector.png" alt="" className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[12px] h-[11px]" />
+                  <img src="/Vector.png" alt="" className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[10px] h-[9px] sm:w-[12px] sm:h-[11px]" />
                 </div>
               </div>
             </div>
 
             {/* Name & Info */}
-            <div className="text-center mb-4">
-              <h2 className="text-[18px] font-semibold text-white">{employee?.name}</h2>
-              <p className="text-[11px] text-cyan-400">{employee?.email}</p>
-              <p className="text-[10px] text-gray-400">Member Since: {formatDate(employee?.created_at)}</p>
+            <div className="text-center mb-3 sm:mb-4">
+              <h2 className="text-[16px] sm:text-[18px] font-semibold text-white">{employee?.name}</h2>
+              <p className="text-[10px] sm:text-[11px] text-cyan-400">{employee?.email}</p>
+              <p className="text-[9px] sm:text-[10px] text-gray-400">Member Since: {formatDate(employee?.created_at)}</p>
             </div>
 
             {/* Stats - No horizontal lines */}
             <div className="space-y-0">
-              <div className="flex justify-between items-center py-2.5">
-                <span className="text-white text-[13px]">Rank</span>
-                <span className="text-white text-[13px] font-semibold">#{employee?.rank || '-'}</span>
+              <div className="flex justify-between items-center py-2 sm:py-2.5">
+                <span className="text-white text-[12px] sm:text-[13px]">Rank</span>
+                <span className="text-white text-[12px] sm:text-[13px] font-semibold">#{employee?.rank || '-'}</span>
               </div>
-              <div className="flex justify-between items-center py-2.5">
-                <span className="text-white text-[13px]">This month</span>
-                <span className="text-white text-[13px] font-semibold">{monthlyScore?.total_points || 0} pts</span>
+              <div className="flex justify-between items-center py-2 sm:py-2.5">
+                <span className="text-white text-[12px] sm:text-[13px]">This month</span>
+                <span className="text-white text-[12px] sm:text-[13px] font-semibold">{monthlyScore?.total_points || 0} pts</span>
               </div>
-              <div className="flex justify-between items-center py-2.5">
-                <span className="text-white text-[13px]">This year</span>
-                <span className="text-white text-[13px] font-semibold">{yearlyScore?.total_points || 0} pts</span>
+              <div className="flex justify-between items-center py-2 sm:py-2.5">
+                <span className="text-white text-[12px] sm:text-[13px]">This year</span>
+                <span className="text-white text-[12px] sm:text-[13px] font-semibold">{yearlyScore?.total_points || 0} pts</span>
               </div>
-              <div className="flex justify-between items-center py-2.5">
-                <span className="text-white text-[13px]">Annual Projects</span>
-                <span className="text-white text-[13px] font-semibold">{yearlyScore?.project_count || 0}</span>
+              <div className="flex justify-between items-center py-2 sm:py-2.5">
+                <span className="text-white text-[12px] sm:text-[13px]">Annual Projects</span>
+                <span className="text-white text-[12px] sm:text-[13px] font-semibold">{yearlyScore?.project_count || 0}</span>
               </div>
             </div>
           </div>
@@ -233,13 +233,13 @@ export default function ProfilePage() {
           
           {/* Badges Section - Below Activity Timeline */}
           <div>
-            <h3 className="text-white text-[14px] font-semibold mb-2">Badges</h3>
-            <div className="rounded-[20px] border border-white/10 p-5">
+            <h3 className="text-white text-[13px] sm:text-[14px] font-semibold mb-2">Badges</h3>
+            <div className="rounded-[20px] border border-white/10 p-3 sm:p-5">
               <div className="flex items-center justify-around">
-                <div className="w-[55px] h-[55px] rounded-full bg-gray-700/30 border border-gray-600"></div>
-                <div className="w-[55px] h-[55px] rounded-full bg-gray-700/30 border border-gray-600"></div>
-                <div className="w-[55px] h-[55px] rounded-full bg-gray-700/30 border border-gray-600"></div>
-                <div className="w-[55px] h-[55px] rounded-full bg-gray-700/30 border border-gray-600"></div>
+                <div className="w-[40px] h-[40px] sm:w-[55px] sm:h-[55px] rounded-full bg-gray-700/30 border border-gray-600"></div>
+                <div className="w-[40px] h-[40px] sm:w-[55px] sm:h-[55px] rounded-full bg-gray-700/30 border border-gray-600"></div>
+                <div className="w-[40px] h-[40px] sm:w-[55px] sm:h-[55px] rounded-full bg-gray-700/30 border border-gray-600"></div>
+                <div className="w-[40px] h-[40px] sm:w-[55px] sm:h-[55px] rounded-full bg-gray-700/30 border border-gray-600"></div>
               </div>
             </div>
           </div>
