@@ -52,11 +52,11 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
     const today = new Date();
     const todayFormatted = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
     const todayISO = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
-    
+
     // Set creation date
     setCreationDateInput(todayFormatted);
     setCreationDate(todayISO);
-    
+
     // Set due date
     setDueDateInput(todayFormatted);
     setDeadlineDate(todayISO);
@@ -80,7 +80,7 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
 
     setTypes(sortedTypes);
     setBrands(brandsRes.data || []);
-    
+
     // Filter employees that can be assigned to using centralized logic
     const assignable = (employeesRes.data || []).filter(
       (e: any) => canAssignTo(currentUserRank, e.rank, currentUserId, e.id)
@@ -161,11 +161,11 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
   };
 
   return (
-    <div 
-      className="fixed inset-0 flex items-start justify-end z-50 pt-[20px] pr-[40px]"
-      onClick={onClose}
+    <div
+      className="fixed inset-0 flex items-start justify-end z-50 pt-[20px] pr-[40px] pointer-events-none"
+      style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
     >
-      <div 
+      <div
         className="rounded-[25px] w-[412px] flex flex-col relative pointer-events-auto overflow-visible"
         onClick={(e) => e.stopPropagation()}
         style={{
@@ -182,293 +182,293 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
 
         <form onSubmit={handleSubmit} className="flex flex-col px-6 pb-4">
           <div className="space-y-2.5">
-          {/* Task Title */}
-          <div>
-            <label className="block text-white text-[13px] font-medium mb-1">Task Title</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter Task Title"
-              className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black placeholder:text-gray-400 text-[13px]"
-              style={{
-                border: '1px solid #D3FEE4',
-              }}
-              required
-            />
-          </div>
-
-          {/* Assignee */}
-          <div>
-            <label className="block text-white text-[13px] font-medium mb-1">Assignee</label>
-            <select
-              value={assignTo}
-              onChange={(e) => setAssignTo(e.target.value)}
-              className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black text-[13px]"
-              style={{
-                border: '1px solid #D3FEE4',
-              }}
-            >
-              {employees.map((emp) => (
-                <option key={emp.id} value={emp.id}>
-                  {emp.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Brand Name */}
-          <div>
-            <label className="block text-white text-[13px] font-medium mb-1">Brand Name</label>
-            <select
-              value={brandId}
-              onChange={(e) => setBrandId(e.target.value)}
-              className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black text-[13px]"
-              style={{
-                border: '1px solid #D3FEE4',
-              }}
-            >
-              <option value="">Select a brand...</option>
-              {brands.map((brand) => (
-                <option key={brand.id} value={brand.id}>
-                  {brand.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Content Type */}
-          <div>
-            <label className="block text-white text-[13px] font-medium mb-1">Content Type</label>
-            <select
-              value={typeId}
-              onChange={(e) => setTypeId(e.target.value)}
-              className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black text-[13px]"
-              style={{
-                border: '1px solid #D3FEE4',
-              }}
-            >
-              {types.map((type) => (
-                <option key={type.id} value={type.id}>
-                  {type.name} - {type.points} pts
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Points */}
-          <div>
-            <label className="block text-white text-[13px] font-medium mb-1">Points</label>
-            {types.find(t => t.id === typeId)?.name === 'Other' ? (
+            {/* Task Title */}
+            <div>
+              <label className="block text-white text-[13px] font-medium mb-1">Task Title</label>
               <input
-                type="number"
-                min="1"
-                value={customPoints}
-                onChange={(e) => setCustomPoints(e.target.value)}
-                placeholder="Enter Points"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter Task Title"
                 className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black placeholder:text-gray-400 text-[13px]"
                 style={{
                   border: '1px solid #D3FEE4',
                 }}
                 required
               />
-            ) : (
-              <input
-                type="number"
-                value={types.find(t => t.id === typeId)?.points || ''}
-                disabled
-                placeholder="Enter Points"
-                className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-gray-200 text-gray-600 placeholder:text-gray-400 text-[13px]"
+            </div>
+
+            {/* Assignee */}
+            <div>
+              <label className="block text-white text-[13px] font-medium mb-1">Assignee</label>
+              <select
+                value={assignTo}
+                onChange={(e) => setAssignTo(e.target.value)}
+                className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black text-[13px]"
                 style={{
                   border: '1px solid #D3FEE4',
                 }}
-              />
-            )}
-          </div>
+              >
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          {/* Creation Date - Past dates only */}
-          <div>
-            <label className="block text-white text-[13px] font-medium mb-1">Creation Date</label>
-            <input
-              type="text"
-              value={creationDateInput}
-              onChange={(e) => {
-                const inputValue = e.target.value;
-                const currentValue = creationDateInput;
-                const cursorPos = e.target.selectionStart || 0;
-                
-                // If deleting (input is shorter than current)
-                if (inputValue.length < currentValue.length) {
-                  // Just set the value as-is when deleting
-                  setCreationDateInput(inputValue);
-                  
-                  // Parse if valid format
-                  const cleanValue = inputValue.replace(/\//g, '');
-                  if (cleanValue.length >= 6) {
-                    const day = inputValue.substring(0, 2);
-                    const month = inputValue.substring(3, 5);
-                    let year = inputValue.substring(6);
-                    if (year.length === 2) year = '20' + year;
+            {/* Brand Name */}
+            <div>
+              <label className="block text-white text-[13px] font-medium mb-1">Brand Name</label>
+              <select
+                value={brandId}
+                onChange={(e) => setBrandId(e.target.value)}
+                className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black text-[13px]"
+                style={{
+                  border: '1px solid #D3FEE4',
+                }}
+              >
+                <option value="">Select a brand...</option>
+                {brands.map((brand) => (
+                  <option key={brand.id} value={brand.id}>
+                    {brand.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Content Type */}
+            <div>
+              <label className="block text-white text-[13px] font-medium mb-1">Content Type</label>
+              <select
+                value={typeId}
+                onChange={(e) => setTypeId(e.target.value)}
+                className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black text-[13px]"
+                style={{
+                  border: '1px solid #D3FEE4',
+                }}
+              >
+                {types.map((type) => (
+                  <option key={type.id} value={type.id}>
+                    {type.name} - {type.points} pts
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Points */}
+            <div>
+              <label className="block text-white text-[13px] font-medium mb-1">Points</label>
+              {types.find(t => t.id === typeId)?.name === 'Other' ? (
+                <input
+                  type="number"
+                  min="1"
+                  value={customPoints}
+                  onChange={(e) => setCustomPoints(e.target.value)}
+                  placeholder="Enter Points"
+                  className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black placeholder:text-gray-400 text-[13px]"
+                  style={{
+                    border: '1px solid #D3FEE4',
+                  }}
+                  required
+                />
+              ) : (
+                <input
+                  type="number"
+                  value={types.find(t => t.id === typeId)?.points || ''}
+                  disabled
+                  placeholder="Enter Points"
+                  className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-gray-200 text-gray-600 placeholder:text-gray-400 text-[13px]"
+                  style={{
+                    border: '1px solid #D3FEE4',
+                  }}
+                />
+              )}
+            </div>
+
+            {/* Creation Date - Past dates only */}
+            <div>
+              <label className="block text-white text-[13px] font-medium mb-1">Creation Date</label>
+              <input
+                type="text"
+                value={creationDateInput}
+                onChange={(e) => {
+                  const inputValue = e.target.value;
+                  const currentValue = creationDateInput;
+                  const cursorPos = e.target.selectionStart || 0;
+
+                  // If deleting (input is shorter than current)
+                  if (inputValue.length < currentValue.length) {
+                    // Just set the value as-is when deleting
+                    setCreationDateInput(inputValue);
+
+                    // Parse if valid format
+                    const cleanValue = inputValue.replace(/\//g, '');
+                    if (cleanValue.length >= 6) {
+                      const day = inputValue.substring(0, 2);
+                      const month = inputValue.substring(3, 5);
+                      let year = inputValue.substring(6);
+                      if (year.length === 2) year = '20' + year;
+                      if (year.length === 4) {
+                        const parsed = `${year}-${month}-${day}`;
+                        const selectedDate = new Date(parsed);
+                        const today = new Date();
+                        today.setHours(23, 59, 59, 999);
+                        if (selectedDate <= today && !isNaN(selectedDate.getTime())) {
+                          setCreationDate(parsed);
+                        }
+                      }
+                    }
+                    return;
+                  }
+
+                  // Get only digits from input
+                  let digits = inputValue.replace(/\D/g, '');
+
+                  // Build formatted string
+                  let formatted = '';
+                  if (digits.length > 0) {
+                    formatted = digits.substring(0, 2);
+                  }
+                  if (digits.length > 2) {
+                    formatted += '/' + digits.substring(2, 4);
+                  }
+                  if (digits.length > 4) {
+                    formatted += '/' + digits.substring(4, 8);
+                  }
+
+                  setCreationDateInput(formatted);
+
+                  // Parse and validate when we have enough digits
+                  if (digits.length >= 6) {
+                    const day = digits.substring(0, 2);
+                    const month = digits.substring(2, 4);
+                    let year = digits.substring(4);
+
+                    // Accept 2-digit year (convert to 4-digit)
+                    if (year.length === 2) {
+                      year = '20' + year;
+                    }
+
                     if (year.length === 4) {
                       const parsed = `${year}-${month}-${day}`;
                       const selectedDate = new Date(parsed);
                       const today = new Date();
                       today.setHours(23, 59, 59, 999);
+
                       if (selectedDate <= today && !isNaN(selectedDate.getTime())) {
                         setCreationDate(parsed);
+                      } else if (selectedDate > today) {
+                        const todayFormatted = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
+                        const todayISO = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+                        setCreationDateInput(todayFormatted);
+                        setCreationDate(todayISO);
+                        setError('Creation date cannot be in the future');
+                        setTimeout(() => setError(null), 2000);
                       }
                     }
+                  } else if (!digits) {
+                    setCreationDate('');
                   }
-                  return;
-                }
-                
-                // Get only digits from input
-                let digits = inputValue.replace(/\D/g, '');
-                
-                // Build formatted string
-                let formatted = '';
-                if (digits.length > 0) {
-                  formatted = digits.substring(0, 2);
-                }
-                if (digits.length > 2) {
-                  formatted += '/' + digits.substring(2, 4);
-                }
-                if (digits.length > 4) {
-                  formatted += '/' + digits.substring(4, 8);
-                }
-                
-                setCreationDateInput(formatted);
-                
-                // Parse and validate when we have enough digits
-                if (digits.length >= 6) {
-                  const day = digits.substring(0, 2);
-                  const month = digits.substring(2, 4);
-                  let year = digits.substring(4);
-                  
-                  // Accept 2-digit year (convert to 4-digit)
-                  if (year.length === 2) {
-                    year = '20' + year;
-                  }
-                  
-                  if (year.length === 4) {
-                    const parsed = `${year}-${month}-${day}`;
-                    const selectedDate = new Date(parsed);
-                    const today = new Date();
-                    today.setHours(23, 59, 59, 999);
-                    
-                    if (selectedDate <= today && !isNaN(selectedDate.getTime())) {
-                      setCreationDate(parsed);
-                    } else if (selectedDate > today) {
-                      const todayFormatted = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
-                      const todayISO = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
-                      setCreationDateInput(todayFormatted);
-                      setCreationDate(todayISO);
-                      setError('Creation date cannot be in the future');
-                      setTimeout(() => setError(null), 2000);
-                    }
-                  }
-                } else if (!digits) {
-                  setCreationDate('');
-                }
-              }}
-              placeholder="dd/mm/yyyy"
-              maxLength={10}
-              className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black placeholder:text-gray-400 text-[13px]"
-              style={{
-                border: '1px solid #D3FEE4',
-              }}
-            />
-          </div>
+                }}
+                placeholder="dd/mm/yyyy"
+                maxLength={10}
+                className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black placeholder:text-gray-400 text-[13px]"
+                style={{
+                  border: '1px solid #D3FEE4',
+                }}
+              />
+            </div>
 
-          {/* Due Date - Any date allowed */}
-          <div>
-            <label className="block text-white text-[13px] font-medium mb-1">Due Date</label>
-            <input
-              type="text"
-              value={dueDateInput}
-              onChange={(e) => {
-                const inputValue = e.target.value;
-                const currentValue = dueDateInput;
-                
-                // If deleting (input is shorter than current)
-                if (inputValue.length < currentValue.length) {
-                  // Just set the value as-is when deleting
-                  setDueDateInput(inputValue);
-                  
-                  // Parse if valid format
-                  const cleanValue = inputValue.replace(/\//g, '');
-                  if (cleanValue.length >= 6) {
-                    const day = inputValue.substring(0, 2);
-                    const month = inputValue.substring(3, 5);
-                    let year = inputValue.substring(6);
-                    if (year.length === 2) year = '20' + year;
+            {/* Due Date - Any date allowed */}
+            <div>
+              <label className="block text-white text-[13px] font-medium mb-1">Due Date</label>
+              <input
+                type="text"
+                value={dueDateInput}
+                onChange={(e) => {
+                  const inputValue = e.target.value;
+                  const currentValue = dueDateInput;
+
+                  // If deleting (input is shorter than current)
+                  if (inputValue.length < currentValue.length) {
+                    // Just set the value as-is when deleting
+                    setDueDateInput(inputValue);
+
+                    // Parse if valid format
+                    const cleanValue = inputValue.replace(/\//g, '');
+                    if (cleanValue.length >= 6) {
+                      const day = inputValue.substring(0, 2);
+                      const month = inputValue.substring(3, 5);
+                      let year = inputValue.substring(6);
+                      if (year.length === 2) year = '20' + year;
+                      if (year.length === 4) {
+                        const parsed = `${year}-${month}-${day}`;
+                        const selectedDate = new Date(parsed);
+                        if (!isNaN(selectedDate.getTime())) {
+                          setDeadlineDate(parsed);
+                        }
+                      }
+                    }
+                    return;
+                  }
+
+                  // Get only digits from input
+                  let digits = inputValue.replace(/\D/g, '');
+
+                  // Build formatted string
+                  let formatted = '';
+                  if (digits.length > 0) {
+                    formatted = digits.substring(0, 2);
+                  }
+                  if (digits.length > 2) {
+                    formatted += '/' + digits.substring(2, 4);
+                  }
+                  if (digits.length > 4) {
+                    formatted += '/' + digits.substring(4, 8);
+                  }
+
+                  setDueDateInput(formatted);
+
+                  // Parse and validate when we have enough digits
+                  if (digits.length >= 6) {
+                    const day = digits.substring(0, 2);
+                    const month = digits.substring(2, 4);
+                    let year = digits.substring(4);
+
+                    // Accept 2-digit year (convert to 4-digit)
+                    if (year.length === 2) {
+                      year = '20' + year;
+                    }
+
                     if (year.length === 4) {
                       const parsed = `${year}-${month}-${day}`;
                       const selectedDate = new Date(parsed);
+
                       if (!isNaN(selectedDate.getTime())) {
                         setDeadlineDate(parsed);
+                        setDeadlineTime('23:59');
                       }
                     }
+                  } else if (!digits) {
+                    setDeadlineDate('');
+                    setDeadlineTime('23:59');
                   }
-                  return;
-                }
-                
-                // Get only digits from input
-                let digits = inputValue.replace(/\D/g, '');
-                
-                // Build formatted string
-                let formatted = '';
-                if (digits.length > 0) {
-                  formatted = digits.substring(0, 2);
-                }
-                if (digits.length > 2) {
-                  formatted += '/' + digits.substring(2, 4);
-                }
-                if (digits.length > 4) {
-                  formatted += '/' + digits.substring(4, 8);
-                }
-                
-                setDueDateInput(formatted);
-                
-                // Parse and validate when we have enough digits
-                if (digits.length >= 6) {
-                  const day = digits.substring(0, 2);
-                  const month = digits.substring(2, 4);
-                  let year = digits.substring(4);
-                  
-                  // Accept 2-digit year (convert to 4-digit)
-                  if (year.length === 2) {
-                    year = '20' + year;
-                  }
-                  
-                  if (year.length === 4) {
-                    const parsed = `${year}-${month}-${day}`;
-                    const selectedDate = new Date(parsed);
-                    
-                    if (!isNaN(selectedDate.getTime())) {
-                      setDeadlineDate(parsed);
-                      setDeadlineTime('23:59');
-                    }
-                  }
-                } else if (!digits) {
-                  setDeadlineDate('');
-                  setDeadlineTime('23:59');
-                }
-              }}
-              placeholder="dd/mm/yyyy"
-              maxLength={10}
-              className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black placeholder:text-gray-400 text-[13px]"
-              style={{
-                border: '1px solid #D3FEE4',
-              }}
-            />
-          </div>
-
-          {error && (
-            <div className="bg-red-500/20 border border-red-500/50 text-red-300 px-2.5 py-1.5 rounded-lg text-xs">
-              {error}
+                }}
+                placeholder="dd/mm/yyyy"
+                maxLength={10}
+                className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black placeholder:text-gray-400 text-[13px]"
+                style={{
+                  border: '1px solid #D3FEE4',
+                }}
+              />
             </div>
-          )}
+
+            {error && (
+              <div className="bg-red-500/20 border border-red-500/50 text-red-300 px-2.5 py-1.5 rounded-lg text-xs">
+                {error}
+              </div>
+            )}
           </div>
 
           {/* Action Buttons */}
