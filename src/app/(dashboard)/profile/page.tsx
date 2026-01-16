@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { redirect } from 'next/navigation';
 import ProfilePointsSection from './ProfilePointsSection';
@@ -15,8 +15,13 @@ export default function ProfilePage() {
   const [availableYears, setAvailableYears] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [achievedBadges, setAchievedBadges] = useState<Set<number>>(new Set());
+  const [totalAllTimePoints, setTotalAllTimePoints] = useState<number>(0);
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const supabase = createClient();
+  const POINTS_REQUIRED_FOR_PHOTO = 250;
 
   useEffect(() => {
     fetchData();
@@ -27,7 +32,7 @@ export default function ProfilePage() {
 
     const { data: employeeData } = await supabase
       .from('employees')
-      .select('id, name, email, rank, is_admin, created_at')
+      .select('id, name, email, rank, is_admin, created_at, profile_photo')
       .ilike('email', user?.email || '')
       .single();
 
@@ -36,6 +41,7 @@ export default function ProfilePage() {
     }
 
     setEmployee(employeeData);
+    setProfilePhoto(employeeData?.profile_photo || null);
 
     const now = new Date();
     const currentMonth = now.getMonth() + 1;
@@ -68,6 +74,27 @@ export default function ProfilePage() {
     setMonthlyScore(monthlyScoreRes.data);
     setYearlyScore(yearlyScoreRes.data);
     setMonthlyTarget(targetRes.data?.target_points || 100);
+
+    // Fetch total all-time points
+    const { data: allTimeYearlyScores } = await supabase
+      .from('yearly_scores')
+      .select('total_points')
+      .eq('employee_id', employeeData?.id);
+    
+    const totalPoints = (allTimeYearlyScores || []).reduce((sum: number, s: any) => sum + (s.total_points || 0), 0);
+    setTotalAllTimePoints(totalPoints);
+
+    // Auto-delete profile photo if points dropped below threshold
+    if (employeeData?.profile_photo && totalPoints < 250) {
+      // Clear profile_photo in database
+      await supabase
+        .from('employees')
+        .update({ profile_photo: null })
+        .eq('id', employeeData.id);
+      
+      setProfilePhoto(null);
+      employeeData.profile_photo = null;
+    }
 
     const { data: projects } = await supabase
       .from('projects')
@@ -530,6 +557,90 @@ export default function ProfilePage() {
     setLoading(false);
   };
 
+  const canUploadPhoto = totalAllTimePoints >= POINTS_REQUIRED_FOR_PHOTO;
+
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !employee?.id || !canUploadPhoto) return;
+
+    // Check file size (1MB = 1048576 bytes)
+    if (file.size > 1048576) {
+      alert('Image must be less than 1MB');
+      return;
+    }
+
+    // Check if it's an image
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64String = e.target?.result as string;
+        
+        // Update employee record with base64 image
+        const { error: updateError } = await supabase
+          .from('employees')
+          .update({ profile_photo: base64String })
+          .eq('id', employee.id);
+
+        if (updateError) {
+          console.error('Update error:', updateError);
+          alert('Failed to save photo. Please try again.');
+          setUploading(false);
+          return;
+        }
+
+        setProfilePhoto(base64String);
+        setEmployee({ ...employee, profile_photo: base64String });
+        setUploading(false);
+      };
+      
+      reader.onerror = () => {
+        alert('Failed to read file. Please try again.');
+        setUploading(false);
+      };
+      
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      alert('An error occurred. Please try again.');
+      setUploading(false);
+    }
+  };
+
+  const handleDeletePhoto = async () => {
+    if (!employee?.id || !profilePhoto) return;
+    
+    if (!confirm('Are you sure you want to delete your profile photo?')) return;
+
+    setUploading(true);
+    try {
+      const { error } = await supabase
+        .from('employees')
+        .update({ profile_photo: null })
+        .eq('id', employee.id);
+
+      if (error) {
+        console.error('Delete error:', error);
+        alert('Failed to delete photo. Please try again.');
+        return;
+      }
+
+      setProfilePhoto(null);
+      setEmployee({ ...employee, profile_photo: null });
+    } catch (error) {
+      console.error('Error deleting photo:', error);
+      alert('An error occurred. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   if (loading) {
     return <div className="animate-pulse bg-gray-700 h-96 rounded-lg"></div>;
   }
@@ -612,10 +723,68 @@ export default function ProfilePage() {
           >
             {/* Avatar */}
             <div className="flex justify-center mb-3">
-              <div className="relative">
+              <div className="relative group">
                 <div className="w-[60px] h-[60px] sm:w-[80px] sm:h-[80px] bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center text-white text-2xl sm:text-3xl font-bold overflow-hidden border-2 border-white/20">
-                  {employee?.name?.charAt(0).toUpperCase()}
+                  {profilePhoto ? (
+                    <img src={profilePhoto} alt={employee?.name} className="w-full h-full object-cover" />
+                  ) : (
+                    employee?.name?.charAt(0).toUpperCase()
+                  )}
                 </div>
+                {/* Upload/Delete overlay - only show if can upload */}
+                {canUploadPhoto && (
+                  <>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      className="hidden"
+                    />
+                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {uploading ? (
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      ) : (
+                        <>
+                          {/* Upload button */}
+                          <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className="p-1 hover:bg-white/20 rounded-full transition-colors"
+                            title="Upload photo"
+                          >
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                          </button>
+                          {/* Delete button - only show if photo exists */}
+                          {profilePhoto && (
+                            <button
+                              onClick={handleDeletePhoto}
+                              className="p-1 hover:bg-red-500/50 rounded-full transition-colors"
+                              title="Delete photo"
+                            >
+                              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
+                {/* Lock overlay - show if cannot upload */}
+                {!canUploadPhoto && (
+                  <div className="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="text-center">
+                      <svg className="w-4 h-4 text-black mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                      </svg>
+                      <p className="text-[8px] text-black font-semibold mt-0.5">{POINTS_REQUIRED_FOR_PHOTO - totalAllTimePoints} pts to unlock</p>
+                    </div>
+                  </div>
+                )}
                 {/* Badge overlay using Ellipse 30.png and Vector.png */}
                 <div className="absolute -bottom-1 -right-1 w-[20px] h-[20px] sm:w-[23px] sm:h-[23px]">
                   <img src="/Ellipse 30.png" alt="" className="w-full h-full" />
@@ -633,10 +802,6 @@ export default function ProfilePage() {
 
             {/* Stats - No horizontal lines */}
             <div className="space-y-0">
-              <div className="flex justify-between items-center py-2 sm:py-2.5">
-                <span className="text-white text-[12px] sm:text-[13px]">Rank</span>
-                <span className="text-white text-[12px] sm:text-[13px] font-semibold">#{employee?.rank || '-'}</span>
-              </div>
               <div className="flex justify-between items-center py-2 sm:py-2.5">
                 <span className="text-white text-[12px] sm:text-[13px]">This month</span>
                 <span className="text-white text-[12px] sm:text-[13px] font-semibold">{monthlyScore?.total_points || 0} pts</span>

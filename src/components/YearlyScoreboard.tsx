@@ -11,6 +11,7 @@ interface YearlyScoreEntry {
   total_points: number;
   project_count: number;
   year: number;
+  profile_photo?: string | null;
 }
 
 const MONTH_NAMES = [
@@ -35,7 +36,7 @@ export default function YearlyScoreboard() {
   const fetchScores = async () => {
     setLoading(true);
 
-    const { data, error } = await supabase
+    const { data: scoresData, error } = await supabase
       .from('yearly_scores')
       .select('id, employee_id, employee_name, total_points, project_count, year')
       .eq('year', selectedYear)
@@ -43,11 +44,31 @@ export default function YearlyScoreboard() {
 
     if (error) {
       console.error('Error fetching yearly scores:', error);
+      setScores([]);
       setLoading(false);
       return;
     }
 
-    setScores(data || []);
+    // Fetch profile photos for all employees
+    if (scoresData && scoresData.length > 0) {
+      const employeeIds = scoresData.map((s: any) => s.employee_id);
+      const { data: employeesData } = await supabase
+        .from('employees')
+        .select('id, profile_photo')
+        .in('id', employeeIds);
+
+      const photoMap = new Map(employeesData?.map((e: any) => [e.id, e.profile_photo]) || []);
+      
+      const scoresWithPhotos = scoresData.map((score: any) => ({
+        ...score,
+        profile_photo: photoMap.get(score.employee_id) || null
+      }));
+      
+      setScores(scoresWithPhotos);
+    } else {
+      setScores([]);
+    }
+    
     setLoading(false);
   };
 
@@ -60,7 +81,7 @@ export default function YearlyScoreboard() {
 
   return (
     <div className="flex flex-col">
-      {/* Header with filter - OUTSIDE the table */}
+      {/* Header with filter */}
       <div className="flex items-center justify-between mb-2">
         <div>
           <h3 className="text-white text-[16px] sm:text-[18px] font-semibold">Yearly scoreboard</h3>
@@ -101,7 +122,14 @@ export default function YearlyScoreboard() {
                   style={bgImage ? { backgroundImage: `url(${bgImage})` } : undefined}
                 >
                   <div className="flex items-center gap-2 sm:gap-3">
-                    <span className="text-[16px] sm:text-[18px]">{getMedalIcon(index)}</span>
+                    {/* Profile Photo */}
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white text-[10px] sm:text-xs font-bold overflow-hidden flex-shrink-0">
+                      {entry.profile_photo ? (
+                        <img src={entry.profile_photo} alt={entry.employee_name} className="w-full h-full object-cover" />
+                      ) : (
+                        entry.employee_name?.charAt(0).toUpperCase()
+                      )}
+                    </div>
                     <div>
                       <span className="text-white text-[14px] sm:text-[16px] font-semibold">{entry.employee_name}</span>
                       <span className="text-gray-400 text-[11px] sm:text-[13px] ml-1">({entry.project_count} projects)</span>

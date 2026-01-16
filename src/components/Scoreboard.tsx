@@ -10,6 +10,7 @@ interface ScoreEntry {
   employee_name: string;
   total_points: number;
   project_count: number;
+  profile_photo?: string | null;
 }
 
 const MONTHS = [
@@ -55,7 +56,7 @@ export default function Scoreboard() {
   const fetchScores = async () => {
     setLoading(true);
 
-    const { data, error } = await supabase
+    const { data: scoresData, error } = await supabase
       .from('monthly_scores')
       .select('*')
       .eq('month', month)
@@ -64,22 +65,37 @@ export default function Scoreboard() {
 
     if (error) {
       console.error('Error fetching scores:', error);
+      setScores([]);
+      setLoading(false);
+      return;
     }
 
-    setScores(data || []);
-    setLoading(false);
-  };
+    // Fetch profile photos for all employees
+    if (scoresData && scoresData.length > 0) {
+      const employeeIds = scoresData.map((s: any) => s.employee_id);
+      const { data: employeesData } = await supabase
+        .from('employees')
+        .select('id, profile_photo')
+        .in('id', employeeIds);
 
-  const getMedalIcon = (index: number) => {
-    if (index === 0) return '🥇';
-    if (index === 1) return '🥈';
-    if (index === 2) return '🥉';
-    return '';
+      const photoMap = new Map(employeesData?.map((e: any) => [e.id, e.profile_photo]) || []);
+      
+      const scoresWithPhotos = scoresData.map((score: any) => ({
+        ...score,
+        profile_photo: photoMap.get(score.employee_id) || null
+      }));
+      
+      setScores(scoresWithPhotos);
+    } else {
+      setScores([]);
+    }
+    
+    setLoading(false);
   };
 
   return (
     <div className="flex flex-col">
-      {/* Header with filters - OUTSIDE the table */}
+      {/* Header with filters */}
       <div className="flex items-center justify-between mb-2">
         <div>
           <h3 className="text-white text-[16px] sm:text-[18px] font-semibold">Monthly scoreboard</h3>
@@ -133,6 +149,14 @@ export default function Scoreboard() {
                   style={bgImage ? { backgroundImage: `url(${bgImage})` } : undefined}
                 >
                   <div className="flex items-center gap-2 sm:gap-3">
+                    {/* Profile Photo */}
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white text-[10px] sm:text-xs font-bold overflow-hidden flex-shrink-0">
+                      {entry.profile_photo ? (
+                        <img src={entry.profile_photo} alt={entry.employee_name} className="w-full h-full object-cover" />
+                      ) : (
+                        entry.employee_name?.charAt(0).toUpperCase()
+                      )}
+                    </div>
                     <div>
                       <span className="text-white text-[14px] sm:text-[16px] font-semibold">{entry.employee_name}</span>
                       <span className="text-gray-400 text-[11px] sm:text-[13px] ml-1">({entry.project_count} projects)</span>

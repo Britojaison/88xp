@@ -9,6 +9,7 @@ interface ScoreEntry {
   employee_id: string;
   employee_name: string;
   total_points: number;
+  profile_photo?: string | null;
 }
 
 export default function LastMonthScoreboard() {
@@ -45,7 +46,23 @@ export default function LastMonthScoreboard() {
       console.error('Error fetching last month scores:', error);
     }
 
-    setScores(data || []);
+    // Fetch profile photos for the top scorers
+    if (data && data.length > 0) {
+      const employeeIds = data.map((s: any) => s.employee_id);
+      const { data: employees } = await supabase
+        .from('employees')
+        .select('id, profile_photo')
+        .in('id', employeeIds);
+
+      const photoMap = new Map(employees?.map((e: any) => [e.id, e.profile_photo]) || []);
+      const scoresWithPhotos = data.map((s: any) => ({
+        ...s,
+        profile_photo: photoMap.get(s.employee_id) || null
+      }));
+      setScores(scoresWithPhotos);
+    } else {
+      setScores(data || []);
+    }
     setLoading(false);
   };
 
@@ -131,8 +148,12 @@ export default function LastMonthScoreboard() {
                   </div>
                   
                   {entry ? (
-                    <div className="w-[45px] h-[45px] sm:w-[50px] sm:h-[50px] lg:w-[60px] lg:h-[60px] rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white font-semibold text-sm sm:text-base border border-white/30">
-                      {getInitials(entry.employee_name)}
+                    <div className="w-[45px] h-[45px] sm:w-[50px] sm:h-[50px] lg:w-[60px] lg:h-[60px] rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white font-semibold text-sm sm:text-base border border-white/30 overflow-hidden">
+                      {entry.profile_photo ? (
+                        <img src={entry.profile_photo} alt={entry.employee_name} className="w-full h-full object-cover" />
+                      ) : (
+                        getInitials(entry.employee_name)
+                      )}
                     </div>
                   ) : (
                     <div className="w-[45px] h-[45px] sm:w-[50px] sm:h-[50px] lg:w-[60px] lg:h-[60px] rounded-full bg-gray-600/50 border border-gray-500/50"></div>

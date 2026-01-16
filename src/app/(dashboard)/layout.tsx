@@ -17,7 +17,7 @@ export default async function DashboardLayout({
 
   const { data: employee } = await supabase
     .from('employees')
-    .select('is_admin, rank, name')
+    .select('is_admin, rank, name, profile_photo')
     .ilike('email', user.email!)
     .single();
 
@@ -32,7 +32,7 @@ export default async function DashboardLayout({
         userRank={employee?.rank ?? null} 
         userName={employee?.name || 'User'}
         userEmail={user.email || ''}
-        userAvatar={user.user_metadata?.avatar_url || null}
+        userAvatar={employee?.profile_photo || null}
       />
       <main className="ml-[60px] sm:ml-[75px] lg:ml-[90px] xl:ml-[100px] px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 max-w-7xl flex flex-col min-h-screen">
         <div className="flex-1">{children}</div>
