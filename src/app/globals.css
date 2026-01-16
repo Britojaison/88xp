@@ -24,3 +24,13 @@ body {
 .font-manrope {
   font-family: var(--font-manrope), sans-serif;
 }
+
+/* Navigation progress animation */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}

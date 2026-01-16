@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
 interface LeftSidebarProps {
@@ -16,12 +17,19 @@ export default function LeftSidebar({ userRank, userName, userAvatar }: LeftSide
   const router = useRouter();
   const supabase = createClient();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const handleLogout = async () => {
     setShowLogoutModal(false);
     await supabase.auth.signOut();
     router.push('/login');
     router.refresh();
+  };
+
+  const handleNavigation = (href: string) => {
+    startTransition(() => {
+      router.push(href);
+    });
   };
 
   const navItems = [
@@ -73,14 +81,15 @@ export default function LeftSidebar({ userRank, userName, userAvatar }: LeftSide
               }
 
               return (
-                <button
+                <Link
                   key={item.name}
-                  onClick={() => router.push(item.href)}
-                  className={`w-8 h-8 sm:w-10 sm:h-10 lg:w-11 lg:h-11 xl:w-12 xl:h-12 flex items-center justify-center rounded-full transition-all duration-200 ${
+                  href={item.href}
+                  prefetch={true}
+                  className={`w-8 h-8 sm:w-10 sm:h-10 lg:w-11 lg:h-11 xl:w-12 xl:h-12 flex items-center justify-center rounded-full transition-all duration-200 relative ${
                     active 
                       ? 'bg-white' 
                       : 'hover:bg-white/10'
-                  }`}
+                  } ${isPending ? 'opacity-70' : ''}`}
                   title={item.name}
                 >
                   <img 
@@ -88,7 +97,12 @@ export default function LeftSidebar({ userRank, userName, userAvatar }: LeftSide
                     alt={item.name} 
                     className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 xl:w-7 xl:h-7 object-contain"
                   />
-                </button>
+                  {isPending && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    </div>
+                  )}
+                </Link>
               );
             })}
           </nav>
@@ -96,9 +110,10 @@ export default function LeftSidebar({ userRank, userName, userAvatar }: LeftSide
 
         {/* User Avatar at bottom */}
         <div className="pb-4 sm:pb-5 lg:pb-6">
-          <button
-            onClick={() => router.push('/profile')}
-            className="w-8 h-8 sm:w-10 sm:h-10 lg:w-11 lg:h-11 xl:w-12 xl:h-12 rounded-full overflow-hidden border-2 border-white/20 hover:border-white/40 transition-colors"
+          <Link
+            href="/profile"
+            prefetch={true}
+            className="block w-8 h-8 sm:w-10 sm:h-10 lg:w-11 lg:h-11 xl:w-12 xl:h-12 rounded-full overflow-hidden border-2 border-white/20 hover:border-white/40 transition-colors"
           >
             {userAvatar ? (
               <img src={userAvatar} alt={userName} className="w-full h-full object-cover" />
@@ -107,7 +122,7 @@ export default function LeftSidebar({ userRank, userName, userAvatar }: LeftSide
                 {userName?.charAt(0).toUpperCase()}
               </div>
             )}
-          </button>
+          </Link>
         </div>
       </div>
 
