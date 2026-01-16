@@ -483,7 +483,7 @@ export default async function PublicProfilePage({ params }: Props) {
         {/* Left - Profile Card */}
         <div className="w-full lg:w-[280px] flex-shrink-0">
           <div 
-            className="rounded-[20px] p-4 sm:p-5 flex flex-col h-full"
+            className="rounded-[20px] p-4 sm:p-5 flex flex-col"
             style={{
               backgroundImage: 'url(/Rectangle%2069.png)',
               backgroundSize: 'cover',
@@ -494,7 +494,11 @@ export default async function PublicProfilePage({ params }: Props) {
             <div className="flex justify-center mb-3">
               <div className="relative">
                 <div className="w-[60px] h-[60px] sm:w-[80px] sm:h-[80px] bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center text-white text-2xl sm:text-3xl font-bold overflow-hidden border-2 border-white/20">
-                  {employee.name?.charAt(0).toUpperCase()}
+                  {employee.profile_photo ? (
+                    <img src={employee.profile_photo} alt={employee.name} className="w-full h-full object-cover" />
+                  ) : (
+                    employee.name?.charAt(0).toUpperCase()
+                  )}
                 </div>
                 <div className="absolute -bottom-1 -right-1 w-[20px] h-[20px] sm:w-[23px] sm:h-[23px]">
                   <img src="/Ellipse 30.png" alt="" className="w-full h-full" />
@@ -513,20 +517,16 @@ export default async function PublicProfilePage({ params }: Props) {
             </div>
 
             {/* Stats */}
-            <div className="space-y-0 mt-auto">
-              <div className="flex justify-between items-center py-2">
-                <span className="text-white text-[12px] sm:text-[13px]">Rank</span>
-                <span className="text-white text-[12px] sm:text-[13px] font-semibold">#{employee.rank || '-'}</span>
-              </div>
-              <div className="flex justify-between items-center py-2">
+            <div className="space-y-0">
+              <div className="flex justify-between items-center py-2 sm:py-2.5">
                 <span className="text-white text-[12px] sm:text-[13px]">This month</span>
                 <span className="text-white text-[12px] sm:text-[13px] font-semibold">{monthlyScore?.total_points || 0} pts</span>
               </div>
-              <div className="flex justify-between items-center py-2">
+              <div className="flex justify-between items-center py-2 sm:py-2.5">
                 <span className="text-white text-[12px] sm:text-[13px]">This year</span>
                 <span className="text-white text-[12px] sm:text-[13px] font-semibold">{yearlyScore?.total_points || 0} pts</span>
               </div>
-              <div className="flex justify-between items-center py-2">
+              <div className="flex justify-between items-center py-2 sm:py-2.5">
                 <span className="text-white text-[12px] sm:text-[13px]">Annual Projects</span>
                 <span className="text-white text-[12px] sm:text-[13px] font-semibold">{allTimeStats?.length || 0}</span>
               </div>
