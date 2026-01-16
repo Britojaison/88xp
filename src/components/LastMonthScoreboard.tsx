@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
 
 interface ScoreEntry {
   id: string;
@@ -16,7 +16,6 @@ export default function LastMonthScoreboard() {
   const [scores, setScores] = useState<ScoreEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
-  const router = useRouter();
 
   useEffect(() => {
     fetchLastMonthScores();
@@ -74,10 +73,6 @@ export default function LastMonthScoreboard() {
     return name.substring(0, 2).toUpperCase();
   };
 
-  const handleCardClick = (employeeId: string) => {
-    router.push(`/user/${employeeId}`);
-  };
-
   const placeholderSlots = [
     { rank: 2, badgeColor: 'bg-gray-400', badgeTextColor: 'text-black' },
     { rank: 1, badgeColor: 'bg-yellow-500', badgeTextColor: 'text-black' },
@@ -130,9 +125,8 @@ export default function LastMonthScoreboard() {
           {placeholderSlots.map((slot, displayIndex) => {
             const entry = orderedScores[displayIndex];
             
-            return (
+            const CardContent = (
               <div 
-                key={displayIndex} 
                 className={`w-[100px] sm:w-[115px] lg:w-[130px] h-[120px] sm:h-[130px] lg:h-[140px] rounded-[15px] sm:rounded-[20px] flex flex-col items-center justify-center relative ${
                   entry ? 'cursor-pointer hover:scale-105 transition-transform duration-200' : ''
                 }`}
@@ -140,7 +134,6 @@ export default function LastMonthScoreboard() {
                   backgroundColor: 'rgba(199, 199, 199, 0.41)',
                   border: '1px solid rgba(199, 199, 199, 0.10)'
                 }}
-                onClick={() => entry && handleCardClick(entry.employee_id)}
               >
                 <div className="relative mb-1 sm:mb-2">
                   <div className={`absolute -top-1 -right-2 ${slot.badgeColor} ${slot.badgeTextColor} text-[8px] sm:text-[10px] font-bold w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center z-10`}>
@@ -170,6 +163,20 @@ export default function LastMonthScoreboard() {
                   </span>
                   <span className="text-gray-300 text-[8px] sm:text-[10px] ml-0.5">pts</span>
                 </p>
+              </div>
+            );
+            
+            return entry ? (
+              <Link
+                key={displayIndex}
+                href={`/user/${entry.employee_id}`}
+                prefetch={true}
+              >
+                {CardContent}
+              </Link>
+            ) : (
+              <div key={displayIndex}>
+                {CardContent}
               </div>
             );
           })}

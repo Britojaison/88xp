@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { redirect } from 'next/navigation';
 import ProfilePointsSection from './ProfilePointsSection';
 import ContributionGraph from '@/components/ContributionGraph';
+import ProfileSkeleton from '@/components/skeletons/ProfileSkeleton';
 
 export default function ProfilePage() {
   const [employee, setEmployee] = useState<any>(null);
@@ -642,7 +643,7 @@ export default function ProfilePage() {
   };
 
   if (loading) {
-    return <div className="animate-pulse bg-gray-700 h-96 rounded-lg"></div>;
+    return <ProfileSkeleton />;
   }
 
   const formatDate = (dateStr: string) => {

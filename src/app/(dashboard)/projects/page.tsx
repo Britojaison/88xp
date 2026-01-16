@@ -9,6 +9,7 @@ import BrandManagement from '@/components/BrandManagement';
 import { CheckIcon, CheckCircleIcon, PencilIcon, TrashIcon, LayoutGridIcon } from 'lucide-react';
 import EditTaskModal from '@/components/EditTaskModal';
 import { canEditTask } from '@/lib/rank-utils';
+import ProjectsSkeleton from '@/components/skeletons/ProjectsSkeleton';
 
 interface Task {
   id: string;
@@ -322,7 +323,7 @@ export default function TasksPage() {
   };
 
   if (loading) {
-    return <div className="animate-pulse bg-gray-200 h-96 rounded-lg"></div>;
+    return <ProjectsSkeleton />;
   }
 
   const formatDateShort = (dateString: string) => {

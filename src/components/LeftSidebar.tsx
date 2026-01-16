@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -17,19 +17,12 @@ export default function LeftSidebar({ userRank, userName, userAvatar }: LeftSide
   const router = useRouter();
   const supabase = createClient();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [isPending, startTransition] = useTransition();
 
   const handleLogout = async () => {
     setShowLogoutModal(false);
     await supabase.auth.signOut();
     router.push('/login');
     router.refresh();
-  };
-
-  const handleNavigation = (href: string) => {
-    startTransition(() => {
-      router.push(href);
-    });
   };
 
   const navItems = [
@@ -89,7 +82,7 @@ export default function LeftSidebar({ userRank, userName, userAvatar }: LeftSide
                     active 
                       ? 'bg-white' 
                       : 'hover:bg-white/10'
-                  } ${isPending ? 'opacity-70' : ''}`}
+                  }`}
                   title={item.name}
                 >
                   <img 
@@ -97,11 +90,6 @@ export default function LeftSidebar({ userRank, userName, userAvatar }: LeftSide
                     alt={item.name} 
                     className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 xl:w-7 xl:h-7 object-contain"
                   />
-                  {isPending && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    </div>
-                  )}
                 </Link>
               );
             })}
