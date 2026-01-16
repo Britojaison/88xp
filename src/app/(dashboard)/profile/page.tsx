@@ -406,16 +406,24 @@ export default function ProfilePage() {
       }
     }
 
-    // Badge 9: Hall Of Fame - Yearly top performers (top 3)
+    // Badge 9: Hall Of Fame - Finish in Top 5 for 12 out of 12 months
     // Only awarded at the END of a completed year
-    if (completedYearlyScores && completedYearlyScores.length > 0) {
+    if (completedMonthlyScores) {
       for (const checkYear of allYears.filter(y => y < currentYear)) {
-        const yearScores = completedYearlyScores.filter((s: any) => s.year === checkYear);
-        const sorted = yearScores.sort((a: any, b: any) => b.total_points - a.total_points);
-        const top3 = sorted.slice(0, 3);
-        if (top3.some((s: any) => s.employee_id === employeeId)) {
-          achieved.add(8);
-          break;
+        const yearScores = completedMonthlyScores.filter((s: any) => s.year === checkYear);
+        if (yearScores.length >= 12) {
+          let allTop5 = true;
+          for (const score of yearScores) {
+            const rank = getRankForCompletedMonth(score.month, score.year);
+            if (!rank || rank > 5) {
+              allTop5 = false;
+              break;
+            }
+          }
+          if (allTop5) {
+            achieved.add(8);
+            break;
+          }
         }
       }
     }
@@ -669,7 +677,7 @@ export default function ProfilePage() {
                     { img: '/6.png', name: 'Dominator', desc: 'Ranked #1 for 3 different months (not continuous)', index: 5 },
                     { img: '/7.png', name: 'Beast Mode', desc: 'Exceeds target by 2x', index: 6 },
                     { img: '/8.png', name: 'The Record Breaker', desc: 'Breaks a platform record', index: 7 },
-                    { img: '/9.png', name: 'Hall Of Fame', desc: 'Yearly top performers', index: 8 },
+                    { img: '/9.png', name: 'Hall Of Fame', desc: 'Finish in Top 5 for 12 out of 12 months', index: 8 },
                     { img: '/10.png', name: 'The Immortal', desc: 'Never drops below Top 10 for a full year', index: 9 },
                     { img: '/11.png', name: 'Dynasty Builder', desc: 'Wins Annual Legend badge twice', index: 10 },
                     { img: '/12.png', name: 'The Juggernaut', desc: 'Exceeds target 3 months in a row', index: 11 }

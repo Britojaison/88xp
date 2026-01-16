@@ -89,25 +89,31 @@ export default function YearlyScoreboard() {
           </p>
         ) : (
           <div className="space-y-1">
-            {scores.map((entry, index) => (
-              <Link
-                key={entry.id}
-                href={`/user/${entry.employee_id}`}
-                className="flex items-center justify-between py-1.5 sm:py-2 hover:bg-white/5 rounded-lg px-1 sm:px-2 transition-colors"
-              >
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <span className="text-[16px] sm:text-[18px]">{getMedalIcon(index)}</span>
-                  <div>
-                    <span className="text-white text-[14px] sm:text-[16px] font-semibold">{entry.employee_name}</span>
-                    <span className="text-gray-400 text-[11px] sm:text-[13px] ml-1">({entry.project_count} projects)</span>
+            {scores.map((entry, index) => {
+              const bgImage = index === 0 ? '/Rectangle%20766.png' : index === 1 ? '/Rectangle%20767.png' : index === 2 ? '/Rectangle%20768.png' : null;
+              return (
+                <Link
+                  key={entry.id}
+                  href={`/user/${entry.employee_id}`}
+                  className={`flex items-center justify-between py-1.5 sm:py-2 hover:bg-white/5 rounded-lg px-2 sm:px-3 transition-colors ${
+                    index < 3 ? 'bg-cover bg-center bg-no-repeat' : ''
+                  }`}
+                  style={bgImage ? { backgroundImage: `url(${bgImage})` } : undefined}
+                >
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <span className="text-[16px] sm:text-[18px]">{getMedalIcon(index)}</span>
+                    <div>
+                      <span className="text-white text-[14px] sm:text-[16px] font-semibold">{entry.employee_name}</span>
+                      <span className="text-gray-400 text-[11px] sm:text-[13px] ml-1">({entry.project_count} projects)</span>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center">
-                  <span className="text-purple-400 text-[14px] sm:text-[16px] font-bold">{entry.total_points}</span>
-                  <span className="text-gray-500 text-[11px] sm:text-[13px] ml-1">pts</span>
-                </div>
-              </Link>
-            ))}
+                  <div className="flex items-center">
+                    <span className="text-white text-[14px] sm:text-[16px] font-bold">{entry.total_points}</span>
+                    <span className="text-gray-500 text-[11px] sm:text-[13px] ml-1">pts</span>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
