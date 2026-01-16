@@ -29,7 +29,7 @@ export default function LeftSidebar({ userRank, userName, userAvatar }: LeftSide
     { name: 'Task', href: '/projects', icon: '/Vector (6).png', activeIcon: '/Vector (10).png' },
     { name: 'Profile', href: '/profile', icon: '/Vector (7).png', activeIcon: '/Vector (11).png' },
     { name: 'Targets', href: '/targets', icon: '/Group 3 (1).png', activeIcon: '/Group 2.png', requiresRank1: true },
-    { name: 'Logout', href: '#', icon: '/Vector (8).png', activeIcon: '/Vector (12).png', isLogout: true },
+    { name: 'Logout', href: '#', icon: '/Vector%20(13).png', activeIcon: '/Vector%20(14).png', isLogout: true },
   ];
 
   const filteredNavItems = navItems.filter(item => {
@@ -62,10 +62,12 @@ export default function LeftSidebar({ userRank, userName, userAvatar }: LeftSide
                   <button
                     key={item.name}
                     onClick={() => setShowLogoutModal(true)}
-                    className="w-8 h-8 sm:w-10 sm:h-10 lg:w-11 lg:h-11 xl:w-12 xl:h-12 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-white/10"
+                    className={`w-8 h-8 sm:w-10 sm:h-10 lg:w-11 lg:h-11 xl:w-12 xl:h-12 flex items-center justify-center rounded-full transition-all duration-200 ${
+                      showLogoutModal ? 'bg-white' : 'hover:bg-white/10'
+                    }`}
                     title={item.name}
                   >
-                    <img src={item.icon} alt={item.name} className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 xl:w-7 xl:h-7 object-contain" />
+                    <img src={showLogoutModal ? item.activeIcon : item.icon} alt={item.name} className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 xl:w-7 xl:h-7 object-contain" />
                   </button>
                 );
               }
