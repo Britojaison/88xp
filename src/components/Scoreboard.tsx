@@ -1,17 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
-
-interface ScoreEntry {
-  id: string;
-  employee_id: string;
-  employee_name: string;
-  total_points: number;
-  project_count: number;
-  profile_photo?: string | null;
-}
+import { useMonthlyScores } from '@/lib/hooks/useScores';
 
 const MONTHS = [
   { value: 1, label: 'Jan' },
@@ -35,63 +26,14 @@ const MONTH_NAMES = [
 
 export default function Scoreboard() {
   const now = new Date();
-  const [scores, setScores] = useState<ScoreEntry[]>([]);
-  const [loading, setLoading] = useState(true);
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
-  const supabase = createClient();
 
   const currentYear = now.getFullYear();
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
-  useEffect(() => {
-    let isMounted = true;
-    const loadScores = async () => {
-      if (isMounted) await fetchScores();
-    };
-    loadScores();
-    return () => { isMounted = false; };
-  }, [month, year]);
-
-  const fetchScores = async () => {
-    setLoading(true);
-
-    const { data: scoresData, error } = await supabase
-      .from('monthly_scores')
-      .select('*')
-      .eq('month', month)
-      .eq('year', year)
-      .order('total_points', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching scores:', error);
-      setScores([]);
-      setLoading(false);
-      return;
-    }
-
-    // Fetch profile photos for all employees
-    if (scoresData && scoresData.length > 0) {
-      const employeeIds = scoresData.map((s: any) => s.employee_id);
-      const { data: employeesData } = await supabase
-        .from('employees')
-        .select('id, profile_photo')
-        .in('id', employeeIds);
-
-      const photoMap = new Map(employeesData?.map((e: any) => [e.id, e.profile_photo]) || []);
-      
-      const scoresWithPhotos = scoresData.map((score: any) => ({
-        ...score,
-        profile_photo: photoMap.get(score.employee_id) || null
-      }));
-      
-      setScores(scoresWithPhotos);
-    } else {
-      setScores([]);
-    }
-    
-    setLoading(false);
-  };
+  // Use React Query hook for data fetching with automatic caching
+  const { data: scores = [], isLoading: loading } = useMonthlyScores(month, year);
 
   return (
     <div className="flex flex-col">

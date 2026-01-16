@@ -1,16 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
-
-interface Project {
-  id: string;
-  name: string;
-  created_at: string;
-  assignee: { name: string } | null;
-  brand: { name: string } | null;
-  type: { name: string } | null;
-}
+import { useProjects } from '@/lib/hooks/useProjects';
 
 interface ProjectsTableProps {
   filterMonth?: number;
@@ -18,60 +8,8 @@ interface ProjectsTableProps {
 }
 
 export default function ProjectsTable({ filterMonth = 0, filterYear = 0 }: ProjectsTableProps) {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-  const supabase = createClient();
-
-  useEffect(() => {
-    fetchProjects();
-  }, [filterMonth, filterYear]);
-
-  const fetchProjects = async () => {
-    setLoading(true);
-    
-    let query = supabase
-      .from('projects')
-      .select('id, name, created_at, assignee:employees!assigned_to(name), brand:brands(name), type:project_types(name)')
-      .order('created_at', { ascending: false });
-
-    // Apply date filters if specified
-    if (filterYear > 0) {
-      const startOfYear = `${filterYear}-01-01`;
-      const endOfYear = `${filterYear}-12-31`;
-      
-      if (filterMonth > 0) {
-        // Filter by specific month and year
-        const startOfMonth = `${filterYear}-${String(filterMonth).padStart(2, '0')}-01`;
-        const lastDay = new Date(filterYear, filterMonth, 0).getDate();
-        const endOfMonth = `${filterYear}-${String(filterMonth).padStart(2, '0')}-${lastDay}`;
-        
-        query = query.gte('created_at', startOfMonth).lte('created_at', endOfMonth + 'T23:59:59');
-      } else {
-        // Filter by year only
-        query = query.gte('created_at', startOfYear).lte('created_at', endOfYear + 'T23:59:59');
-      }
-    } else if (filterMonth > 0) {
-      // Filter by month only (current year)
-      const currentYear = new Date().getFullYear();
-      const startOfMonth = `${currentYear}-${String(filterMonth).padStart(2, '0')}-01`;
-      const lastDay = new Date(currentYear, filterMonth, 0).getDate();
-      const endOfMonth = `${currentYear}-${String(filterMonth).padStart(2, '0')}-${lastDay}`;
-      
-      query = query.gte('created_at', startOfMonth).lte('created_at', endOfMonth + 'T23:59:59');
-    }
-
-    const { data } = await query;
-
-    const transform = (items: typeof data) => (items || []).map((p: Record<string, unknown>) => ({
-      ...p,
-      assignee: Array.isArray(p.assignee) ? p.assignee[0] : p.assignee,
-      brand: Array.isArray(p.brand) ? p.brand[0] : p.brand,
-      type: Array.isArray(p.type) ? p.type[0] : p.type,
-    }));
-
-    setProjects(transform(data) as Project[]);
-    setLoading(false);
-  };
+  // Use React Query hook for data fetching with automatic caching
+  const { data: projects = [], isLoading: loading } = useProjects(filterMonth, filterYear);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);

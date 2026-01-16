@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import LeftSidebar from '@/components/LeftSidebar';
 import Footer from '@/components/Footer';
+import QueryProvider from '@/lib/query-provider';
 
 export default async function DashboardLayout({
   children,
@@ -27,17 +28,19 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#000509' }}>
-      <LeftSidebar 
-        userRank={employee?.rank ?? null} 
-        userName={employee?.name || 'User'}
-        userEmail={user.email || ''}
-        userAvatar={employee?.profile_photo || null}
-      />
-      <main className="ml-[60px] sm:ml-[75px] lg:ml-[90px] xl:ml-[100px] px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 max-w-7xl flex flex-col min-h-screen">
-        <div className="flex-1">{children}</div>
-        <Footer />
-      </main>
-    </div>
+    <QueryProvider>
+      <div className="min-h-screen" style={{ backgroundColor: '#000509' }}>
+        <LeftSidebar 
+          userRank={employee?.rank ?? null} 
+          userName={employee?.name || 'User'}
+          userEmail={user.email || ''}
+          userAvatar={employee?.profile_photo || null}
+        />
+        <main className="ml-[60px] sm:ml-[75px] lg:ml-[90px] xl:ml-[100px] px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 max-w-7xl flex flex-col min-h-screen">
+          <div className="flex-1">{children}</div>
+          <Footer />
+        </main>
+      </div>
+    </QueryProvider>
   );
 }
