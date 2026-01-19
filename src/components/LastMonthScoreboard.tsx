@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
+import { useLastMonthScores } from '@/lib/hooks/useScores';
 
 interface ScoreEntry {
   id: string;
@@ -13,57 +12,8 @@ interface ScoreEntry {
 }
 
 export default function LastMonthScoreboard() {
-  const [scores, setScores] = useState<ScoreEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const supabase = createClient();
-
-  useEffect(() => {
-    fetchLastMonthScores();
-  }, []);
-
-  const fetchLastMonthScores = async () => {
-    setLoading(true);
-    
-    const now = new Date();
-    let lastMonth = now.getMonth();
-    let year = now.getFullYear();
-    
-    if (lastMonth === 0) {
-      lastMonth = 12;
-      year = year - 1;
-    }
-
-    const { data, error } = await supabase
-      .from('monthly_scores')
-      .select('id, employee_id, employee_name, total_points')
-      .eq('month', lastMonth)
-      .eq('year', year)
-      .order('total_points', { ascending: false })
-      .limit(3);
-
-    if (error) {
-      console.error('Error fetching last month scores:', error);
-    }
-
-    // Fetch profile photos for the top scorers
-    if (data && data.length > 0) {
-      const employeeIds = data.map((s: any) => s.employee_id);
-      const { data: employees } = await supabase
-        .from('employees')
-        .select('id, profile_photo')
-        .in('id', employeeIds);
-
-      const photoMap = new Map(employees?.map((e: any) => [e.id, e.profile_photo]) || []);
-      const scoresWithPhotos = data.map((s: any) => ({
-        ...s,
-        profile_photo: photoMap.get(s.employee_id) || null
-      }));
-      setScores(scoresWithPhotos);
-    } else {
-      setScores(data || []);
-    }
-    setLoading(false);
-  };
+  // Use React Query hook for data fetching with automatic caching
+  const { data: scores = [], isLoading: loading } = useLastMonthScores();
 
   const getInitials = (name: string) => {
     const names = name.split(' ');
@@ -79,17 +29,17 @@ export default function LastMonthScoreboard() {
     { rank: 3, badgeColor: 'bg-orange-500', badgeTextColor: 'text-white' }
   ];
 
-  const orderedScores = scores.length >= 2 
+  const orderedScores = scores.length >= 2
     ? [scores[1], scores[0], scores[2]].filter(Boolean)
     : scores;
 
   if (loading) {
     return (
-      <div 
+      <div
         className="w-[480px] h-[220px] p-5 relative overflow-hidden"
         style={{ borderRadius: '30px 10px 30px 10px' }}
       >
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: 'url(/Rectangle%20391.png)' }}
         />
@@ -109,27 +59,26 @@ export default function LastMonthScoreboard() {
   }
 
   return (
-    <div 
+    <div
       className="w-full sm:w-[380px] lg:w-[480px] h-[180px] sm:h-[200px] lg:h-[220px] px-3 sm:px-4 lg:px-5 py-3 sm:py-4 relative overflow-hidden"
       style={{ borderRadius: '30px 10px 30px 10px' }}
     >
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: 'url(/Rectangle%20391.png)' }}
       />
-      
+
       <div className="relative z-10">
         <h3 className="text-white text-base sm:text-lg font-semibold mb-2 sm:mb-4">Last Month Scoreboard</h3>
-        
+
         <div className="flex justify-center gap-2 sm:gap-3 lg:gap-4">
           {placeholderSlots.map((slot, displayIndex) => {
             const entry = orderedScores[displayIndex];
-            
+
             const CardContent = (
-              <div 
-                className={`w-[100px] sm:w-[115px] lg:w-[130px] h-[120px] sm:h-[130px] lg:h-[140px] rounded-[15px] sm:rounded-[20px] flex flex-col items-center justify-center relative ${
-                  entry ? 'cursor-pointer hover:scale-105 transition-transform duration-200' : ''
-                }`}
+              <div
+                className={`w-[100px] sm:w-[115px] lg:w-[130px] h-[120px] sm:h-[130px] lg:h-[140px] rounded-[15px] sm:rounded-[20px] flex flex-col items-center justify-center relative ${entry ? 'cursor-pointer hover:scale-105 transition-transform duration-200' : ''
+                  }`}
                 style={{
                   backgroundColor: 'rgba(199, 199, 199, 0.41)',
                   border: '1px solid rgba(199, 199, 199, 0.10)'
@@ -139,7 +88,7 @@ export default function LastMonthScoreboard() {
                   <div className={`absolute -top-1 -right-2 ${slot.badgeColor} ${slot.badgeTextColor} text-[8px] sm:text-[10px] font-bold w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center z-10`}>
                     #{slot.rank}
                   </div>
-                  
+
                   {entry ? (
                     <div className="w-[45px] h-[45px] sm:w-[50px] sm:h-[50px] lg:w-[60px] lg:h-[60px] rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white font-semibold text-sm sm:text-base border border-white/30 overflow-hidden">
                       {entry.profile_photo ? (
@@ -152,11 +101,11 @@ export default function LastMonthScoreboard() {
                     <div className="w-[45px] h-[45px] sm:w-[50px] sm:h-[50px] lg:w-[60px] lg:h-[60px] rounded-full bg-gray-600/50 border border-gray-500/50"></div>
                   )}
                 </div>
-                
+
                 <p className="text-white text-[11px] sm:text-[12px] lg:text-[13px] font-medium text-center w-[90px] sm:w-[100px] lg:w-[110px] truncate">
                   {entry?.employee_name || '—'}
                 </p>
-                
+
                 <p className="text-center mt-0.5 sm:mt-1">
                   <span className="text-purple-300 font-bold text-sm sm:text-base">
                     {entry ? entry.total_points : '—'}
@@ -165,7 +114,7 @@ export default function LastMonthScoreboard() {
                 </p>
               </div>
             );
-            
+
             return entry ? (
               <Link
                 key={displayIndex}

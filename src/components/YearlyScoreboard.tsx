@@ -1,18 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
-
-interface YearlyScoreEntry {
-  id: string;
-  employee_id: string;
-  employee_name: string;
-  total_points: number;
-  project_count: number;
-  year: number;
-  profile_photo?: string | null;
-}
+import { useYearlyScores } from '@/lib/hooks/useScores';
 
 const MONTH_NAMES = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -21,63 +11,13 @@ const MONTH_NAMES = [
 
 export default function YearlyScoreboard() {
   const now = new Date();
-  const [scores, setScores] = useState<YearlyScoreEntry[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
-  const supabase = createClient();
 
   const currentYear = now.getFullYear();
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
-  useEffect(() => {
-    fetchScores();
-  }, [selectedYear]);
-
-  const fetchScores = async () => {
-    setLoading(true);
-
-    const { data: scoresData, error } = await supabase
-      .from('yearly_scores')
-      .select('id, employee_id, employee_name, total_points, project_count, year')
-      .eq('year', selectedYear)
-      .order('total_points', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching yearly scores:', error);
-      setScores([]);
-      setLoading(false);
-      return;
-    }
-
-    // Fetch profile photos for all employees
-    if (scoresData && scoresData.length > 0) {
-      const employeeIds = scoresData.map((s: any) => s.employee_id);
-      const { data: employeesData } = await supabase
-        .from('employees')
-        .select('id, profile_photo')
-        .in('id', employeeIds);
-
-      const photoMap = new Map(employeesData?.map((e: any) => [e.id, e.profile_photo]) || []);
-      
-      const scoresWithPhotos = scoresData.map((score: any) => ({
-        ...score,
-        profile_photo: photoMap.get(score.employee_id) || null
-      }));
-      
-      setScores(scoresWithPhotos);
-    } else {
-      setScores([]);
-    }
-    
-    setLoading(false);
-  };
-
-  const getMedalIcon = (index: number) => {
-    if (index === 0) return '🥇';
-    if (index === 1) return '🥈';
-    if (index === 2) return '🥉';
-    return '';
-  };
+  // Use React Query hook for data fetching with automatic caching
+  const { data: scores = [], isLoading: loading } = useYearlyScores(selectedYear);
 
   return (
     <div className="flex flex-col">
@@ -116,9 +56,8 @@ export default function YearlyScoreboard() {
                 <Link
                   key={entry.id}
                   href={`/user/${entry.employee_id}`}
-                  className={`flex items-center justify-between py-1.5 sm:py-2 hover:bg-white/5 rounded-lg px-2 sm:px-3 transition-colors ${
-                    index < 3 ? 'bg-cover bg-center bg-no-repeat' : ''
-                  }`}
+                  className={`flex items-center justify-between py-1.5 sm:py-2 hover:bg-white/5 rounded-lg px-2 sm:px-3 transition-colors ${index < 3 ? 'bg-cover bg-center bg-no-repeat' : ''
+                    }`}
                   style={bgImage ? { backgroundImage: `url(${bgImage})` } : undefined}
                 >
                   <div className="flex items-center gap-2 sm:gap-3">

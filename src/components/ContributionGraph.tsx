@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useMemo, useRef, useState, useEffect } from 'react';
+import { useContributions } from '@/lib/hooks/useProjects';
 
 interface ContributionDay {
   date: Date;
@@ -15,13 +15,6 @@ interface Props {
   showLegend?: boolean;
   selectedYear?: number;
   onYearChange?: (year: number) => void;
-}
-
-interface Project {
-  id: string;
-  completed_at: string;
-  points_override: number | null;
-  type: { points: number } | { points: number }[] | null;
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -45,105 +38,29 @@ const getFillColor = (count: number): string => {
 };
 
 export default function ContributionGraph({ employeeId, showLegend = true, selectedYear, onYearChange }: Props) {
-  const [contributions, setContributions] = useState<Map<string, { count: number; points: number }>>(new Map());
-  const [loading, setLoading] = useState(true);
-  const [totalProjects, setTotalProjects] = useState(0);
-  const [totalPoints, setTotalPoints] = useState(0);
   const [cellSize, setCellSize] = useState<number>(12);
-  const supabase = createClient();
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
-    
-    const loadData = async () => {
-      if (isMounted) {
-        await fetchContributions();
-      }
-    };
-    
-    loadData();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [employeeId, selectedYear]);
-
-  const fetchContributions = async () => {
-    setLoading(true);
-    
-    const now = new Date();
-    const currentYear = selectedYear || now.getFullYear();
-    const isCurrentYear = currentYear === now.getFullYear();
-    
-    let startDate: Date;
-    let endDate: Date;
-    
-    if (isCurrentYear) {
-      // For current year, show last 365 days
-      endDate = new Date(now);
-      startDate = new Date(now);
-      startDate.setDate(startDate.getDate() - 365);
-    } else {
-      // For past years, show the full year
-      startDate = new Date(currentYear, 0, 1);
-      endDate = new Date(currentYear, 11, 31, 23, 59, 59);
-    }
-    
-    const { data: projects, error } = await supabase
-      .from('projects')
-      .select('id, completed_at, points_override, type:project_types(points)')
-      .eq('assigned_to', employeeId)
-      .in('status', ['completed', 'approved'])
-      .not('completed_at', 'is', null)
-      .gte('completed_at', startDate.toISOString())
-      .lte('completed_at', endDate.toISOString())
-      .order('completed_at', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching contributions:', error);
-      setLoading(false);
-      return;
-    }
-
-    const contributionMap = new Map<string, { count: number; points: number }>();
-    let totalPts = 0;
-    
-    (projects || []).forEach((project: Project) => {
-      const dateKey = project.completed_at.split('T')[0];
-      const typeData = Array.isArray(project.type) ? project.type[0] : project.type;
-      const points = project.points_override ?? typeData?.points ?? 0;
-      
-      if (contributionMap.has(dateKey)) {
-        const existing = contributionMap.get(dateKey)!;
-        existing.count += 1;
-        existing.points += points;
-      } else {
-        contributionMap.set(dateKey, { count: 1, points });
-      }
-      totalPts += points;
-    });
-
-    setContributions(contributionMap);
-    setTotalProjects(projects?.length || 0);
-    setTotalPoints(totalPts);
-    setLoading(false);
-  };
+  // Use React Query hook for data fetching with automatic caching
+  const { data, isLoading: loading } = useContributions(employeeId, selectedYear);
+  const contributions = data?.contributions || new Map();
+  const totalProjects = data?.totalProjects || 0;
+  const totalPoints = data?.totalPoints || 0;
 
   const { weeks, monthLabels } = useMemo(() => {
     const currentYear = selectedYear || new Date().getFullYear();
     const today = new Date();
     today.setHours(12, 0, 0, 0);
     const isCurrentYear = currentYear === today.getFullYear();
-    
+
     let endDate: Date;
     let startDate: Date;
-    
+
     if (isCurrentYear) {
       // For current year, show last 365 days (53 weeks)
       endDate = new Date(today);
       endDate.setDate(endDate.getDate() + (6 - endDate.getDay())); // End on Saturday
-      
+
       startDate = new Date(endDate);
       startDate.setDate(startDate.getDate() - (WEEKS * 7) + 1); // Go back 53 weeks
     } else {
@@ -151,44 +68,44 @@ export default function ContributionGraph({ employeeId, showLegend = true, selec
       endDate = new Date(currentYear, 11, 31);
       const lastSaturday = new Date(endDate);
       lastSaturday.setDate(lastSaturday.getDate() + (6 - lastSaturday.getDay()));
-      
+
       startDate = new Date(lastSaturday);
       startDate.setDate(startDate.getDate() - (WEEKS * 7) + 1);
       endDate = lastSaturday;
     }
-    
+
     const weeksArr: ContributionDay[][] = [];
     const labels: { month: string; weekIndex: number }[] = [];
     let lastMonthYear = '';
-    
+
     const currentDate = new Date(startDate);
-    
+
     for (let w = 0; w < WEEKS; w++) {
       const week: ContributionDay[] = [];
-      
+
       for (let d = 0; d < 7; d++) {
         const dateStr = currentDate.toISOString().split('T')[0];
         const isFuture = currentDate > today;
-        
+
         week.push({
           date: new Date(currentDate),
           dateStr,
           count: isFuture ? -1 : 0,
           points: 0,
         });
-        
+
         const monthYear = `${currentDate.getFullYear()}-${currentDate.getMonth()}`;
         if (monthYear !== lastMonthYear && !isFuture) {
           labels.push({ month: MONTHS[currentDate.getMonth()], weekIndex: w });
           lastMonthYear = monthYear;
         }
-        
+
         currentDate.setDate(currentDate.getDate() + 1);
       }
-      
+
       weeksArr.push(week);
     }
-    
+
     return { weeks: weeksArr, monthLabels: labels };
   }, [selectedYear]);
 
@@ -212,7 +129,7 @@ export default function ContributionGraph({ employeeId, showLegend = true, selec
     update();
     let ro: ResizeObserver | null = new ResizeObserver(update);
     ro.observe(el);
-    
+
     return () => {
       if (ro) {
         ro.disconnect();
@@ -237,112 +154,111 @@ export default function ContributionGraph({ employeeId, showLegend = true, selec
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 sm:mb-3 gap-2">
         <h3 className="text-sm sm:text-base font-semibold text-white">Activity Timeline</h3>
         <div className="text-xs sm:text-sm text-gray-400">
-          <span className="font-semibold text-blue-400">{totalProjects}</span> projects • 
+          <span className="font-semibold text-blue-400">{totalProjects}</span> projects •
           <span className="font-semibold text-blue-400 ml-1">{totalPoints}</span> pts
         </div>
       </div>
-      
+
       {/* Main content with year selector inside */}
       <div className="flex gap-2 sm:gap-3">
         <div ref={containerRef} className="flex-1 overflow-x-auto">
-        <div className="w-full min-w-[300px]">
-          <div className="flex mb-1" style={{ marginLeft: DAY_LABEL_WIDTH }}>
-            <svg width={gridWidth + 2} height={16} viewBox={`-1 0 ${gridWidth + 2} 16`} overflow="visible">
-              {monthLabels.map((label, idx) => (
-                <text
-                  key={`${label.month}-${label.weekIndex}-${idx}`}
-                  x={label.weekIndex * (cellSize + GAP)}
-                  y={12}
-                  className="fill-gray-400"
-                  style={{ fontSize: 10 }}
-                >
-                  {label.month}
-                </text>
-              ))}
-            </svg>
-          </div>
-
-          <div className="flex">
-            <div className="flex flex-col justify-between pr-1" style={{ height: gridHeight, width: DAY_LABEL_WIDTH }}>
-              <span></span>
-              <span className="text-[8px] sm:text-[10px] text-gray-400 leading-none">Mon</span>
-              <span></span>
-              <span className="text-[8px] sm:text-[10px] text-gray-400 leading-none">Wed</span>
-              <span></span>
-              <span className="text-[8px] sm:text-[10px] text-gray-400 leading-none">Fri</span>
-              <span></span>
+          <div className="w-full min-w-[300px]">
+            <div className="flex mb-1" style={{ marginLeft: DAY_LABEL_WIDTH }}>
+              <svg width={gridWidth + 2} height={16} viewBox={`-1 0 ${gridWidth + 2} 16`} overflow="visible">
+                {monthLabels.map((label, idx) => (
+                  <text
+                    key={`${label.month}-${label.weekIndex}-${idx}`}
+                    x={label.weekIndex * (cellSize + GAP)}
+                    y={12}
+                    className="fill-gray-400"
+                    style={{ fontSize: 10 }}
+                  >
+                    {label.month}
+                  </text>
+                ))}
+              </svg>
             </div>
 
-            <svg
-              width={gridWidth + 2}
-              height={gridHeight + 2}
-              viewBox={`-1 -1 ${gridWidth + 2} ${gridHeight + 2}`}
-              overflow="visible"
-            >
-              {weeks.map((week, weekIdx) =>
-                week.map((day, dayIdx) => {
-                  const contribution = contributions.get(day.dateStr);
-                  const count = contribution?.count || 0;
-                  const points = contribution?.points || 0;
-                  const isFuture = day.count === -1;
-                  const isToday = day.dateStr === todayStr;
+            <div className="flex">
+              <div className="flex flex-col justify-between pr-1" style={{ height: gridHeight, width: DAY_LABEL_WIDTH }}>
+                <span></span>
+                <span className="text-[8px] sm:text-[10px] text-gray-400 leading-none">Mon</span>
+                <span></span>
+                <span className="text-[8px] sm:text-[10px] text-gray-400 leading-none">Wed</span>
+                <span></span>
+                <span className="text-[8px] sm:text-[10px] text-gray-400 leading-none">Fri</span>
+                <span></span>
+              </div>
 
-                  if (isFuture) return null;
+              <svg
+                width={gridWidth + 2}
+                height={gridHeight + 2}
+                viewBox={`-1 -1 ${gridWidth + 2} ${gridHeight + 2}`}
+                overflow="visible"
+              >
+                {weeks.map((week, weekIdx) =>
+                  week.map((day, dayIdx) => {
+                    const contribution = contributions.get(day.dateStr);
+                    const count = contribution?.count || 0;
+                    const points = contribution?.points || 0;
+                    const isFuture = day.count === -1;
+                    const isToday = day.dateStr === todayStr;
 
-                  const x = weekIdx * (cellSize + GAP);
-                  const y = dayIdx * (cellSize + GAP);
+                    if (isFuture) return null;
 
-                  return (
-                    <g key={day.dateStr}>
-                      <rect
-                        x={x}
-                        y={y}
-                        width={cellSize}
-                        height={cellSize}
-                        rx={2}
-                        fill={getFillColor(count)}
-                        stroke={isToday ? '#94a3b8' : 'none'}
-                        strokeWidth={isToday ? 1 : 0}
-                      >
-                        <title>{`${day.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}\n${count} project${count !== 1 ? 's' : ''} • ${points} points`}</title>
-                      </rect>
-                    </g>
-                  );
-                })
-              )}
-            </svg>
-          </div>
+                    const x = weekIdx * (cellSize + GAP);
+                    const y = dayIdx * (cellSize + GAP);
 
-          {showLegend && (
-            <div className="flex items-center justify-end mt-2 sm:mt-3 gap-1 text-[8px] sm:text-[10px] text-gray-400">
-              <span>Less</span>
-              <div className="rounded-sm bg-slate-200" style={{ width: cellSize, height: cellSize }} />
-              <div className="rounded-sm bg-blue-200" style={{ width: cellSize, height: cellSize }} />
-              <div className="rounded-sm bg-blue-400" style={{ width: cellSize, height: cellSize }} />
-              <div className="rounded-sm bg-blue-500" style={{ width: cellSize, height: cellSize }} />
-              <div className="rounded-sm bg-blue-700" style={{ width: cellSize, height: cellSize }} />
-              <span>More</span>
+                    return (
+                      <g key={day.dateStr}>
+                        <rect
+                          x={x}
+                          y={y}
+                          width={cellSize}
+                          height={cellSize}
+                          rx={2}
+                          fill={getFillColor(count)}
+                          stroke={isToday ? '#94a3b8' : 'none'}
+                          strokeWidth={isToday ? 1 : 0}
+                        >
+                          <title>{`${day.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}\n${count} project${count !== 1 ? 's' : ''} • ${points} points`}</title>
+                        </rect>
+                      </g>
+                    );
+                  })
+                )}
+              </svg>
             </div>
-          )}
+
+            {showLegend && (
+              <div className="flex items-center justify-end mt-2 sm:mt-3 gap-1 text-[8px] sm:text-[10px] text-gray-400">
+                <span>Less</span>
+                <div className="rounded-sm bg-slate-200" style={{ width: cellSize, height: cellSize }} />
+                <div className="rounded-sm bg-blue-200" style={{ width: cellSize, height: cellSize }} />
+                <div className="rounded-sm bg-blue-400" style={{ width: cellSize, height: cellSize }} />
+                <div className="rounded-sm bg-blue-500" style={{ width: cellSize, height: cellSize }} />
+                <div className="rounded-sm bg-blue-700" style={{ width: cellSize, height: cellSize }} />
+                <span>More</span>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-      
-      {/* Year Selector - Inside Activity Timeline */}
-      <div className="flex flex-col gap-1 sm:gap-1.5">
-        {[2024, 2025, 2026].map((year) => (
-          <button
-            key={year}
-            onClick={() => onYearChange?.(year)}
-            className={`w-[40px] sm:w-[50px] h-[24px] sm:h-[28px] rounded-[6px] sm:rounded-[8px] text-[10px] sm:text-[12px] font-medium transition-all ${
-              selectedYear === year
-                ? 'bg-[#3A4A5A] text-white border border-cyan-400'
-                : 'bg-transparent text-gray-400 hover:text-white'
-            }`}
-          >
-            {year}
-          </button>
-        ))}
-      </div>
+
+        {/* Year Selector - Inside Activity Timeline */}
+        <div className="flex flex-col gap-1 sm:gap-1.5">
+          {[2024, 2025, 2026].map((year) => (
+            <button
+              key={year}
+              onClick={() => onYearChange?.(year)}
+              className={`w-[40px] sm:w-[50px] h-[24px] sm:h-[28px] rounded-[6px] sm:rounded-[8px] text-[10px] sm:text-[12px] font-medium transition-all ${selectedYear === year
+                  ? 'bg-[#3A4A5A] text-white border border-cyan-400'
+                  : 'bg-transparent text-gray-400 hover:text-white'
+                }`}
+            >
+              {year}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

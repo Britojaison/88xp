@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useState } from 'react';
 import { RefreshCwIcon, CheckCircleIcon } from 'lucide-react';
+import { useActiveProjects } from '@/lib/hooks/useActiveProjects';
 
 interface Task {
   id: string;
@@ -22,75 +22,16 @@ const MONTHS = [
 
 export default function ActiveProjects() {
   const now = new Date();
-  const [ongoingTasks, setOngoingTasks] = useState<Task[]>([]);
-  const [completedTasks, setCompletedTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
-  const supabase = createClient();
 
   const currentYear = now.getFullYear();
   const availableYears = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
-  useEffect(() => {
-    let isMounted = true;
-    
-    const loadTasks = async () => {
-      if (isMounted) {
-        await fetchTasks();
-      }
-    };
-    
-    loadTasks();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedMonth, selectedYear]);
-
-  const fetchTasks = async () => {
-    setLoading(true);
-    
-    // Calculate date range for filtering at database level
-    // Start of month
-    const startDate = new Date(selectedYear, selectedMonth - 1, 1);
-    startDate.setHours(0, 0, 0, 0);
-    // End of month
-    const endDate = new Date(selectedYear, selectedMonth, 0);
-    endDate.setHours(23, 59, 59, 999);
-    
-    const startDateStr = startDate.toISOString();
-    const endDateStr = endDate.toISOString();
-    
-    // Fetch ongoing tasks (filter by created_at)
-    const { data: ongoingData } = await supabase
-      .from('projects')
-      .select('id, name, status, points_override, completed_at, created_at, assignee:employees!assigned_to(name), type:project_types(name, points)')
-      .in('status', ['pending', 'in_progress'])
-      .gte('created_at', startDateStr)
-      .lte('created_at', endDateStr)
-      .order('created_at', { ascending: false });
-
-    // Fetch completed tasks (filter by completed_at)
-    const { data: completedData } = await supabase
-      .from('projects')
-      .select('id, name, status, points_override, completed_at, created_at, assignee:employees!assigned_to(name), type:project_types(name, points)')
-      .in('status', ['completed', 'approved'])
-      .not('completed_at', 'is', null)
-      .gte('completed_at', startDateStr)
-      .lte('completed_at', endDateStr)
-      .order('completed_at', { ascending: false });
-
-    const transform = (items: typeof ongoingData) => (items || []).map((p: any) => ({
-      ...p,
-      assignee: Array.isArray(p.assignee) ? p.assignee[0] : p.assignee,
-      type: Array.isArray(p.type) ? p.type[0] : p.type,
-    }));
-
-    setOngoingTasks(transform(ongoingData) as Task[]);
-    setCompletedTasks(transform(completedData) as Task[]);
-    setLoading(false);
-  };
+  // Use React Query hook for data fetching with automatic caching
+  const { data, isLoading: loading } = useActiveProjects(selectedMonth, selectedYear);
+  const ongoingTasks = data?.ongoingTasks || [];
+  const completedTasks = data?.completedTasks || [];
 
   const getStatusBadge = (status: string) => {
     const config: Record<string, { bg: string; text: string }> = {
@@ -121,26 +62,26 @@ export default function ActiveProjects() {
       <div className="bg-white rounded-lg shadow p-4">
         <div className="flex flex-wrap items-center gap-4">
           <span className="text-sm font-medium text-gray-700">Filter by Month:</span>
-          
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(Number(e.target.value))}
-              className="border rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-indigo-500"
-            >
-              {MONTHS.map((month, index) => (
-                <option key={index} value={index + 1}>{month}</option>
-              ))}
-            </select>
 
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="border rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-indigo-500"
-            >
-              {availableYears.map((year) => (
-                <option key={year} value={year}>{year}</option>
-              ))}
-            </select>
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(Number(e.target.value))}
+            className="border rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-indigo-500"
+          >
+            {MONTHS.map((month, index) => (
+              <option key={index} value={index + 1}>{month}</option>
+            ))}
+          </select>
+
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(Number(e.target.value))}
+            className="border rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-indigo-500"
+          >
+            {availableYears.map((year) => (
+              <option key={year} value={year}>{year}</option>
+            ))}
+          </select>
 
           <span className="ml-auto text-sm text-gray-500">
             Showing: <span className="font-medium text-gray-700">{getFilterLabel()}</span>
