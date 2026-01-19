@@ -472,6 +472,7 @@ export default function TasksPage() {
                 <thead>
                   <tr>
                     <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">PROJECT TITLE</th>
+                    <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">BRAND</th>
                     <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">ASSIGNED TO</th>
                     <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">CREATED BY</th>
                     <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">STATUS</th>
@@ -490,6 +491,7 @@ export default function TasksPage() {
                           <div className="text-gray-400 text-[9px] sm:text-[11px] mt-1 break-words">{renderRemarks(task.remarks)}</div>
                         )}
                       </td>
+                      <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">{task.brand?.name || '-'}</td>
                       <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">{task.assignee?.name || '-'}</td>
                       <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">{task.creator?.name || '-'}</td>
                       <td className="px-2 py-3 sm:py-4">
@@ -555,6 +557,7 @@ export default function TasksPage() {
               <thead>
                 <tr>
                   <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">PROJECT TITLE</th>
+                  <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">BRAND</th>
                   <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">COMPLETED BY</th>
                   <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">CREATED BY</th>
                   <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">STATUS</th>
@@ -573,6 +576,7 @@ export default function TasksPage() {
                         <div className="text-gray-400 text-[9px] sm:text-[11px] mt-1 break-words">{renderRemarks(task.remarks)}</div>
                       )}
                     </td>
+                    <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">{task.brand?.name || '-'}</td>
                     <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">{task.assignee?.name || '-'}</td>
                     <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">{task.creator?.name || '-'}</td>
                     <td className="px-2 py-3 sm:py-4">
