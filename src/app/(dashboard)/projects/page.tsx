@@ -491,7 +491,7 @@ export default function TasksPage() {
                           <div className="text-gray-400 text-[9px] sm:text-[11px] mt-1 break-words">{renderRemarks(task.remarks)}</div>
                         )}
                       </td>
-                      <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">{task.brand?.name || '-'}</td>
+                      <td className="px-2 py-3 sm:py-4 text-[11px] sm:text-[13px]" style={{ color: 'rgb(170, 130, 174)' }}>{task.brand?.name || '-'}</td>
                       <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">{task.assignee?.name || '-'}</td>
                       <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">{task.creator?.name || '-'}</td>
                       <td className="px-2 py-3 sm:py-4">
@@ -576,7 +576,7 @@ export default function TasksPage() {
                         <div className="text-gray-400 text-[9px] sm:text-[11px] mt-1 break-words">{renderRemarks(task.remarks)}</div>
                       )}
                     </td>
-                    <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">{task.brand?.name || '-'}</td>
+                    <td className="px-2 py-3 sm:py-4 text-[11px] sm:text-[13px]" style={{ color: 'rgb(170, 130, 174)' }}>{task.brand?.name || '-'}</td>
                     <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">{task.assignee?.name || '-'}</td>
                     <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">{task.creator?.name || '-'}</td>
                     <td className="px-2 py-3 sm:py-4">
