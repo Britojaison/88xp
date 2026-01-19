@@ -260,7 +260,11 @@ export default function TasksPage() {
   });
 
   const ongoingTasks = sortedOngoingTasks;
-  const completedTasks = filteredTasks.filter(isCompleted);
+  const completedTasks = filteredTasks.filter(isCompleted).sort((a, b) => {
+    const aDate = a.completed_at ? new Date(a.completed_at).getTime() : 0;
+    const bDate = b.completed_at ? new Date(b.completed_at).getTime() : 0;
+    return bDate - aDate; // Newest first
+  });
 
   const getStatusBadge = (status: string) => {
     // For ongoing tasks, status should be purple text

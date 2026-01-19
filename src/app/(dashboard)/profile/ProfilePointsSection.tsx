@@ -7,6 +7,7 @@ interface PointsBreakdownEntry {
   id: string;
   name: string;
   type: { name: string; points: number } | null;
+  brand: { id: string; name: string } | null;
   points_override: number | null;
   created_by: string;
   assigned_to: string;
@@ -44,7 +45,7 @@ export default function ProfilePointsSection({ employeeId }: Props) {
     const { data, error } = await supabase
       .from('projects')
       .select(`
-        id, name, type:project_types(name, points), points_override,
+        id, name, type:project_types(name, points), brand:brands(id, name), points_override,
         created_by, assigned_to, completed_at, status,
         creator:employees!created_by(id, name),
         assignee:employees!assigned_to(id, name)
@@ -65,6 +66,7 @@ export default function ProfilePointsSection({ employeeId }: Props) {
     const transformed = (data || []).map((p: any) => ({
       ...p,
       type: Array.isArray(p.type) ? p.type[0] : p.type,
+      brand: Array.isArray(p.brand) ? p.brand[0] : p.brand,
       creator: Array.isArray(p.creator) ? p.creator[0] : p.creator,
       assignee: Array.isArray(p.assignee) ? p.assignee[0] : p.assignee,
     })) as PointsBreakdownEntry[];
@@ -130,8 +132,9 @@ export default function ProfilePointsSection({ employeeId }: Props) {
       {/* Table - Header and Content in ONE container */}
       <div className="rounded-[20px] sm:rounded-[25px] border border-[#424242] overflow-hidden p-2 sm:p-4" style={{ backgroundColor: '#141415' }}>
         {/* Table Header - Hidden on mobile, show on sm+ */}
-        <div className="hidden sm:grid grid-cols-7 px-3 sm:px-5 py-2 sm:py-3 text-[11px] sm:text-[13px] font-medium" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr 1.2fr' }}>
+        <div className="hidden sm:grid grid-cols-8 px-3 sm:px-5 py-2 sm:py-3 text-[11px] sm:text-[13px] font-medium" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr 1fr 1.2fr' }}>
           <div className="text-white">Project</div>
+          <div className="text-white">Brand</div>
           <div className="text-white">Type</div>
           <div className="text-center text-white">Base pts</div>
           <div className="text-center text-gray-400">Override</div>
@@ -163,8 +166,13 @@ export default function ProfilePointsSection({ employeeId }: Props) {
                 </div>
                 
                 {/* Desktop Table Row */}
-                <div className="hidden sm:grid grid-cols-7 px-3 sm:px-5 py-2 sm:py-3 text-[11px] sm:text-[13px] items-center" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr 1.2fr' }}>
+                <div className="hidden sm:grid grid-cols-8 px-3 sm:px-5 py-2 sm:py-3 text-[11px] sm:text-[13px] items-center" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr 1fr 1.2fr' }}>
                   <div className="text-white font-medium pr-2 break-words">{project.name}</div>
+                  <div>
+                    <span className="text-[11px] sm:text-[13px]" style={{ color: 'rgb(170, 130, 174)' }}>
+                      {project.brand?.name || '-'}
+                    </span>
+                  </div>
                   <div>
                     <span className="text-[11px] sm:text-[13px] text-[#60A5FA]">
                       {project.type?.name || 'Unknown'}
