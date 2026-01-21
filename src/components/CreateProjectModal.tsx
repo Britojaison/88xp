@@ -104,10 +104,10 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
     const selectedType = types.find(t => t.id === typeId);
     const isOtherType = selectedType?.name === 'Other';
 
-    // Validate custom points for "Other" type
+    // Validate custom points for "Other" type (allow decimals)
     if (isOtherType) {
-      const points = parseInt(customPoints);
-      if (!customPoints || isNaN(points) || points <= 0) {
+      const points = parseFloat(customPoints);
+      if (!customPoints || !Number.isFinite(points) || points <= 0) {
         setError('Please enter a valid number of points (greater than 0) for "Other" type tasks.');
         setLoading(false);
         return;
@@ -131,9 +131,9 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
       created_at: creationDate ? `${creationDate}T00:00:00.000Z` : new Date().toISOString(),
     };
 
-    // Add points_override for "Other" type
+    // Add points_override for "Other" type (can be decimal)
     if (isOtherType && customPoints) {
-      projectData.points_override = parseInt(customPoints);
+      projectData.points_override = parseFloat(customPoints);
     }
 
     const { error: insertError } = await supabase.from('projects').insert(projectData);
@@ -262,7 +262,8 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
               {types.find(t => t.id === typeId)?.name === 'Other' ? (
                 <input
                   type="number"
-                  min="1"
+                  min="0.01"
+                  step="0.01"
                   value={customPoints}
                   onChange={(e) => setCustomPoints(e.target.value)}
                   placeholder="Enter Points"

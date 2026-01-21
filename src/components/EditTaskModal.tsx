@@ -142,10 +142,10 @@ export default function EditTaskModal({
     const selectedType = types.find(t => t.id === typeId);
     const isOtherType = selectedType?.name === 'Other';
 
-    // Validate custom points for "Other" type
+    // Validate custom points for "Other" type (allow decimals)
     if (isOtherType) {
-      const points = parseInt(customPoints);
-      if (!customPoints || isNaN(points) || points <= 0) {
+      const points = parseFloat(customPoints);
+      if (!customPoints || !Number.isFinite(points) || points <= 0) {
         setError('Please enter a valid number of points (greater than 0) for "Other" type tasks.');
         setLoading(false);
         return;
@@ -182,7 +182,7 @@ export default function EditTaskModal({
       assigned_to: assignTo,
       deadline: deadlineValue,
       remarks: remarks || null,
-      points_override: isOtherType && customPoints ? parseInt(customPoints) : null,
+      points_override: isOtherType && customPoints ? parseFloat(customPoints) : null,
       created_at: creationDate ? `${creationDate}T00:00:00.000Z` : undefined,
     };
 
@@ -306,7 +306,8 @@ export default function EditTaskModal({
               {types.find(t => t.id === typeId)?.name === 'Other' ? (
                 <input
                   type="number"
-                  min="1"
+                  min="0.01"
+                  step="0.01"
                   value={customPoints}
                   onChange={(e) => setCustomPoints(e.target.value)}
                   placeholder="Enter Points"
