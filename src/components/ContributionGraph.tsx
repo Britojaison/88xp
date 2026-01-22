@@ -155,7 +155,7 @@ export default function ContributionGraph({ employeeId, showLegend = true, selec
         <h3 className="text-sm sm:text-base font-semibold text-white">Activity Timeline</h3>
         <div className="text-xs sm:text-sm text-gray-400">
           <span className="font-semibold text-blue-400">{totalProjects}</span> projects •
-          <span className="font-semibold text-blue-400 ml-1">{totalPoints}</span> pts
+          <span className="font-semibold text-blue-400 ml-1">{totalPoints.toFixed(1)}</span> pts
         </div>
       </div>
 

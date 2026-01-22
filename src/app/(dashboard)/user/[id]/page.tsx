@@ -520,11 +520,11 @@ export default async function PublicProfilePage({ params }: Props) {
             <div className="space-y-0">
               <div className="flex justify-between items-center py-2 sm:py-2.5">
                 <span className="text-white text-[12px] sm:text-[13px]">This month</span>
-                <span className="text-white text-[12px] sm:text-[13px] font-semibold">{monthlyScore?.total_points || 0} pts</span>
+                <span className="text-white text-[12px] sm:text-[13px] font-semibold">{Number(monthlyScore?.total_points || 0).toFixed(1)} pts</span>
               </div>
               <div className="flex justify-between items-center py-2 sm:py-2.5">
                 <span className="text-white text-[12px] sm:text-[13px]">This year</span>
-                <span className="text-white text-[12px] sm:text-[13px] font-semibold">{yearlyScore?.total_points || 0} pts</span>
+                <span className="text-white text-[12px] sm:text-[13px] font-semibold">{Number(yearlyScore?.total_points || 0).toFixed(1)} pts</span>
               </div>
               <div className="flex justify-between items-center py-2 sm:py-2.5">
                 <span className="text-white text-[12px] sm:text-[13px]">Annual Projects</span>

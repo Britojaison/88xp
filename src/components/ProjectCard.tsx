@@ -38,7 +38,7 @@ const statusConfig: Record<string, { bg: string; text: string; border: string }>
 
 export default function ProjectCard({ project, currentUserRank, currentUserId, onUpdate, isOwner }: Props) {
   const [editingPoints, setEditingPoints] = useState(false);
-  const [newPoints, setNewPoints] = useState(project.points_override || project.type?.points || 0);
+  const [newPoints, setNewPoints] = useState<number>(project.points_override ?? project.type?.points ?? 0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
     const [showCompletionModal, setShowCompletionModal] = useState(false);
@@ -192,10 +192,11 @@ export default function ProjectCard({ project, currentUserRank, currentUserId, o
             <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-1.5">
               <input
                 type="number"
+                step="0.01"
                 value={newPoints}
-                onChange={(e) => setNewPoints(Number(e.target.value))}
+                onChange={(e) => setNewPoints(parseFloat(e.target.value) || 0)}
                 className="w-20 border border-gray-300 rounded-lg px-2 py-1 text-center font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                min={0}
+                min="0"
                 autoFocus
               />
               <span className="text-gray-500 text-sm">pts</span>
@@ -217,11 +218,11 @@ export default function ProjectCard({ project, currentUserRank, currentUserId, o
             <div className="flex items-center gap-2">
               <div className={`flex items-center gap-1 px-3 py-1.5 rounded-lg ${hasOverride ? 'bg-orange-50 border border-orange-200' : 'bg-gray-50'}`}>
                 <span className={`font-bold text-lg ${hasOverride ? 'text-orange-600' : 'text-gray-800'}`}>
-                  {currentPoints}
+                  {Number(currentPoints).toFixed(1)}
                 </span>
                 <span className="text-gray-500 text-sm">pts</span>
                 {hasOverride && (
-                  <span className="text-orange-500 ml-1" title={`Overridden from ${basePoints} pts`}>
+                  <span className="text-orange-500 ml-1" title={`Overridden from ${Number(basePoints).toFixed(1)} pts`}>
                     ✎
                   </span>
                 )}

@@ -250,7 +250,7 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
               >
                 {types.map((type) => (
                   <option key={type.id} value={type.id}>
-                    {type.name} - {type.points} pts
+                    {type.name} - {Number(type.points).toFixed(1)} pts
                   </option>
                 ))}
               </select>

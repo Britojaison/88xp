@@ -237,7 +237,7 @@ export default function RecentProjects({ employeeId, employeeName }: Props) {
           {filteredProjects.length} {filteredProjects.length === 1 ? 'project' : 'projects'}
         </div>
         <div className="text-lg font-bold text-blue-400">
-          {totalPoints} pts
+          {totalPoints.toFixed(1)} pts
         </div>
       </div>
       
@@ -274,7 +274,7 @@ export default function RecentProjects({ employeeId, employeeName }: Props) {
                 
                 <div className="text-right">
                   <p className={`font-bold ${hasOverride ? 'text-orange-400' : 'text-blue-400'}`}>
-                    {points}
+                    {points.toFixed(1)}
                     <span className="text-sm text-gray-500 ml-1">pts</span>
                     {hasOverride && <span className="text-orange-400 ml-1" title="Points overridden">✎</span>}
                   </p>

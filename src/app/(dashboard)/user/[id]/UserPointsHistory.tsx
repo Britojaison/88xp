@@ -10,6 +10,7 @@ interface Project {
   completed_at: string | null;
   points_override: number | null;
   type: { name: string; points: number } | null;
+  brand: { id: string; name: string } | null;
 }
 
 interface Props {
@@ -66,7 +67,8 @@ export default function UserPointsHistory({ employeeId }: Props) {
       .from('projects')
       .select(`
         id, name, status, completed_at, points_override,
-        type:project_types(name, points)
+        type:project_types(name, points),
+        brand:brands(id, name)
       `)
       .eq('assigned_to', employeeId)
       .in('status', ['completed', 'approved'])
@@ -84,6 +86,7 @@ export default function UserPointsHistory({ employeeId }: Props) {
     const transformed = (data || []).map((p: Record<string, unknown>) => ({
       ...p,
       type: Array.isArray(p.type) ? p.type[0] : p.type,
+      brand: Array.isArray(p.brand) ? p.brand[0] : p.brand,
     })) as Project[];
 
     setProjects(transformed);
@@ -147,7 +150,7 @@ export default function UserPointsHistory({ employeeId }: Props) {
             </div>
             <div>
               <span className="text-gray-400">Total points </span>
-              <span className="text-cyan-400 font-semibold">: {totalPoints} pts</span>
+              <span className="text-cyan-400 font-semibold">: {totalPoints.toFixed(1)} pts</span>
             </div>
           </div>
         </div>
@@ -187,8 +190,9 @@ export default function UserPointsHistory({ employeeId }: Props) {
       {/* Table */}
       <div className="rounded-[20px] sm:rounded-[25px] border border-[#424242] overflow-hidden p-2 sm:p-4">
         {/* Table Header - Hidden on mobile */}
-        <div className="hidden sm:grid grid-cols-4 px-3 sm:px-4 py-2 sm:py-3 text-[11px] sm:text-[13px] font-medium border-b border-[#424242]">
-          <div className="text-white">Project</div>
+        <div className="hidden sm:grid px-3 sm:px-4 py-2 sm:py-3 text-[11px] sm:text-[13px] font-medium border-b border-[#424242]" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1.2fr' }}>
+          <div className="text-white pr-4">Project</div>
+          <div className="text-white">Brand</div>
           <div className="text-white">Type</div>
           <div className="text-white">Points</div>
           <div className="text-white">Completed On</div>
@@ -207,19 +211,25 @@ export default function UserPointsHistory({ employeeId }: Props) {
                 <div className="sm:hidden p-3 border-b border-[#424242]/30 last:border-b-0">
                   <div className="flex justify-between items-start mb-1">
                     <div className="text-white text-[12px] font-medium flex-1 pr-2">{project.name}</div>
-                    <span className="text-cyan-400 text-[12px] font-semibold">{getPoints(project)} pts</span>
+                    <span className="text-cyan-400 text-[12px] font-semibold">{getPoints(project).toFixed(1)} pts</span>
                   </div>
                   <div className="flex gap-2 text-[10px]">
+                    {project.brand && <span className="text-purple-400">{project.brand.name}</span>}
                     <span className="text-gray-400">{project.type?.name || 'Unknown'}</span>
                     <span className="text-gray-400">• {formatDate(project.completed_at!)}</span>
                   </div>
                 </div>
                 
                 {/* Desktop Table Row */}
-                <div className="hidden sm:grid grid-cols-4 px-3 sm:px-4 py-2 sm:py-3 text-[11px] sm:text-[13px] items-center">
-                  <div className="text-white">{project.name}</div>
+                <div className="hidden sm:grid px-3 sm:px-4 py-2 sm:py-3 text-[11px] sm:text-[13px] items-center" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1.2fr' }}>
+                  <div className="text-white pr-4">{project.name}</div>
+                  <div>
+                    <span className="text-[11px] sm:text-[13px]" style={{ color: 'rgb(170, 130, 174)' }}>
+                      {project.brand?.name || '-'}
+                    </span>
+                  </div>
                   <div className="text-gray-400">{project.type?.name || 'Unknown'}</div>
-                  <div className="text-cyan-400 font-semibold">{getPoints(project)} pts</div>
+                  <div className="text-cyan-400 font-semibold">{getPoints(project).toFixed(1)} pts</div>
                   <div className="text-gray-400">{formatDate(project.completed_at!)}</div>
                 </div>
               </div>

@@ -94,7 +94,7 @@ export default function ProfilePointsSection({ employeeId }: Props) {
           <h3 className="text-white text-[16px] sm:text-[18px] font-semibold">Points History</h3>
           <p className="text-[12px] sm:text-[13px]">
             <span className="text-gray-400">Total : </span>
-            <span className="text-purple-400 font-semibold">{totalPoints} pts</span>
+            <span className="text-purple-400 font-semibold">{totalPoints.toFixed(1)} pts</span>
             <span className="text-gray-400"> ({projects.length} projects)</span>
           </p>
         </div>
@@ -156,7 +156,7 @@ export default function ProfilePointsSection({ employeeId }: Props) {
                 <div className="sm:hidden p-3 border-b border-[#424242]/30 last:border-b-0">
                   <div className="flex justify-between items-start mb-2">
                     <div className="text-white text-[12px] font-medium flex-1 pr-2">{project.name}</div>
-                    <span className="text-[#6885BC] text-[12px] font-semibold">{getPoints(project)} pts</span>
+                    <span className="text-[#6885BC] text-[12px] font-semibold">{getPoints(project).toFixed(1)} pts</span>
                   </div>
                   <div className="flex flex-wrap gap-2 text-[10px]">
                     <span className="text-[#60A5FA]">{project.type?.name || 'Unknown'}</span>
@@ -178,16 +178,16 @@ export default function ProfilePointsSection({ employeeId }: Props) {
                       {project.type?.name || 'Unknown'}
                     </span>
                   </div>
-                  <div className="text-center text-gray-400">{getBasePoints(project)}</div>
+                  <div className="text-center text-gray-400">{getBasePoints(project).toFixed(1)}</div>
                   <div className="text-center">
                     {getOverride(project) > 0 ? (
-                      <span className="text-purple-400 font-medium">{getOverride(project)} pts</span>
+                      <span className="text-purple-400 font-medium">{getOverride(project).toFixed(1)} pts</span>
                     ) : (
                       <span className="text-gray-500">0 pts</span>
                     )}
                   </div>
                   <div className="text-center">
-                    <span className="text-[#6885BC] font-semibold">{getPoints(project)} pts</span>
+                    <span className="text-[#6885BC] font-semibold">{getPoints(project).toFixed(1)} pts</span>
                   </div>
                   <div className="text-gray-400 truncate pr-2">{project.creator?.name || 'Unknown'}</div>
                   <div className="text-gray-400">{formatDate(project.completed_at)}</div>

@@ -105,7 +105,7 @@ export default function Scoreboard() {
                     </div>
                   </div>
                   <div className="flex items-center">
-                    <span className="text-white text-[14px] sm:text-[16px] font-bold">{entry.total_points}</span>
+                    <span className="text-white text-[14px] sm:text-[16px] font-bold">{Number(entry.total_points).toFixed(1)}</span>
                     <span className="text-gray-500 text-[11px] sm:text-[13px] ml-1">pts</span>
                   </div>
                 </Link>

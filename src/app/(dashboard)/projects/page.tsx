@@ -502,7 +502,7 @@ export default function TasksPage() {
                         <span className="text-purple-400 text-[11px] sm:text-[13px] font-medium">Pending</span>
                       </td>
                       <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">{task.type?.name || '-'}</td>
-                      <td className="px-2 py-3 sm:py-4 text-blue-400 text-[11px] sm:text-[13px] font-medium">{getPoints(task)} pts</td>
+                      <td className="px-2 py-3 sm:py-4 text-blue-400 text-[11px] sm:text-[13px] font-medium">{getPoints(task).toFixed(1)} pts</td>
                       <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">{formatDateShort(task.created_at)}</td>
                       <td className="px-2 py-3 sm:py-4">
                         <div className="flex items-center gap-2 sm:gap-3">
@@ -592,10 +592,11 @@ export default function TasksPage() {
                         <div className="flex items-center gap-1">
                           <input
                             type="number"
+                            step="0.01"
                             value={overridePoints}
-                            onChange={(e) => setOverridePoints(Number(e.target.value))}
+                            onChange={(e) => setOverridePoints(parseFloat(e.target.value) || 0)}
                             className="w-12 sm:w-14 border border-[#424242] rounded px-1 py-1 text-center text-[10px] sm:text-[12px] bg-black text-white"
-                            min={0}
+                            min="0"
                             autoFocus
                           />
                           <button
@@ -614,11 +615,11 @@ export default function TasksPage() {
                         </div>
                       ) : (
                         <span className="text-emerald-400 text-[11px] sm:text-[13px] font-medium">
-                          +{getPoints(task)} pts
+                          +{getPoints(task).toFixed(1)} pts
                         </span>
                       )}
                     </td>
-                    <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">
+                    <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px] whitespace-nowrap">
                       {task.completed_at ? formatDateShort(task.completed_at) : '-'}
                     </td>
                     <td className="px-2 py-3 sm:py-4">

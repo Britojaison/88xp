@@ -125,7 +125,7 @@ export default function ActiveProjects() {
                         {task.type?.name || 'Unknown'}
                       </span>
                     </div>
-                    <div className="col-span-1 text-right font-semibold text-gray-700">{getPoints(task)} pts</div>
+                    <div className="col-span-1 text-right font-semibold text-gray-700">{getPoints(task).toFixed(1)} pts</div>
                   </div>
                 ))}
               </div>
@@ -168,7 +168,7 @@ export default function ActiveProjects() {
                         {task.type?.name || 'Unknown'}
                       </span>
                     </div>
-                    <div className="col-span-2 text-right font-semibold text-emerald-600">+{getPoints(task)} pts</div>
+                    <div className="col-span-2 text-right font-semibold text-emerald-600">+{getPoints(task).toFixed(1)} pts</div>
                   </div>
                 ))}
               </div>

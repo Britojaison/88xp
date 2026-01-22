@@ -108,7 +108,7 @@ export default function LastMonthScoreboard() {
 
                 <p className="text-center mt-0.5 sm:mt-1">
                   <span className="text-purple-300 font-bold text-sm sm:text-base">
-                    {entry ? entry.total_points : '—'}
+                    {entry ? Number(entry.total_points).toFixed(1) : '—'}
                   </span>
                   <span className="text-gray-300 text-[8px] sm:text-[10px] ml-0.5">pts</span>
                 </p>

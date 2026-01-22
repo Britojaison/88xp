@@ -108,7 +108,7 @@ export default function PointsBreakdown({ employeeId, month, year }: Props) {
         <h3 className="text-lg font-semibold text-white">Points History</h3>
         <div className="text-right">
           <span className="text-sm text-gray-400">Total: </span>
-          <span className="text-xl font-bold text-[#9F4E99]">{totalPoints} pts</span>
+          <span className="text-xl font-bold text-[#9F4E99]">{totalPoints.toFixed(1)} pts</span>
           <span className="text-sm text-gray-400 ml-2">({projects.length} projects)</span>
         </div>
       </div>
@@ -141,20 +141,20 @@ export default function PointsBreakdown({ employeeId, month, year }: Props) {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-center text-gray-400">
-                    {project.type?.points ?? '-'}
+                    {project.type?.points ? Number(project.type.points).toFixed(1) : '-'}
                   </td>
                   <td className="px-4 py-3 text-center">
                     {project.points_override ? (
                       <span className="text-[#9F4E99] font-medium">
-                        {project.points_override} pts
+                        {Number(project.points_override).toFixed(1)} pts
                       </span>
                     ) : (
-                      <span className="text-gray-500">0 pts</span>
+                      <span className="text-gray-500">0.0 pts</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span className="font-bold text-[#6885BC]">
-                      {getPoints(project)} pts
+                      {getPoints(project).toFixed(1)} pts
                     </span>
                   </td>
                   <td className="px-4 py-3 text-gray-400">
