@@ -33,11 +33,11 @@ export const BADGE_MAP: Record<keyof Omit<BadgeStatus, 'employee_id' | 'employee
 // Index 4 = The Unstoppable (hits target before 50% of month - needs date calculations)
 
 /**
- * Hook to fetch employee badges from the database view
- * Uses the employee_badges view which computes all badge statuses server-side
+ * Hook to fetch employee badges from stored achievements
+ * Uses the employee_current_badges view which reads from badge_achievements table
  * 
- * NOTE: This requires the 007_badge_views_and_indexes.sql migration to be run first.
- * The view may not exist until migration is applied.
+ * NOTE: This requires the 008_badge_achievements_table.sql migration to be run first.
+ * Badges are calculated monthly via cron job.
  */
 export function useEmployeeBadges(employeeId: string) {
     const supabase = createClient();
@@ -46,21 +46,21 @@ export function useEmployeeBadges(employeeId: string) {
         queryKey: ['employee-badges', employeeId],
         queryFn: async () => {
             const { data, error } = await supabase
-                .from('employee_badges')
+                .from('employee_current_badges')
                 .select('*')
                 .eq('employee_id', employeeId)
                 .single();
 
             if (error) {
                 // View might not exist if migration hasn't been run
-                console.warn('employee_badges view not found, falling back to client-side calculation:', error.message);
+                console.warn('employee_current_badges view not found:', error.message);
                 return null;
             }
 
             return data as BadgeStatus;
         },
-        staleTime: 5 * 60 * 1000, // 5 minutes - badges don't change often
-        retry: 1, // Only retry once if view doesn't exist
+        staleTime: 60 * 60 * 1000, // 1 hour - badges are stored and only change monthly
+        retry: 1,
     });
 }
 
