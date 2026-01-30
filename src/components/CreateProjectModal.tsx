@@ -56,10 +56,18 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
   }, []);
 
   const fetchData = async () => {
-    const [typesRes, employeesRes, brandsRes] = await Promise.all([
+    const [typesRes, employeesRes, brandsRes, lastProjectRes] = await Promise.all([
       supabase.from('project_types').select('*').order('points'),
       supabase.from('employees').select('id, name, rank').eq('is_admin', false).order('rank'),
       supabase.from('brands').select('id, name').order('name'),
+      // Fetch the user's last created project to get their last used brand
+      supabase
+        .from('projects')
+        .select('brand_id')
+        .eq('created_by', currentUserId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
     ]);
 
     // Sort types: Story first, Other last, rest in ascending order
@@ -81,10 +89,14 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
     setEmployees(assignable);
 
     if (sortedTypes.length) setTypeId(sortedTypes[0].id);
-    // Set default brand if available (not shown in Figma but required by backend)
-    if (brandsRes.data?.length) {
+    
+    // Auto-fill brand from user's last project, or use first brand as fallback
+    if (lastProjectRes.data?.brand_id) {
+      setBrandId(lastProjectRes.data.brand_id);
+    } else if (brandsRes.data?.length) {
       setBrandId(brandsRes.data[0].id);
     }
+    
     setAssignTo(currentUserId);
   };
 
