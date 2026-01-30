@@ -1,4 +1,5 @@
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+/// <reference lib="deno.ns" />
+import { createClient } from '@supabase/supabase-js';
 
 Deno.serve(async (req: Request) => {
   try {
