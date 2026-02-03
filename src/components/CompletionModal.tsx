@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { ClipboardIcon, Loader2, CheckIcon } from 'lucide-react';
 
@@ -22,18 +22,37 @@ export default function CompletionModal({
   onComplete 
 }: Props) {
   const [remarks, setRemarks] = useState('');
+  const [completionDate, setCompletionDate] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
+
+  useEffect(() => {
+    // Set today's date as default
+    const today = new Date();
+    const todayISO = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+    setCompletionDate(todayISO);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
+    // Validate completion date
+    if (!completionDate) {
+      setError('Please select a completion date');
+      setLoading(false);
+      return;
+    }
+
+    // Convert completion date to timestamp (end of day)
+    const completionDateTime = new Date(completionDate);
+    completionDateTime.setHours(23, 59, 59, 999);
+
     const updates: Record<string, unknown> = {
       status: 'completed',
-      completed_at: new Date().toISOString(),
+      completed_at: completionDateTime.toISOString(),
     };
 
     // Add remarks if provided
@@ -75,6 +94,28 @@ export default function CompletionModal({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          {/* Completion Date */}
+          <div>
+            <label className="block text-sm font-semibold text-white mb-2">
+              Completion Date <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="date"
+              value={completionDate}
+              onChange={(e) => setCompletionDate(e.target.value)}
+              onClick={(e) => e.currentTarget.showPicker?.()}
+              max={(() => {
+                const today = new Date();
+                return `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+              })()}
+              required
+              className="w-full border border-gray-600 bg-[#2a2a2a] text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors cursor-pointer"
+            />
+            <p className="mt-1 text-xs text-gray-400">
+              Select the date when this task was actually completed
+            </p>
+          </div>
+
           {/* Remarks */}
           <div>
             <label className="block text-sm font-semibold text-white mb-2">
