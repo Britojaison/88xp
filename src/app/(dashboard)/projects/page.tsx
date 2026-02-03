@@ -392,7 +392,7 @@ export default function TasksPage() {
           </div>
         </div>
 
-        {/* Right side - Status and Year Filters */}
+        {/* Right side - Status, Month and Year Filters */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
           {/* Status Filter */}
           <div className="flex items-center gap-2">
@@ -427,6 +427,35 @@ export default function TasksPage() {
                     <span className="relative z-10">{s === 'all' ? 'All' : s === 'ongoing' ? 'Ongoing' : 'Completed'}</span>
                   </button>
                 ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Month Filter */}
+          <div className="flex items-center gap-2">
+            <span className="text-white text-[12px] sm:text-[14px] font-medium">Month</span>
+            <div 
+              className="relative h-[40px] sm:h-[50px] w-[100px] sm:w-[122px] rounded-[12px] sm:rounded-[15px]"
+              style={{
+                backgroundImage: 'url(/Rectangle%2019.png)',
+                backgroundSize: '100% 100%',
+                backgroundRepeat: 'no-repeat'
+              }}
+            >
+              <select
+                value={monthFilter}
+                onChange={(e) => setMonthFilter(e.target.value)}
+                className="absolute inset-[1px] rounded-[12px] sm:rounded-[15px] bg-black text-white px-3 sm:px-4 text-[12px] sm:text-[14px] appearance-none cursor-pointer focus:outline-none"
+              >
+                <option value="all">All</option>
+                {MONTH_NAMES.map((month, index) => (
+                  <option key={index + 1} value={index + 1}>{month}</option>
+                ))}
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
+                  <path d="M1 1.5L6 6.5L11 1.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </div>
             </div>
           </div>
