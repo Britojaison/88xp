@@ -89,8 +89,8 @@ export default function CompletionModal({
             backgroundPosition: 'center'
           }}
         >
-          <h2 className="text-xl font-bold text-black">Complete Task</h2>
-          <p className="text-black/70 text-sm mt-1 truncate">{projectName}</p>
+          <h2 className="text-xl font-bold text-white">Complete Task</h2>
+          <p className="text-white/70 text-sm mt-1 truncate">{projectName}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
@@ -153,7 +153,7 @@ export default function CompletionModal({
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 text-black font-medium py-3 rounded-lg transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 text-white font-medium py-3 rounded-lg transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
               style={{
                 backgroundImage: 'url(/Rectangle%20758.png)',
                 backgroundSize: 'cover',
