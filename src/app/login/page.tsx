@@ -97,29 +97,35 @@ export default function LoginPage() {
         />
 
         {/* LOGIN CARD */}
-<div
-  className="w-[360px] p-10 rounded-[24px] border border-white/30 relative z-10 shadow-2xl"
-  style={{
-    background: `
+        <div
+          className="w-[360px] p-10 rounded-[24px] border border-white/30 relative z-10 shadow-2xl"
+          style={{
+            background: `
       linear-gradient(
         135deg,
         rgba(216, 214, 214, 0.12),
         rgba(255,255,255,0.03)
       )
     `,
-    
-    WebkitBackdropFilter: 'blur(40px)',
-    boxShadow: `
+
+            WebkitBackdropFilter: 'blur(40px)',
+            boxShadow: `
       inset 0 0 30px rgba(255,255,255,0.08),
       0 0 40px rgba(150,120,255,0.15)
     `
-  }}
->
+          }}
+        >
           <h2 className="text-white text-2xl font-semibold mb-10 text-center">
             Login
           </h2>
 
           <form onSubmit={handleLogin} className="space-y-6">
+            {/* ERROR MESSAGE */}
+            {error && (
+              <div className="bg-red-500/20 border border-red-500/50 text-red-200 text-sm px-4 py-2.5 rounded-lg text-center backdrop-blur-sm">
+                {error}
+              </div>
+            )}
 
             {/* EMAIL */}
             <div>
@@ -138,33 +144,33 @@ export default function LoginPage() {
 
             {/* PASSWORD */}
             <div>
-            <label className="text-white text-sm mb-2 block">
-             Password
-            </label>
+              <label className="text-white text-sm mb-2 block">
+                Password
+              </label>
 
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={handlePasswordChange}
-                placeholder="Enter your Password"
-                className="w-full px-4 py-3 pr-12 rounded-full bg-transparent border border-white/30 text-white placeholder-white/40 focus:outline-none focus:border-blue-400 text-sm"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={handlePasswordChange}
+                  placeholder="Enter your Password"
+                  className="w-full px-4 py-3 pr-12 rounded-full bg-transparent border border-white/30 text-white placeholder-white/40 focus:outline-none focus:border-blue-400 text-sm"
+                  required
+                />
 
-    <button
-      type="button"
-      onClick={() => setShowPassword(!showPassword)}
-      className="absolute right-4 top-1/2 -translate-y-1/2"
-    >
-      <img
-        src={showPassword ? '/eye.png' : '/open eye.png'}
-        alt="Toggle password"
-        className="w-5 h-5 opacity-80 hover:opacity-100 transition"
-      />
-    </button>
-  </div>
-</div>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2"
+                >
+                  <img
+                    src={showPassword ? '/eye.png' : '/open eye.png'}
+                    alt="Toggle password"
+                    className="w-5 h-5 opacity-80 hover:opacity-100 transition"
+                  />
+                </button>
+              </div>
+            </div>
 
 
             <button
