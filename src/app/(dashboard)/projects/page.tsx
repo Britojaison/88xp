@@ -77,6 +77,8 @@ export default function TasksPage() {
   
   const [yearFilter, setYearFilter] = useState<string>(currentYear.toString());
   const [monthFilter, setMonthFilter] = useState<string>(currentMonth.toString());
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [sortOrder, setSortOrder] = useState<'recent' | 'az' | 'za'>('recent');
   const [showModal, setShowModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<{ id: string; rank: number | null; is_admin: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -222,10 +224,22 @@ export default function TasksPage() {
       if (yearFilter !== 'all' && date.getFullYear() !== Number(yearFilter)) return false;
       if (monthFilter !== 'all' && date.getMonth() + 1 !== Number(monthFilter)) return false;
     }
+
+    if (searchQuery.trim()) {
+      if (!task.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    }
+
     return true;
   });
 
-  // Sort ongoing tasks: overdue first, then earliest deadline, then created_at
+  const applySortOrder = <T extends Task>(tasks: T[]): T[] => {
+    if (sortOrder === 'az') return [...tasks].sort((a, b) => a.name.localeCompare(b.name));
+    if (sortOrder === 'za') return [...tasks].sort((a, b) => b.name.localeCompare(a.name));
+    // 'recent': newest created_at first
+    return [...tasks].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  };
+
+  // Sort ongoing tasks by deadline priority (only used when sortOrder is NOT 'recent')
   const sortedOngoingTasks = filteredTasks.filter(isOngoing).sort((a, b) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -259,12 +273,14 @@ export default function TasksPage() {
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
-  const ongoingTasks = sortedOngoingTasks;
-  const completedTasks = filteredTasks.filter(isCompleted).sort((a, b) => {
+  const ongoingTasks = sortOrder === 'recent'
+    ? applySortOrder(filteredTasks.filter(isOngoing))
+    : applySortOrder(sortedOngoingTasks);
+  const completedTasks = applySortOrder(filteredTasks.filter(isCompleted).sort((a, b) => {
     const aDate = a.completed_at ? new Date(a.completed_at).getTime() : 0;
     const bDate = b.completed_at ? new Date(b.completed_at).getTime() : 0;
     return bDate - aDate; // Newest first
-  });
+  }));
 
   const getStatusBadge = (status: string) => {
     // For ongoing tasks, status should be purple text
@@ -486,6 +502,63 @@ export default function TasksPage() {
                   <path d="M1 1.5L6 6.5L11 1.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Search and Sort */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        {/* Search Bar */}
+        <div className="relative flex-1 w-full sm:max-w-sm">
+          <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#747474" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+          </div>
+          <input
+            type="text"
+            placeholder="Search tasks..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full h-[40px] sm:h-[50px] bg-[#141415] border border-[#424242] rounded-[12px] sm:rounded-[15px] pl-9 pr-4 text-white text-[12px] sm:text-[14px] placeholder-[#747474] focus:outline-none focus:border-[#666]"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute inset-y-0 right-3 flex items-center text-[#747474] hover:text-white"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 6 6 18M6 6l12 12"/>
+              </svg>
+            </button>
+          )}
+        </div>
+
+        {/* Sort Dropdown */}
+        <div className="flex items-center gap-2">
+          <span className="text-white text-[12px] sm:text-[14px] font-medium whitespace-nowrap">Sort by</span>
+          <div
+            className="relative h-[40px] sm:h-[50px] w-[160px] sm:w-[180px] rounded-[12px] sm:rounded-[15px]"
+            style={{
+              backgroundImage: 'url(/Rectangle%2019.png)',
+              backgroundSize: '100% 100%',
+              backgroundRepeat: 'no-repeat'
+            }}
+          >
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value as 'recent' | 'az' | 'za')}
+              className="absolute inset-[1px] rounded-[12px] sm:rounded-[15px] bg-black text-white px-3 sm:px-4 text-[12px] sm:text-[14px] appearance-none cursor-pointer focus:outline-none"
+            >
+              <option value="recent">Recently Added</option>
+              <option value="az">Alphabetical A–Z</option>
+              <option value="za">Alphabetical Z–A</option>
+            </select>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+              <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
+                <path d="M1 1.5L6 6.5L11 1.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </div>
           </div>
         </div>
