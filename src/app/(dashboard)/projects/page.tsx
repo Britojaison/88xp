@@ -115,9 +115,10 @@ export default function TasksPage() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [monthFilter, yearFilter, employeeFilter]);
 
   const fetchData = async () => {
+    setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user?.email) return;
 
@@ -154,12 +155,44 @@ export default function TasksPage() {
       .order('rank', { ascending: true });
     setEmployees((employeeRows || []) as EmployeeOption[]);
 
-    const { data: tasks } = await supabase
+    // Build the query
+    let query = supabase
       .from('projects')
-      .select('id, name, status, deadline, remarks, points_override, created_at, completed_at, created_by, assigned_to, type_id, brand_id, type:project_types(id, name, points), brand:brands(id, name), creator:employees!created_by(id, name, rank), assignee:employees!assigned_to(id, name, rank)')
-      .order('created_at', { ascending: false });
+      .select('id, name, status, deadline, remarks, points_override, created_at, completed_at, created_by, assigned_to, type_id, brand_id, type:project_types(id, name, points), brand:brands(id, name), creator:employees!created_by(id, name, rank), assignee:employees!assigned_to(id, name, rank)');
 
-    setAllTasks((tasks || []).map(transform) as Task[]);
+    // If a specific employee is selected, filter by it at the server level
+    if (employeeFilter !== 'all') {
+      query = query.eq('assigned_to', employeeFilter);
+    }
+
+    // If month/year filter is applied, we want:
+    // 1. Tasks completed in that period
+    // 2. Tasks that are currently ongoing (to ensure they are always visible)
+    // 3. Tasks that were ongoing during that period (created before/during, completed after)
+    
+    if (yearFilter !== 'all' || monthFilter !== 'all') {
+      const year = yearFilter === 'all' ? new Date().getFullYear() : Number(yearFilter);
+      if (monthFilter !== 'all') {
+        const month = Number(monthFilter);
+        const startDate = new Date(year, month - 1, 1).toISOString();
+        const endDate = new Date(year, month, 0, 23, 59, 59, 999).toISOString();
+        
+        // Filter: (Completed in Month) OR (Ongoing AND Created before end of month)
+        query = query.or(`and(completed_at.gte.${startDate},completed_at.lte.${endDate}),and(status.in.(pending,in_progress),created_at.lte.${endDate})`);
+      } else {
+        const startDate = `${year}-01-01T00:00:00.000Z`;
+        const endDate = `${year}-12-31T23:59:59.999Z`;
+        query = query.or(`and(completed_at.gte.${startDate},completed_at.lte.${endDate}),and(status.in.(pending,in_progress),created_at.lte.${endDate})`);
+      }
+    }
+
+    const { data: tasks, error } = await query.order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching tasks:', error);
+    } else {
+      setAllTasks((tasks || []).map(transform) as Task[]);
+    }
     setLoading(false);
   };
 
@@ -218,11 +251,21 @@ export default function TasksPage() {
     if (statusFilter === 'completed' && !isCompleted(task)) return false;
     
     if (yearFilter !== 'all' || monthFilter !== 'all') {
-      const dateStr = task.completed_at || task.created_at;
-      if (!dateStr) return false;
-      const date = new Date(dateStr);
-      if (yearFilter !== 'all' && date.getFullYear() !== Number(yearFilter)) return false;
-      if (monthFilter !== 'all' && date.getMonth() + 1 !== Number(monthFilter)) return false;
+      const year = yearFilter === 'all' ? null : Number(yearFilter);
+      const month = monthFilter === 'all' ? null : Number(monthFilter);
+      
+      const isTaskCompleted = isCompleted(task);
+      const taskDate = new Date(isTaskCompleted ? (task.completed_at || task.created_at) : task.created_at);
+      
+      if (isTaskCompleted) {
+        // For completed tasks, they must match the selected month/year exactly
+        if (year && taskDate.getFullYear() !== year) return false;
+        if (month && taskDate.getMonth() + 1 !== month) return false;
+      } else {
+        // For ongoing tasks, they show up if they were created before or during the selected period
+        if (year && taskDate.getFullYear() > year) return false;
+        if (month && year && (taskDate.getFullYear() * 12 + taskDate.getMonth()) > (year * 12 + month - 1)) return false;
+      }
     }
 
     if (searchQuery.trim()) {
