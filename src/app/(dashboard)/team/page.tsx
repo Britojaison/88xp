@@ -22,8 +22,27 @@ export default function TeamPage() {
   const [reportEmployee, setReportEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentUserRank, setCurrentUserRank] = useState<number | null>(null);
+
+  const now = new Date();
+  const currentMonthIdx = now.getMonth();
+  const currentYearVal = now.getFullYear();
+  const defaultYear = currentMonthIdx === 0 ? currentYearVal - 1 : currentYearVal;
+  const defaultMonth = currentMonthIdx === 0 ? 12 : currentMonthIdx;
+
+  const [teamReportMonth, setTeamReportMonth] = useState(defaultMonth);
+  const [teamReportYear, setTeamReportYear] = useState(defaultYear);
+
+  const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const availableYears = Array.from({ length: 5 }, (_, i) => currentYearVal - i);
+
   const router = useRouter();
   const supabase = createClient();
+
+  useEffect(() => {
+    if (teamReportYear === currentYearVal && teamReportMonth > currentMonthIdx) {
+      setTeamReportMonth(defaultMonth);
+    }
+  }, [teamReportYear, currentYearVal, currentMonthIdx, teamReportMonth, defaultMonth]);
 
   useEffect(() => {
     checkAccessAndFetchData();
@@ -122,6 +141,30 @@ export default function TeamPage() {
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:mt-8">
+          <select
+            value={teamReportMonth}
+            onChange={(e) => setTeamReportMonth(Number(e.target.value))}
+            className="bg-[#2A2A2A] border border-[#424242] text-white rounded-[20px] px-3 py-2 text-sm focus:outline-none"
+          >
+            {MONTH_NAMES.map((m, i) => {
+              const monthNum = i + 1;
+              const isDisabled = teamReportYear === currentYearVal && monthNum > currentMonthIdx;
+              return (
+                <option key={i} value={monthNum} disabled={isDisabled}>
+                  {m}
+                </option>
+              );
+            })}
+          </select>
+          <select
+            value={teamReportYear}
+            onChange={(e) => setTeamReportYear(Number(e.target.value))}
+            className="bg-[#2A2A2A] border border-[#424242] text-white rounded-[20px] px-3 py-2 text-sm focus:outline-none"
+          >
+            {availableYears.map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
           <button
             onClick={() => setShowTeamReportModal(true)}
             className="bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 px-4 py-2 rounded-[20px] transition-colors text-sm sm:text-base border border-purple-500/30 flex items-center justify-center gap-2"
@@ -222,6 +265,8 @@ export default function TeamPage() {
       {showTeamReportModal && (
         <TeamReportModal
           employees={employees}
+          selectedMonth={teamReportMonth}
+          selectedYear={teamReportYear}
           onClose={() => setShowTeamReportModal(false)}
         />
       )}
@@ -493,31 +538,19 @@ function EmployeeReportModal({
 
 function TeamReportModal({
   employees,
+  selectedMonth,
+  selectedYear,
   onClose,
 }: {
   employees: Employee[];
+  selectedMonth: number;
+  selectedYear: number;
   onClose: () => void;
 }) {
-  const now = new Date();
-  const currentMonthIdx = now.getMonth();
-  const currentYearVal = now.getFullYear();
-  const defaultYear = currentMonthIdx === 0 ? currentYearVal - 1 : currentYearVal;
-  const defaultMonth = currentMonthIdx === 0 ? 12 : currentMonthIdx;
-
-  const [selectedMonth, setSelectedMonth] = useState(defaultMonth);
-  const [selectedYear, setSelectedYear] = useState(defaultYear);
   const [loading, setLoading] = useState(true);
-  const [reportData, setReportData] = useState<any[]>([]);
+  const [totalTarget, setTotalTarget] = useState(0);
+  const [totalEarned, setTotalEarned] = useState(0);
   const supabase = createClient();
-
-  const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const availableYears = Array.from({ length: 5 }, (_, i) => currentYearVal - i);
-
-  useEffect(() => {
-    if (selectedYear === currentYearVal && selectedMonth > currentMonthIdx) {
-      setSelectedMonth(defaultMonth);
-    }
-  }, [selectedYear, currentYearVal, currentMonthIdx, selectedMonth, defaultMonth]);
 
   useEffect(() => {
     fetchTeamReport();
@@ -550,53 +583,30 @@ function TeamReportModal({
 
       const earned = scoreData?.total_points ?? 0;
 
-      return {
-        ...emp,
-        targetPoints: tPoints,
-        earnedPoints: earned,
-      };
+      return { tPoints, earned };
     });
 
     const results = await Promise.all(dataPromises);
-    setReportData(results);
+    const sumTarget = results.reduce((sum, r) => sum + r.tPoints, 0);
+    const sumEarned = results.reduce((sum, r) => sum + r.earned, 0);
+    
+    setTotalTarget(sumTarget);
+    setTotalEarned(sumEarned);
     setLoading(false);
   };
 
+  const progressPercentage = Math.min(100, totalTarget > 0 ? (totalEarned / totalTarget) * 100 : 0);
+  const isTargetMet = totalEarned >= totalTarget;
+
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] px-4 py-8">
-      <div className="bg-[#1E1E1E] border border-[#424242] rounded-[20px] p-6 w-full max-w-4xl mx-auto max-h-[90vh] flex flex-col">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 shrink-0 gap-4">
+      <div className="bg-[#1E1E1E] border border-[#424242] rounded-[20px] p-6 w-full max-w-4xl mx-auto flex flex-col">
+        <div className="flex justify-between items-start mb-6 shrink-0">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">Team Report</h2>
-            <p className="text-sm text-gray-400">Overall Monthly Performance</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">Combined Team Report</h2>
+            <p className="text-sm text-gray-400">Total Performance for {selectedMonth}/{selectedYear}</p>
           </div>
-          <div className="flex items-center gap-3">
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(Number(e.target.value))}
-              className="bg-[#2A2A2A] border border-[#424242] text-white rounded-lg px-3 py-1.5 text-sm focus:outline-none"
-            >
-              {MONTH_NAMES.map((m, i) => {
-                const monthNum = i + 1;
-                const isDisabled = selectedYear === currentYearVal && monthNum > currentMonthIdx;
-                return (
-                  <option key={i} value={monthNum} disabled={isDisabled}>
-                    {m}
-                  </option>
-                );
-              })}
-            </select>
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="bg-[#2A2A2A] border border-[#424242] text-white rounded-lg px-3 py-1.5 text-sm focus:outline-none"
-            >
-              {availableYears.map(y => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
-            <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl ml-2">✕</button>
-          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl">✕</button>
         </div>
 
         {loading ? (
@@ -604,53 +614,40 @@ function TeamReportModal({
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
           </div>
         ) : (
-          <div className="overflow-x-auto flex-1 custom-scrollbar">
-            <table className="w-full text-left text-sm text-white">
-              <thead className="bg-[#1A1A1A] text-gray-400 text-xs uppercase sticky top-0">
-                <tr>
-                  <th className="px-4 py-3 font-semibold whitespace-nowrap">Employee</th>
-                  <th className="px-4 py-3 font-semibold whitespace-nowrap text-center">Target Points</th>
-                  <th className="px-4 py-3 font-semibold whitespace-nowrap text-center">Earned Points</th>
-                  <th className="px-4 py-3 font-semibold whitespace-nowrap">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#424242]">
-                {reportData.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center text-gray-500">No data found</td>
-                  </tr>
+          <div className="flex flex-col gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 shrink-0">
+              <div className="bg-[#2A2A2A] rounded-xl p-4 border border-[#424242]">
+                <p className="text-sm text-gray-400 mb-1">Total Target Points</p>
+                <p className="text-2xl font-bold text-white">{totalTarget}</p>
+              </div>
+              <div className="bg-[#2A2A2A] rounded-xl p-4 border border-[#424242]">
+                <p className="text-sm text-gray-400 mb-1">Total Earned Points</p>
+                <p className="text-2xl font-bold text-emerald-400">{totalEarned.toFixed(1)}</p>
+              </div>
+              <div className="bg-[#2A2A2A] rounded-xl p-4 border border-[#424242]">
+                <p className="text-sm text-gray-400 mb-1">Team Status</p>
+                {isTargetMet ? (
+                  <p className="text-2xl font-bold text-green-400">
+                    {totalEarned > totalTarget ? `${(totalEarned - totalTarget).toFixed(1)} ahead` : 'Target Met'}
+                  </p>
                 ) : (
-                  reportData.map((data) => {
-                    const isTargetMet = data.earnedPoints >= data.targetPoints;
-                    return (
-                      <tr key={data.id} className="hover:bg-[#333]/50 transition-colors">
-                        <td className="px-4 py-4 font-medium flex items-center gap-3">
-                          <div className="w-[28px] h-[28px] bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
-                            <img 
-                              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}&background=random&size=28`}
-                              alt={data.name}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          {data.name}
-                        </td>
-                        <td className="px-4 py-4 text-center">{data.targetPoints}</td>
-                        <td className="px-4 py-4 text-emerald-400 font-medium text-center">{data.earnedPoints.toFixed(1)}</td>
-                        <td className="px-4 py-4">
-                           {isTargetMet ? (
-                              <span className="text-green-400 font-medium">
-                                {data.earnedPoints > data.targetPoints ? `${(data.earnedPoints - data.targetPoints).toFixed(1)} ahead` : 'Target Met'}
-                              </span>
-                           ) : (
-                              <span className="text-orange-400 font-medium">{(data.targetPoints - data.earnedPoints).toFixed(1)} to go</span>
-                           )}
-                        </td>
-                      </tr>
-                    );
-                  })
+                  <p className="text-2xl font-bold text-orange-400">{(totalTarget - totalEarned).toFixed(1)} to go</p>
                 )}
-              </tbody>
-            </table>
+              </div>
+            </div>
+
+            <div className="bg-[#2A2A2A] rounded-xl p-5 border border-[#424242] shrink-0">
+               <div className="flex justify-between text-sm text-white mb-2">
+                 <span>Team Progress</span>
+                 <span>{progressPercentage.toFixed(1)}%</span>
+               </div>
+               <div className="w-full bg-[#1A1A1A] rounded-full h-2.5 overflow-hidden">
+                 <div 
+                   className={`h-2.5 rounded-full transition-all duration-1000 ${isTargetMet ? 'bg-green-500' : 'bg-blue-500'}`} 
+                   style={{ width: `${progressPercentage}%` }}
+                 ></div>
+               </div>
+            </div>
           </div>
         )}
       </div>
