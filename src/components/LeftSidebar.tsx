@@ -28,6 +28,7 @@ export default function LeftSidebar({ userRank, userName, userAvatar }: LeftSide
   const navItems = [
     { name: 'Dashboard', href: '/home', icon: '/Vector (1).png', activeIcon: '/Vector (9).png' },
     { name: 'Task', href: '/projects', icon: '/Vector (6).png', activeIcon: '/Vector (10).png' },
+    { name: 'Team', href: '/team', icon: '/Group 1.png', activeIcon: '/Vector (8).png', requiresRank1: true },
     { name: 'Profile', href: '/profile', icon: '/Vector (7).png', activeIcon: '/Vector (11).png' },
     { name: 'Targets', href: '/targets', icon: '/Group 3 (1).png', activeIcon: '/Group 2.png', requiresRank1: true },
     { name: 'Logout', href: '#', icon: '/Vector%20(13).png', activeIcon: '/Vector%20(14).png', isLogout: true },
