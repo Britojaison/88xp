@@ -16,9 +16,7 @@ interface Employee {
 export default function TeamPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showResetModal, setShowResetModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
-  const [resetEmployee, setResetEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentUserRank, setCurrentUserRank] = useState<number | null>(null);
   const router = useRouter();
@@ -174,12 +172,6 @@ export default function TeamPage() {
                           Edit
                         </button>
                         <button
-                          onClick={() => { setResetEmployee(emp); setShowResetModal(true); }}
-                          className="text-orange-400 hover:text-orange-300 text-xs sm:text-sm text-left transition-colors"
-                        >
-                          Reset Pwd
-                        </button>
-                        <button
                           onClick={() => handleDelete(emp.id)}
                           className="text-red-400 hover:text-red-300 text-xs sm:text-sm text-left transition-colors"
                         >
@@ -200,13 +192,6 @@ export default function TeamPage() {
           employee={editingEmployee}
           onClose={() => { setShowEditModal(false); setEditingEmployee(null); }}
           onSaved={fetchEmployees}
-        />
-      )}
-
-      {showResetModal && resetEmployee && (
-        <ResetPasswordModal
-          employee={resetEmployee}
-          onClose={() => { setShowResetModal(false); setResetEmployee(null); }}
         />
       )}
     </div>
@@ -317,169 +302,6 @@ function EditEmployeeModal({
             </button>
           </div>
         </form>
-      </div>
-    </div>
-  );
-}
-
-function ResetPasswordModal({
-  employee,
-  onClose,
-}: {
-  employee: Employee;
-  onClose: () => void;
-}) {
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-  const supabase = createClient();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    if (newPassword.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        setError('Session expired. Please log in again.');
-        setLoading(false);
-        return;
-      }
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/reset-employee-password`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ 
-            employeeId: employee.id,
-            newPassword: newPassword 
-          }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        setError(result.error || 'Failed to reset password');
-        setLoading(false);
-        return;
-      }
-
-      setSuccess(true);
-      setTimeout(() => {
-        onClose();
-      }, 2000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100]">
-      <div className="bg-[#1E1E1E] border border-[#424242] rounded-[20px] p-6 w-full max-w-md mx-4">
-        <h2 className="text-xl font-bold mb-2 text-white">Reset Password</h2>
-        <p className="text-gray-400 text-sm mb-4">
-          Set a new password for <span className="font-medium text-white">{employee.name}</span> ({employee.email})
-        </p>
-
-        {success ? (
-          <div className="bg-green-500/10 border border-green-500/30 text-green-400 px-4 py-3 rounded-lg">
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              Password reset successfully!
-            </div>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">New Password</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full bg-[#2A2A2A] border border-[#424242] text-white rounded-lg px-3 py-2 pr-10 focus:outline-none focus:border-purple-500"
-                  placeholder="Minimum 6 characters"
-                  required
-                  minLength={6}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-300"
-                  tabIndex={-1}
-                >
-                  {showPassword ? (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Confirm Password</label>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full bg-[#2A2A2A] border border-[#424242] text-white rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500"
-                placeholder="Re-enter password"
-                required
-              />
-            </div>
-            {error && (
-              <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
-            <div className="flex gap-3 justify-end mt-6">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 border border-[#424242] text-gray-300 rounded-lg hover:bg-[#2A2A2A] transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors"
-              >
-                {loading ? 'Resetting...' : 'Reset Password'}
-              </button>
-            </div>
-          </form>
-        )}
       </div>
     </div>
   );
