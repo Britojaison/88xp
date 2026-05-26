@@ -601,7 +601,8 @@ function TeamReportModal({
         scale: 2, // Higher quality
         backgroundColor: '#1E1E1E',
         windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight
+        windowHeight: element.scrollHeight,
+        useCORS: true
       });
 
       const imgData = canvas.toDataURL('image/png');
