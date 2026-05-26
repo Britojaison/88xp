@@ -95,6 +95,48 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
     }
   };
 
+  const handleDeleteBrand = async (e: React.MouseEvent, id: string, name: string) => {
+    e.preventDefault();
+    if (currentUserRank !== 1 || !id) return;
+    
+    if (confirm(`Are you sure you want to delete the brand "${name}"?`)) {
+      setLoading(true);
+      const { error } = await supabase.from('brands').delete().eq('id', id);
+      setLoading(false);
+      
+      if (!error) {
+        const updatedBrands = brands.filter(b => b.id !== id);
+        setBrands(updatedBrands);
+        if (brandId === id) {
+          setBrandId(updatedBrands.length > 0 ? updatedBrands[0].id : '');
+        }
+      } else {
+        setError(`Failed to delete brand: ${error.message}`);
+      }
+    }
+  };
+
+  const handleDeleteType = async (e: React.MouseEvent, id: string, name: string) => {
+    e.preventDefault();
+    if (currentUserRank !== 1 || !id) return;
+    
+    if (confirm(`Are you sure you want to delete the content type "${name}"?`)) {
+      setLoading(true);
+      const { error } = await supabase.from('project_types').delete().eq('id', id);
+      setLoading(false);
+      
+      if (!error) {
+        const updatedTypes = types.filter(t => t.id !== id);
+        setTypes(updatedTypes);
+        if (typeId === id) {
+          setTypeId(updatedTypes.length > 0 ? updatedTypes[0].id : '');
+        }
+      } else {
+        setError(`Failed to delete content type: ${error.message}`);
+      }
+    }
+  };
+
   useEffect(() => {
     fetchData();
     // Set today's date as default for both creation date and due date
@@ -289,7 +331,9 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
               <select
                 value={brandId}
                 onChange={(e) => setBrandId(e.target.value)}
+                onContextMenu={(e) => handleDeleteBrand(e, brandId, brands.find(b => b.id === brandId)?.name || '')}
                 className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black text-[13px]"
+                title={currentUserRank === 1 ? "Right-click to delete selected brand" : ""}
                 style={{
                   border: '1px solid #D3FEE4',
                 }}
@@ -338,7 +382,9 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
               <select
                 value={typeId}
                 onChange={(e) => setTypeId(e.target.value)}
+                onContextMenu={(e) => handleDeleteType(e, typeId, types.find(t => t.id === typeId)?.name || '')}
                 className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black text-[13px]"
+                title={currentUserRank === 1 ? "Right-click to delete selected content type" : ""}
                 style={{
                   border: '1px solid #D3FEE4',
                 }}
