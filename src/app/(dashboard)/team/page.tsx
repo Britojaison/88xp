@@ -600,9 +600,14 @@ function TeamReportModal({
       const { jsPDF } = await import('jspdf');
 
       const element = pdfRef.current;
+      const filter = (node: HTMLElement) => {
+        return node.getAttribute?.('data-html2canvas-ignore') !== 'true';
+      };
+      
       const imgData = await toPng(element, {
         backgroundColor: '#1E1E1E',
         pixelRatio: 2, // Higher quality
+        filter: filter as any,
       });
 
       const pdf = new jsPDF('p', 'mm', 'a4');
