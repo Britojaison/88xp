@@ -548,8 +548,7 @@ function TeamReportModal({
   onClose: () => void;
 }) {
   const [loading, setLoading] = useState(true);
-  const [totalTarget, setTotalTarget] = useState(0);
-  const [totalEarned, setTotalEarned] = useState(0);
+  const [reportData, setReportData] = useState<any[]>([]);
   const supabase = createClient();
 
   useEffect(() => {
@@ -583,71 +582,103 @@ function TeamReportModal({
 
       const earned = scoreData?.total_points ?? 0;
 
-      return { tPoints, earned };
+      return {
+        ...emp,
+        targetPoints: tPoints,
+        earnedPoints: earned,
+      };
     });
 
     const results = await Promise.all(dataPromises);
-    const sumTarget = results.reduce((sum, r) => sum + r.tPoints, 0);
-    const sumEarned = results.reduce((sum, r) => sum + r.earned, 0);
     
-    setTotalTarget(sumTarget);
-    setTotalEarned(sumEarned);
+    // Sort alphabetically by name
+    results.sort((a, b) => a.name.localeCompare(b.name));
+    
+    setReportData(results);
     setLoading(false);
   };
 
-  const progressPercentage = Math.min(100, totalTarget > 0 ? (totalEarned / totalTarget) * 100 : 0);
-  const isTargetMet = totalEarned >= totalTarget;
+  const handlePrint = () => {
+    window.print();
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] px-4 py-8">
-      <div className="bg-[#1E1E1E] border border-[#424242] rounded-[20px] p-6 w-full max-w-4xl mx-auto flex flex-col">
-        <div className="flex justify-between items-start mb-6 shrink-0">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] px-4 py-8 print:bg-white print:static print:inset-auto print:p-0 print:block">
+      <div className="bg-[#1E1E1E] border border-[#424242] rounded-[20px] p-6 w-full max-w-4xl mx-auto max-h-[90vh] flex flex-col print:bg-white print:border-none print:max-h-none print:p-0 print:max-w-none">
+        <div className="flex justify-between items-start mb-6 shrink-0 print:hidden">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">Combined Team Report</h2>
-            <p className="text-sm text-gray-400">Total Performance for {selectedMonth}/{selectedYear}</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">Team Report</h2>
+            <p className="text-sm text-gray-400">Monthly Performance for {selectedMonth}/{selectedYear}</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl">✕</button>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={handlePrint} 
+              className="bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 px-4 py-2 rounded-lg border border-purple-500/30 text-sm"
+            >
+              Download PDF
+            </button>
+            <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl ml-2">✕</button>
+          </div>
+        </div>
+
+        {/* Print Header */}
+        <div className="hidden print:block mb-8">
+            <h2 className="text-2xl font-bold mb-1 text-black">Team Report</h2>
+            <p className="text-sm text-gray-600">Monthly Performance for {selectedMonth}/{selectedYear}</p>
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center flex-1 min-h-[200px]">
+          <div className="flex items-center justify-center flex-1 min-h-[200px] print:hidden">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
           </div>
         ) : (
-          <div className="flex flex-col gap-6">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 shrink-0">
-              <div className="bg-[#2A2A2A] rounded-xl p-4 border border-[#424242]">
-                <p className="text-sm text-gray-400 mb-1">Total Target Points</p>
-                <p className="text-2xl font-bold text-white">{totalTarget}</p>
-              </div>
-              <div className="bg-[#2A2A2A] rounded-xl p-4 border border-[#424242]">
-                <p className="text-sm text-gray-400 mb-1">Total Earned Points</p>
-                <p className="text-2xl font-bold text-emerald-400">{totalEarned.toFixed(1)}</p>
-              </div>
-              <div className="bg-[#2A2A2A] rounded-xl p-4 border border-[#424242]">
-                <p className="text-sm text-gray-400 mb-1">Team Status</p>
-                {isTargetMet ? (
-                  <p className="text-2xl font-bold text-green-400">
-                    {totalEarned > totalTarget ? `${(totalEarned - totalTarget).toFixed(1)} ahead` : 'Target Met'}
-                  </p>
+          <div className="overflow-x-auto flex-1 custom-scrollbar print:overflow-visible">
+            <table className="w-full text-left text-sm text-white print:text-black print:border-collapse">
+              <thead className="bg-[#1A1A1A] text-gray-400 text-xs uppercase sticky top-0 print:static print:bg-gray-100 print:text-gray-800">
+                <tr>
+                  <th className="px-4 py-3 font-semibold whitespace-nowrap print:border print:border-gray-300">Employee</th>
+                  <th className="px-4 py-3 font-semibold whitespace-nowrap text-center print:border print:border-gray-300">Target Points</th>
+                  <th className="px-4 py-3 font-semibold whitespace-nowrap text-center print:border print:border-gray-300">Earned Points</th>
+                  <th className="px-4 py-3 font-semibold whitespace-nowrap print:border print:border-gray-300">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#424242] print:divide-gray-300">
+                {reportData.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-8 text-center text-gray-500 print:border print:border-gray-300">No data found</td>
+                  </tr>
                 ) : (
-                  <p className="text-2xl font-bold text-orange-400">{(totalTarget - totalEarned).toFixed(1)} to go</p>
+                  reportData.map((data) => {
+                    const isTargetMet = data.earnedPoints >= data.targetPoints;
+                    return (
+                      <tr key={data.id} className="hover:bg-[#333]/50 transition-colors print:hover:bg-transparent">
+                        <td className="px-4 py-4 font-medium flex items-center gap-3 print:border print:border-gray-300">
+                          <div className="w-[28px] h-[28px] bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 print:hidden">
+                            <img 
+                              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}&background=random&size=28`}
+                              alt={data.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          {data.name}
+                        </td>
+                        <td className="px-4 py-4 text-center print:border print:border-gray-300">{data.targetPoints}</td>
+                        <td className="px-4 py-4 text-emerald-400 font-medium text-center print:border print:border-gray-300 print:text-black">{data.earnedPoints.toFixed(1)}</td>
+                        <td className="px-4 py-4 print:border print:border-gray-300">
+                           {isTargetMet ? (
+                              <span className="text-green-400 font-medium print:text-black">
+                                {data.earnedPoints > data.targetPoints ? `${(data.earnedPoints - data.targetPoints).toFixed(1)} ahead` : 'Target Met'}
+                              </span>
+                           ) : (
+                              <span className="text-orange-400 font-medium print:text-black">{(data.targetPoints - data.earnedPoints).toFixed(1)} to go</span>
+                           )}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
-              </div>
-            </div>
-
-            <div className="bg-[#2A2A2A] rounded-xl p-5 border border-[#424242] shrink-0">
-               <div className="flex justify-between text-sm text-white mb-2">
-                 <span>Team Progress</span>
-                 <span>{progressPercentage.toFixed(1)}%</span>
-               </div>
-               <div className="w-full bg-[#1A1A1A] rounded-full h-2.5 overflow-hidden">
-                 <div 
-                   className={`h-2.5 rounded-full transition-all duration-1000 ${isTargetMet ? 'bg-green-500' : 'bg-blue-500'}`} 
-                   style={{ width: `${progressPercentage}%` }}
-                 ></div>
-               </div>
-            </div>
+              </tbody>
+            </table>
           </div>
         )}
       </div>
