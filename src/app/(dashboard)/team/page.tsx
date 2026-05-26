@@ -29,20 +29,11 @@ export default function TeamPage() {
   const defaultYear = currentMonthIdx === 0 ? currentYearVal - 1 : currentYearVal;
   const defaultMonth = currentMonthIdx === 0 ? 12 : currentMonthIdx;
 
-  const [teamReportMonth, setTeamReportMonth] = useState(defaultMonth);
-  const [teamReportYear, setTeamReportYear] = useState(defaultYear);
-
   const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const availableYears = Array.from({ length: 5 }, (_, i) => currentYearVal - i);
 
   const router = useRouter();
   const supabase = createClient();
-
-  useEffect(() => {
-    if (teamReportYear === currentYearVal && teamReportMonth > currentMonthIdx) {
-      setTeamReportMonth(defaultMonth);
-    }
-  }, [teamReportYear, currentYearVal, currentMonthIdx, teamReportMonth, defaultMonth]);
 
   useEffect(() => {
     checkAccessAndFetchData();
@@ -141,30 +132,6 @@ export default function TeamPage() {
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:mt-8">
-          <select
-            value={teamReportMonth}
-            onChange={(e) => setTeamReportMonth(Number(e.target.value))}
-            className="bg-[#2A2A2A] border border-[#424242] text-white rounded-[20px] px-3 py-2 text-sm focus:outline-none"
-          >
-            {MONTH_NAMES.map((m, i) => {
-              const monthNum = i + 1;
-              const isDisabled = teamReportYear === currentYearVal && monthNum > currentMonthIdx;
-              return (
-                <option key={i} value={monthNum} disabled={isDisabled}>
-                  {m}
-                </option>
-              );
-            })}
-          </select>
-          <select
-            value={teamReportYear}
-            onChange={(e) => setTeamReportYear(Number(e.target.value))}
-            className="bg-[#2A2A2A] border border-[#424242] text-white rounded-[20px] px-3 py-2 text-sm focus:outline-none"
-          >
-            {availableYears.map(y => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
           <button
             onClick={() => setShowTeamReportModal(true)}
             className="bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 px-4 py-2 rounded-[20px] transition-colors text-sm sm:text-base border border-purple-500/30 flex items-center justify-center gap-2"
@@ -252,8 +219,6 @@ export default function TeamPage() {
       {showTeamReportModal && (
         <TeamReportModal
           employees={employees}
-          selectedMonth={teamReportMonth}
-          selectedYear={teamReportYear}
           onClose={() => setShowTeamReportModal(false)}
         />
       )}
@@ -525,20 +490,33 @@ function EmployeeReportModal({
 
 function TeamReportModal({
   employees,
-  selectedMonth,
-  selectedYear,
   onClose,
 }: {
   employees: Employee[];
-  selectedMonth: number;
-  selectedYear: number;
   onClose: () => void;
 }) {
+  const now = new Date();
+  const currentMonthIdx = now.getMonth();
+  const currentYearVal = now.getFullYear();
+  const defaultYear = currentMonthIdx === 0 ? currentYearVal - 1 : currentYearVal;
+  const defaultMonth = currentMonthIdx === 0 ? 12 : currentMonthIdx;
+
+  const [selectedMonth, setSelectedMonth] = useState(defaultMonth);
+  const [selectedYear, setSelectedYear] = useState(defaultYear);
   const [loading, setLoading] = useState(true);
   const [reportData, setReportData] = useState<any[]>([]);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const supabase = createClient();
   const pdfRef = useRef<HTMLDivElement>(null);
+
+  const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const availableYears = Array.from({ length: 5 }, (_, i) => currentYearVal - i);
+
+  useEffect(() => {
+    if (selectedYear === currentYearVal && selectedMonth > currentMonthIdx) {
+      setSelectedMonth(defaultMonth);
+    }
+  }, [selectedYear, currentYearVal, currentMonthIdx, selectedMonth, defaultMonth]);
 
   useEffect(() => {
     fetchTeamReport();
@@ -607,6 +585,7 @@ function TeamReportModal({
       const imgData = await toPng(element, {
         backgroundColor: '#1E1E1E',
         pixelRatio: 2, // Higher quality
+        skipFonts: true,
         filter: filter as any,
       });
 
@@ -641,6 +620,32 @@ function TeamReportModal({
             <p className="text-sm text-gray-400">Monthly Performance for {selectedMonth}/{selectedYear}</p>
           </div>
           <div className="flex items-center gap-3">
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              className="bg-[#2A2A2A] border border-[#424242] text-white rounded-lg px-3 py-1.5 text-sm focus:outline-none"
+              data-html2canvas-ignore="true"
+            >
+              {MONTH_NAMES.map((m, i) => {
+                const monthNum = i + 1;
+                const isDisabled = selectedYear === currentYearVal && monthNum > currentMonthIdx;
+                return (
+                  <option key={i} value={monthNum} disabled={isDisabled}>
+                    {m}
+                  </option>
+                );
+              })}
+            </select>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className="bg-[#2A2A2A] border border-[#424242] text-white rounded-lg px-3 py-1.5 text-sm focus:outline-none"
+              data-html2canvas-ignore="true"
+            >
+              {availableYears.map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
             <button 
               onClick={handlePrint} 
               disabled={isGeneratingPdf}
