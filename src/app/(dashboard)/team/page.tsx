@@ -596,22 +596,18 @@ function TeamReportModal({
     
     try {
       // Dynamic imports for PDF libraries
-      const html2canvas = (await import('html2canvas')).default;
+      const { toPng } = await import('html-to-image');
       const { jsPDF } = await import('jspdf');
 
       const element = pdfRef.current;
-      const canvas = await html2canvas(element, {
-        scale: 2, // Higher quality
+      const imgData = await toPng(element, {
         backgroundColor: '#1E1E1E',
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight,
-        useCORS: true
+        pixelRatio: 2, // Higher quality
       });
 
-      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pdfHeight = (element.scrollHeight * pdfWidth) / element.scrollWidth;
       
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`Team_Report_${selectedMonth}_${selectedYear}.pdf`);
