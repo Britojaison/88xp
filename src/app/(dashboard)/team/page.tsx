@@ -16,7 +16,9 @@ interface Employee {
 export default function TeamPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [reportEmployee, setReportEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentUserRank, setCurrentUserRank] = useState<number | null>(null);
   const router = useRouter();
@@ -172,6 +174,12 @@ export default function TeamPage() {
                           Edit
                         </button>
                         <button
+                          onClick={() => { setReportEmployee(emp); setShowReportModal(true); }}
+                          className="text-green-400 hover:text-green-300 text-xs sm:text-sm text-left transition-colors"
+                        >
+                          Report
+                        </button>
+                        <button
                           onClick={() => handleDelete(emp.id)}
                           className="text-red-400 hover:text-red-300 text-xs sm:text-sm text-left transition-colors"
                         >
@@ -192,6 +200,13 @@ export default function TeamPage() {
           employee={editingEmployee}
           onClose={() => { setShowEditModal(false); setEditingEmployee(null); }}
           onSaved={fetchEmployees}
+        />
+      )}
+
+      {showReportModal && reportEmployee && (
+        <EmployeeReportModal
+          employee={reportEmployee}
+          onClose={() => { setShowReportModal(false); setReportEmployee(null); }}
         />
       )}
     </div>
@@ -302,6 +317,184 @@ function EditEmployeeModal({
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+function EmployeeReportModal({
+  employee,
+  onClose,
+}: {
+  employee: Employee;
+  onClose: () => void;
+}) {
+  const [loading, setLoading] = useState(true);
+  const [targetPoints, setTargetPoints] = useState(100);
+  const [earnedPoints, setEarnedPoints] = useState(0);
+  const [projects, setProjects] = useState<any[]>([]);
+  const supabase = createClient();
+
+  useEffect(() => {
+    fetchReportData();
+  }, [employee.id]);
+
+  const fetchReportData = async () => {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+    const startDate = new Date(currentYear, currentMonth - 1, 1).toISOString();
+    const endDate = new Date(currentYear, currentMonth, 0, 23, 59, 59, 999).toISOString();
+
+    // 1. Fetch Target Points
+    const { data: targetData } = await supabase
+      .rpc('get_or_create_monthly_target', {
+        p_employee_id: employee.id,
+        p_month: currentMonth,
+        p_year: currentYear,
+      });
+
+    // 2. Fetch Earned Points
+    const { data: scoreData } = await supabase
+      .from('monthly_scores')
+      .select('total_points')
+      .eq('employee_id', employee.id)
+      .eq('month', currentMonth)
+      .eq('year', currentYear)
+      .single();
+
+    // 3. Fetch Projects created or completed in this month
+    const { data: projectsData } = await supabase
+      .from('projects')
+      .select('id, name, status, created_at, completed_at, points_override, type:project_types(name, points)')
+      .eq('assigned_to', employee.id)
+      .or(`and(completed_at.gte.${startDate},completed_at.lte.${endDate}),and(status.in.(pending,in_progress),created_at.lte.${endDate},created_at.gte.${startDate})`)
+      .order('created_at', { ascending: false });
+
+    // Ensure type relates properly since project_types might return an array if improperly joined in postgrest
+    const transformedProjects = (projectsData || []).map(p => ({
+      ...p,
+      type: Array.isArray(p.type) ? p.type[0] : p.type,
+    }));
+
+    // RPC returns scalar or object depending on definition, handle gracefully
+    const tPoints = targetData && typeof targetData === 'object' && 'target_points' in targetData 
+        ? Number((targetData as any).target_points) 
+        : Number(targetData) || 100;
+
+    setTargetPoints(tPoints);
+    setEarnedPoints(scoreData?.total_points ?? 0);
+    setProjects(transformedProjects);
+    setLoading(false);
+  };
+
+  const progressPercentage = Math.min(100, targetPoints > 0 ? (earnedPoints / targetPoints) * 100 : 0);
+  const isTargetMet = earnedPoints >= targetPoints;
+
+  const getPoints = (project: any) => project.points_override ?? project.type?.points ?? 0;
+
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] px-4 py-8">
+      <div className="bg-[#1E1E1E] border border-[#424242] rounded-[20px] p-6 w-full max-w-4xl mx-auto max-h-[90vh] flex flex-col">
+        <div className="flex justify-between items-start mb-6 shrink-0">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">{employee.name}&apos;s Report</h2>
+            <p className="text-sm text-gray-400">Current Month Overview</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl">✕</button>
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center flex-1 min-h-[200px]">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar">
+            {/* Stats Summary */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 shrink-0">
+              <div className="bg-[#2A2A2A] rounded-xl p-4 border border-[#424242]">
+                <p className="text-sm text-gray-400 mb-1">Target Points</p>
+                <p className="text-2xl font-bold text-white">{targetPoints}</p>
+              </div>
+              <div className="bg-[#2A2A2A] rounded-xl p-4 border border-[#424242]">
+                <p className="text-sm text-gray-400 mb-1">Earned Points</p>
+                <p className="text-2xl font-bold text-emerald-400">{earnedPoints.toFixed(1)}</p>
+              </div>
+              <div className="bg-[#2A2A2A] rounded-xl p-4 border border-[#424242]">
+                <p className="text-sm text-gray-400 mb-1">Status</p>
+                {isTargetMet ? (
+                  <p className="text-2xl font-bold text-green-400">Target Met</p>
+                ) : (
+                  <p className="text-2xl font-bold text-orange-400">{(targetPoints - earnedPoints).toFixed(1)} to go</p>
+                )}
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="bg-[#2A2A2A] rounded-xl p-5 border border-[#424242] shrink-0">
+               <div className="flex justify-between text-sm text-white mb-2">
+                 <span>Progress</span>
+                 <span>{progressPercentage.toFixed(1)}%</span>
+               </div>
+               <div className="w-full bg-[#1A1A1A] rounded-full h-2.5 overflow-hidden">
+                 <div 
+                   className={`h-2.5 rounded-full transition-all duration-1000 ${isTargetMet ? 'bg-green-500' : 'bg-blue-500'}`} 
+                   style={{ width: `${progressPercentage}%` }}
+                 ></div>
+               </div>
+            </div>
+
+            {/* Projects Table */}
+            <div className="bg-[#2A2A2A] rounded-xl border border-[#424242] flex flex-col min-h-[300px]">
+              <div className="px-4 py-3 border-b border-[#424242] shrink-0">
+                <h3 className="text-white font-semibold">Projects Worked On</h3>
+              </div>
+              <div className="overflow-x-auto flex-1">
+                <table className="w-full text-left text-sm text-white">
+                  <thead className="bg-[#1A1A1A] text-gray-400 text-xs uppercase sticky top-0">
+                    <tr>
+                      <th className="px-4 py-3 font-semibold whitespace-nowrap">Project Name</th>
+                      <th className="px-4 py-3 font-semibold whitespace-nowrap">Type</th>
+                      <th className="px-4 py-3 font-semibold whitespace-nowrap">Status</th>
+                      <th className="px-4 py-3 font-semibold whitespace-nowrap">Points</th>
+                      <th className="px-4 py-3 font-semibold whitespace-nowrap">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#424242]">
+                    {projects.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-8 text-center text-gray-500">No projects found for this month</td>
+                      </tr>
+                    ) : (
+                      projects.map((project) => {
+                        const isCompleted = project.status === 'completed' || project.status === 'approved';
+                        return (
+                          <tr key={project.id} className="hover:bg-[#333]/50 transition-colors">
+                            <td className="px-4 py-3 max-w-[200px] sm:max-w-[300px] truncate">{project.name}</td>
+                            <td className="px-4 py-3 text-gray-400 whitespace-nowrap">{project.type?.name || '-'}</td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                               {isCompleted ? (
+                                  <span className="text-emerald-400">Completed</span>
+                               ) : (
+                                  <span className="text-purple-400 capitalize">{project.status.replace('_', ' ')}</span>
+                               )}
+                            </td>
+                            <td className="px-4 py-3 font-medium text-blue-400 whitespace-nowrap">+{getPoints(project).toFixed(1)}</td>
+                            <td className="px-4 py-3 text-gray-400 whitespace-nowrap">
+                               {isCompleted && project.completed_at 
+                                 ? new Date(project.completed_at).toLocaleDateString()
+                                 : new Date(project.created_at).toLocaleDateString()}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
