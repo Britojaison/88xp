@@ -336,9 +336,6 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
               <select
                 value={brandId}
                 onChange={(e) => setBrandId(e.target.value)}
-              <select
-                value={brandId}
-                onChange={(e) => setBrandId(e.target.value)}
                 className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black text-[13px]"
                 style={{
                   border: '1px solid #D3FEE4',
