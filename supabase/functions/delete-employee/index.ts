@@ -39,15 +39,15 @@ serve(async (req) => {
       throw new Error('Unauthorized')
     }
 
-    // Check if user is admin - use email for reliable lookup
+    // Check if user is admin or rank 1 - use email for reliable lookup
     const { data: employee, error: empError } = await supabaseAdmin
       .from('employees')
-      .select('is_admin, email')
+      .select('is_admin, email, rank')
       .ilike('email', user.email || '')
       .single()
 
-    if (empError || !employee?.is_admin) {
-      throw new Error('Unauthorized: Admin access required')
+    if (empError || (!employee?.is_admin && employee?.rank !== 1)) {
+      throw new Error('Unauthorized: Admin or Rank 1 access required')
     }
 
     // Parse request body
