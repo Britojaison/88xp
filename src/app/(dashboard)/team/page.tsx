@@ -329,29 +329,33 @@ function EmployeeReportModal({
   employee: Employee;
   onClose: () => void;
 }) {
+  const now = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [loading, setLoading] = useState(true);
   const [targetPoints, setTargetPoints] = useState(100);
   const [earnedPoints, setEarnedPoints] = useState(0);
   const [projects, setProjects] = useState<any[]>([]);
   const supabase = createClient();
 
+  const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const availableYears = Array.from({ length: 5 }, (_, i) => now.getFullYear() - i);
+
   useEffect(() => {
     fetchReportData();
-  }, [employee.id]);
+  }, [employee.id, selectedMonth, selectedYear]);
 
   const fetchReportData = async () => {
-    const now = new Date();
-    const currentMonth = now.getMonth() + 1;
-    const currentYear = now.getFullYear();
-    const startDate = new Date(currentYear, currentMonth - 1, 1).toISOString();
-    const endDate = new Date(currentYear, currentMonth, 0, 23, 59, 59, 999).toISOString();
+    setLoading(true);
+    const startDate = new Date(selectedYear, selectedMonth - 1, 1).toISOString();
+    const endDate = new Date(selectedYear, selectedMonth, 0, 23, 59, 59, 999).toISOString();
 
     // 1. Fetch Target Points
     const { data: targetData } = await supabase
       .rpc('get_or_create_monthly_target', {
         p_employee_id: employee.id,
-        p_month: currentMonth,
-        p_year: currentYear,
+        p_month: selectedMonth,
+        p_year: selectedYear,
       });
 
     // 2. Fetch Earned Points
@@ -359,8 +363,8 @@ function EmployeeReportModal({
       .from('monthly_scores')
       .select('total_points')
       .eq('employee_id', employee.id)
-      .eq('month', currentMonth)
-      .eq('year', currentYear)
+      .eq('month', selectedMonth)
+      .eq('year', selectedYear)
       .single();
 
     // 3. Fetch Projects created or completed in this month
@@ -396,12 +400,32 @@ function EmployeeReportModal({
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] px-4 py-8">
       <div className="bg-[#1E1E1E] border border-[#424242] rounded-[20px] p-6 w-full max-w-4xl mx-auto max-h-[90vh] flex flex-col">
-        <div className="flex justify-between items-start mb-6 shrink-0">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 shrink-0 gap-4">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">{employee.name}&apos;s Report</h2>
-            <p className="text-sm text-gray-400">Current Month Overview</p>
+            <p className="text-sm text-gray-400">Monthly Overview</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl">✕</button>
+          <div className="flex items-center gap-3">
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              className="bg-[#2A2A2A] border border-[#424242] text-white rounded-lg px-3 py-1.5 text-sm focus:outline-none"
+            >
+              {MONTH_NAMES.map((m, i) => (
+                <option key={i} value={i + 1}>{m}</option>
+              ))}
+            </select>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className="bg-[#2A2A2A] border border-[#424242] text-white rounded-lg px-3 py-1.5 text-sm focus:outline-none"
+            >
+              {availableYears.map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+            <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl ml-2">✕</button>
+          </div>
         </div>
 
         {loading ? (
