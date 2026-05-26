@@ -615,9 +615,9 @@ function TeamReportModal({
       
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`Team_Report_${selectedMonth}_${selectedYear}.pdf`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating PDF', error);
-      alert('Failed to generate PDF. Please try again.');
+      alert(`Failed to generate PDF. Please try again. Error: ${error?.message || error}`);
     } finally {
       setIsGeneratingPdf(false);
     }
