@@ -507,7 +507,6 @@ function TeamReportModal({
   const [reportData, setReportData] = useState<any[]>([]);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const supabase = createClient();
-  const pdfRef = useRef<HTMLDivElement>(null);
 
   const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const availableYears = Array.from({ length: 5 }, (_, i) => currentYearVal - i);
@@ -565,35 +564,117 @@ function TeamReportModal({
     setLoading(false);
   };
 
+  const MONTH_NAMES_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
   const handlePrint = async () => {
-    if (!pdfRef.current) return;
     setIsGeneratingPdf(true);
     
-    // Wait for React to apply styles (e.g., removing scrollbars)
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
     try {
-      // Dynamic imports for PDF libraries
-      const { toPng } = await import('html-to-image');
       const { jsPDF } = await import('jspdf');
 
-      const element = pdfRef.current;
-      const filter = (node: HTMLElement) => {
-        return node.getAttribute?.('data-html2canvas-ignore') !== 'true';
-      };
-      
-      const imgData = await toPng(element, {
-        backgroundColor: '#1E1E1E',
-        pixelRatio: 2, // Higher quality
-        skipFonts: true,
-        filter: filter as any,
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 15;
+      const usableWidth = pageWidth - margin * 2;
+      let y = margin;
+
+      // --- Header ---
+      pdf.setFillColor(30, 30, 30); // #1E1E1E
+      pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(22);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Team Report', margin, y + 8);
+      y += 14;
+
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(160, 160, 160);
+      pdf.text(`Monthly Performance for ${MONTH_NAMES_FULL[selectedMonth - 1]} ${selectedYear}`, margin, y);
+      y += 10;
+
+      // --- Table Header ---
+      const colWidths = [usableWidth * 0.30, usableWidth * 0.20, usableWidth * 0.20, usableWidth * 0.30];
+      const colX = [margin, margin + colWidths[0], margin + colWidths[0] + colWidths[1], margin + colWidths[0] + colWidths[1] + colWidths[2]];
+      const rowHeight = 10;
+
+      pdf.setFillColor(26, 26, 26); // #1A1A1A
+      pdf.rect(margin, y, usableWidth, rowHeight, 'F');
+
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(160, 160, 160);
+      const headers = ['EMPLOYEE', 'TARGET POINTS', 'EARNED POINTS', 'STATUS'];
+      headers.forEach((h, i) => {
+        pdf.text(h, colX[i] + 3, y + 7);
+      });
+      y += rowHeight;
+
+      // --- Table Rows ---
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+
+      reportData.forEach((data, index) => {
+        // Check if we need a new page
+        if (y + rowHeight > pageHeight - margin) {
+          pdf.addPage();
+          // Fill new page background
+          pdf.setFillColor(30, 30, 30);
+          pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+          y = margin;
+
+          // Repeat header on new page
+          pdf.setFillColor(26, 26, 26);
+          pdf.rect(margin, y, usableWidth, rowHeight, 'F');
+          pdf.setFontSize(9);
+          pdf.setFont('helvetica', 'bold');
+          pdf.setTextColor(160, 160, 160);
+          headers.forEach((h, i) => {
+            pdf.text(h, colX[i] + 3, y + 7);
+          });
+          y += rowHeight;
+          pdf.setFontSize(10);
+          pdf.setFont('helvetica', 'normal');
+        }
+
+        // Row separator
+        pdf.setDrawColor(66, 66, 66); // #424242
+        pdf.line(margin, y, margin + usableWidth, y);
+
+        // Name
+        pdf.setTextColor(255, 255, 255);
+        pdf.text(data.name, colX[0] + 3, y + 7);
+
+        // Target Points
+        pdf.setTextColor(255, 255, 255);
+        pdf.text(String(data.targetPoints), colX[1] + 3, y + 7);
+
+        // Earned Points
+        pdf.setTextColor(52, 211, 153); // emerald-400
+        pdf.text(data.earnedPoints.toFixed(1), colX[2] + 3, y + 7);
+
+        // Status
+        const isTargetMet = data.earnedPoints >= data.targetPoints;
+        if (isTargetMet) {
+          pdf.setTextColor(74, 222, 128); // green-400
+          const statusText = data.earnedPoints > data.targetPoints 
+            ? `${(data.earnedPoints - data.targetPoints).toFixed(1)} ahead` 
+            : 'Target Met';
+          pdf.text(statusText, colX[3] + 3, y + 7);
+        } else {
+          pdf.setTextColor(251, 146, 60); // orange-400
+          pdf.text(`${(data.targetPoints - data.earnedPoints).toFixed(1)} to go`, colX[3] + 3, y + 7);
+        }
+
+        y += rowHeight;
       });
 
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (element.scrollHeight * pdfWidth) / element.scrollWidth;
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      // Bottom border
+      pdf.setDrawColor(66, 66, 66);
+      pdf.line(margin, y, margin + usableWidth, y);
+
       pdf.save(`Team_Report_${selectedMonth}_${selectedYear}.pdf`);
     } catch (error: any) {
       console.error('Error generating PDF', error);
@@ -606,15 +687,9 @@ function TeamReportModal({
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] px-4 py-8">
       <div 
-        ref={pdfRef} 
         className="bg-[#1E1E1E] border border-[#424242] rounded-[20px] p-6 w-full max-w-4xl mx-auto max-h-[90vh] flex flex-col"
-        style={{
-          height: isGeneratingPdf ? 'max-content' : undefined,
-          maxHeight: isGeneratingPdf ? 'none' : '90vh',
-          overflow: isGeneratingPdf ? 'visible' : undefined,
-        }}
       >
-        <div className="flex justify-between items-start mb-6 shrink-0" data-html2canvas-ignore={isGeneratingPdf ? "false" : "true"}>
+        <div className="flex justify-between items-start mb-6 shrink-0">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">Team Report</h2>
             <p className="text-sm text-gray-400">Monthly Performance for {selectedMonth}/{selectedYear}</p>
@@ -624,7 +699,6 @@ function TeamReportModal({
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(Number(e.target.value))}
               className="bg-[#2A2A2A] border border-[#424242] text-white rounded-lg px-3 py-1.5 text-sm focus:outline-none"
-              data-html2canvas-ignore="true"
             >
               {MONTH_NAMES.map((m, i) => {
                 const monthNum = i + 1;
@@ -640,7 +714,6 @@ function TeamReportModal({
               value={selectedYear}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
               className="bg-[#2A2A2A] border border-[#424242] text-white rounded-lg px-3 py-1.5 text-sm focus:outline-none"
-              data-html2canvas-ignore="true"
             >
               {availableYears.map(y => (
                 <option key={y} value={y}>{y}</option>
@@ -650,22 +723,21 @@ function TeamReportModal({
               onClick={handlePrint} 
               disabled={isGeneratingPdf}
               className="bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 px-4 py-2 rounded-lg border border-purple-500/30 text-sm disabled:opacity-50"
-              data-html2canvas-ignore="true"
             >
               {isGeneratingPdf ? 'Generating PDF...' : 'Download PDF'}
             </button>
-            <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl ml-2" data-html2canvas-ignore="true">✕</button>
+            <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl ml-2">✕</button>
           </div>
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center flex-1 min-h-[200px]" data-html2canvas-ignore="true">
+          <div className="flex items-center justify-center flex-1 min-h-[200px]">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
           </div>
         ) : (
-          <div className="overflow-x-auto flex-1 custom-scrollbar" style={{ overflow: isGeneratingPdf ? 'visible' : 'auto' }}>
+          <div className="overflow-x-auto flex-1 custom-scrollbar">
             <table className="w-full text-left text-sm text-white">
-              <thead className="bg-[#1A1A1A] text-gray-400 text-xs uppercase sticky top-0" style={{ position: isGeneratingPdf ? 'static' : 'sticky' }}>
+              <thead className="bg-[#1A1A1A] text-gray-400 text-xs uppercase sticky top-0">
                 <tr>
                   <th className="px-4 py-3 font-semibold whitespace-nowrap">Employee</th>
                   <th className="px-4 py-3 font-semibold whitespace-nowrap text-center">Target Points</th>
