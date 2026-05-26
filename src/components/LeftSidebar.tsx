@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { Shield } from 'lucide-react';
 
 interface LeftSidebarProps {
   userRank: number | null;
@@ -28,6 +29,7 @@ export default function LeftSidebar({ userRank, userName, userAvatar }: LeftSide
   const navItems = [
     { name: 'Dashboard', href: '/home', icon: '/Vector (1).png', activeIcon: '/Vector (9).png' },
     { name: 'Task', href: '/projects', icon: '/Vector (6).png', activeIcon: '/Vector (10).png' },
+    { name: 'Admin Access', href: '/team', lucideIcon: Shield, requiresRank1: true },
     { name: 'Profile', href: '/profile', icon: '/Vector (7).png', activeIcon: '/Vector (11).png' },
     { name: 'Targets', href: '/targets', icon: '/Group 3 (1).png', activeIcon: '/Group 2.png', requiresRank1: true },
     { name: 'Logout', href: '#', icon: '/Vector%20(13).png', activeIcon: '/Vector%20(14).png', isLogout: true },
@@ -85,11 +87,15 @@ export default function LeftSidebar({ userRank, userName, userAvatar }: LeftSide
                   }`}
                   title={item.name}
                 >
-                  <img 
-                    src={active ? item.activeIcon : item.icon} 
-                    alt={item.name} 
-                    className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 xl:w-7 xl:h-7 object-contain"
-                  />
+                  {item.lucideIcon ? (
+                    <item.lucideIcon className={`w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 xl:w-7 xl:h-7 ${active ? 'text-black' : 'text-white'}`} strokeWidth={1.5} />
+                  ) : (
+                    <img 
+                      src={active ? item.activeIcon : item.icon} 
+                      alt={item.name} 
+                      className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 xl:w-7 xl:h-7 object-contain"
+                    />
+                  )}
                 </Link>
               );
             })}
