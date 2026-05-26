@@ -484,6 +484,8 @@ function EmployeeReportModal({
                  ></div>
                </div>
             </div>
+          </div>
+        )}
       </div>
     </div>
   );
