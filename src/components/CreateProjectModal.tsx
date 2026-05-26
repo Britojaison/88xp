@@ -310,9 +310,14 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
               <div className="flex justify-between items-center mb-1">
                 <label className="block text-white text-[13px] font-medium">Brand Name</label>
                 {currentUserRank === 1 && (
-                  <button type="button" onClick={() => setShowAddBrand(!showAddBrand)} className="text-white hover:text-green-400 font-bold text-lg leading-none">
-                    +
-                  </button>
+                  <div className="flex gap-3">
+                    <button type="button" onClick={() => setShowAddBrand(!showAddBrand)} className="text-white hover:text-green-400 font-bold text-lg leading-none" title="Add new brand">
+                      +
+                    </button>
+                    <button type="button" onClick={(e) => handleDeleteBrand(e, brandId, brands.find(b => b.id === brandId)?.name || '')} className="text-white hover:text-red-400 font-bold text-lg leading-none" title="Delete selected brand">
+                      -
+                    </button>
+                  </div>
                 )}
               </div>
               
@@ -331,9 +336,10 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
               <select
                 value={brandId}
                 onChange={(e) => setBrandId(e.target.value)}
-                onContextMenu={(e) => handleDeleteBrand(e, brandId, brands.find(b => b.id === brandId)?.name || '')}
+              <select
+                value={brandId}
+                onChange={(e) => setBrandId(e.target.value)}
                 className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black text-[13px]"
-                title={currentUserRank === 1 ? "Right-click to delete selected brand" : ""}
                 style={{
                   border: '1px solid #D3FEE4',
                 }}
@@ -352,9 +358,14 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
               <div className="flex justify-between items-center mb-1">
                 <label className="block text-white text-[13px] font-medium">Content Type</label>
                 {currentUserRank === 1 && (
-                  <button type="button" onClick={() => setShowAddType(!showAddType)} className="text-white hover:text-green-400 font-bold text-lg leading-none">
-                    +
-                  </button>
+                  <div className="flex gap-3">
+                    <button type="button" onClick={() => setShowAddType(!showAddType)} className="text-white hover:text-green-400 font-bold text-lg leading-none" title="Add new content type">
+                      +
+                    </button>
+                    <button type="button" onClick={(e) => handleDeleteType(e, typeId, types.find(t => t.id === typeId)?.name || '')} className="text-white hover:text-red-400 font-bold text-lg leading-none" title="Delete selected content type">
+                      -
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -382,9 +393,7 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
               <select
                 value={typeId}
                 onChange={(e) => setTypeId(e.target.value)}
-                onContextMenu={(e) => handleDeleteType(e, typeId, types.find(t => t.id === typeId)?.name || '')}
                 className="w-full h-[36px] rounded-[5px] px-3 py-1.5 bg-white text-black text-[13px]"
-                title={currentUserRank === 1 ? "Right-click to delete selected content type" : ""}
                 style={{
                   border: '1px solid #D3FEE4',
                 }}
