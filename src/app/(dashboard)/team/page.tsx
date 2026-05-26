@@ -226,12 +226,6 @@ export default function TeamPage() {
                           Edit
                         </button>
                         <button
-                          onClick={() => { setReportEmployee(emp); setShowReportModal(true); }}
-                          className="text-green-400 hover:text-green-300 text-xs sm:text-sm text-left transition-colors"
-                        >
-                          Report
-                        </button>
-                        <button
                           onClick={() => handleDelete(emp.id)}
                           className="text-red-400 hover:text-red-300 text-xs sm:text-sm text-left transition-colors"
                         >
@@ -252,13 +246,6 @@ export default function TeamPage() {
           employee={editingEmployee}
           onClose={() => { setShowEditModal(false); setEditingEmployee(null); }}
           onSaved={fetchEmployees}
-        />
-      )}
-
-      {showReportModal && reportEmployee && (
-        <EmployeeReportModal
-          employee={reportEmployee}
-          onClose={() => { setShowReportModal(false); setReportEmployee(null); }}
         />
       )}
 
@@ -549,7 +536,9 @@ function TeamReportModal({
 }) {
   const [loading, setLoading] = useState(true);
   const [reportData, setReportData] = useState<any[]>([]);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const supabase = createClient();
+  const pdfRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchTeamReport();
@@ -598,14 +587,50 @@ function TeamReportModal({
     setLoading(false);
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = async () => {
+    if (!pdfRef.current) return;
+    setIsGeneratingPdf(true);
+    
+    try {
+      // Dynamic imports for PDF libraries
+      const html2canvas = (await import('html2canvas')).default;
+      const { jsPDF } = await import('jspdf');
+
+      const element = pdfRef.current;
+      const canvas = await html2canvas(element, {
+        scale: 2, // Higher quality
+        backgroundColor: '#1E1E1E',
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Team_Report_${selectedMonth}_${selectedYear}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsGeneratingPdf(false);
+    }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] px-4 py-8 print:bg-white print:static print:inset-auto print:p-0 print:block">
-      <div className="bg-[#1E1E1E] border border-[#424242] rounded-[20px] p-6 w-full max-w-4xl mx-auto max-h-[90vh] flex flex-col print:bg-white print:border-none print:max-h-none print:p-0 print:max-w-none">
-        <div className="flex justify-between items-start mb-6 shrink-0 print:hidden">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] px-4 py-8">
+      <div 
+        ref={pdfRef} 
+        className="bg-[#1E1E1E] border border-[#424242] rounded-[20px] p-6 w-full max-w-4xl mx-auto max-h-[90vh] flex flex-col"
+        style={{
+          height: isGeneratingPdf ? 'max-content' : undefined,
+          maxHeight: isGeneratingPdf ? 'none' : '90vh',
+          overflow: isGeneratingPdf ? 'visible' : undefined,
+        }}
+      >
+        <div className="flex justify-between items-start mb-6 shrink-0" data-html2canvas-ignore={isGeneratingPdf ? "false" : "true"}>
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">Team Report</h2>
             <p className="text-sm text-gray-400">Monthly Performance for {selectedMonth}/{selectedYear}</p>
@@ -613,47 +638,43 @@ function TeamReportModal({
           <div className="flex items-center gap-3">
             <button 
               onClick={handlePrint} 
-              className="bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 px-4 py-2 rounded-lg border border-purple-500/30 text-sm"
+              disabled={isGeneratingPdf}
+              className="bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 px-4 py-2 rounded-lg border border-purple-500/30 text-sm disabled:opacity-50"
+              data-html2canvas-ignore="true"
             >
-              Download PDF
+              {isGeneratingPdf ? 'Generating PDF...' : 'Download PDF'}
             </button>
-            <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl ml-2">✕</button>
+            <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl ml-2" data-html2canvas-ignore="true">✕</button>
           </div>
-        </div>
-
-        {/* Print Header */}
-        <div className="hidden print:block mb-8">
-            <h2 className="text-2xl font-bold mb-1 text-black">Team Report</h2>
-            <p className="text-sm text-gray-600">Monthly Performance for {selectedMonth}/{selectedYear}</p>
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center flex-1 min-h-[200px] print:hidden">
+          <div className="flex items-center justify-center flex-1 min-h-[200px]" data-html2canvas-ignore="true">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
           </div>
         ) : (
-          <div className="overflow-x-auto flex-1 custom-scrollbar print:overflow-visible">
-            <table className="w-full text-left text-sm text-white print:text-black print:border-collapse">
-              <thead className="bg-[#1A1A1A] text-gray-400 text-xs uppercase sticky top-0 print:static print:bg-gray-100 print:text-gray-800">
+          <div className="overflow-x-auto flex-1 custom-scrollbar" style={{ overflow: isGeneratingPdf ? 'visible' : 'auto' }}>
+            <table className="w-full text-left text-sm text-white">
+              <thead className="bg-[#1A1A1A] text-gray-400 text-xs uppercase sticky top-0" style={{ position: isGeneratingPdf ? 'static' : 'sticky' }}>
                 <tr>
-                  <th className="px-4 py-3 font-semibold whitespace-nowrap print:border print:border-gray-300">Employee</th>
-                  <th className="px-4 py-3 font-semibold whitespace-nowrap text-center print:border print:border-gray-300">Target Points</th>
-                  <th className="px-4 py-3 font-semibold whitespace-nowrap text-center print:border print:border-gray-300">Earned Points</th>
-                  <th className="px-4 py-3 font-semibold whitespace-nowrap print:border print:border-gray-300">Status</th>
+                  <th className="px-4 py-3 font-semibold whitespace-nowrap">Employee</th>
+                  <th className="px-4 py-3 font-semibold whitespace-nowrap text-center">Target Points</th>
+                  <th className="px-4 py-3 font-semibold whitespace-nowrap text-center">Earned Points</th>
+                  <th className="px-4 py-3 font-semibold whitespace-nowrap">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#424242] print:divide-gray-300">
+              <tbody className="divide-y divide-[#424242]">
                 {reportData.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center text-gray-500 print:border print:border-gray-300">No data found</td>
+                    <td colSpan={4} className="px-4 py-8 text-center text-gray-500">No data found</td>
                   </tr>
                 ) : (
                   reportData.map((data) => {
                     const isTargetMet = data.earnedPoints >= data.targetPoints;
                     return (
-                      <tr key={data.id} className="hover:bg-[#333]/50 transition-colors print:hover:bg-transparent">
-                        <td className="px-4 py-4 font-medium flex items-center gap-3 print:border print:border-gray-300">
-                          <div className="w-[28px] h-[28px] bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 print:hidden">
+                      <tr key={data.id} className="hover:bg-[#333]/50 transition-colors">
+                        <td className="px-4 py-4 font-medium flex items-center gap-3">
+                          <div className="w-[28px] h-[28px] bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
                             <img 
                               src={`https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}&background=random&size=28`}
                               alt={data.name}
@@ -662,15 +683,15 @@ function TeamReportModal({
                           </div>
                           {data.name}
                         </td>
-                        <td className="px-4 py-4 text-center print:border print:border-gray-300">{data.targetPoints}</td>
-                        <td className="px-4 py-4 text-emerald-400 font-medium text-center print:border print:border-gray-300 print:text-black">{data.earnedPoints.toFixed(1)}</td>
-                        <td className="px-4 py-4 print:border print:border-gray-300">
+                        <td className="px-4 py-4 text-center">{data.targetPoints}</td>
+                        <td className="px-4 py-4 text-emerald-400 font-medium text-center">{data.earnedPoints.toFixed(1)}</td>
+                        <td className="px-4 py-4">
                            {isTargetMet ? (
-                              <span className="text-green-400 font-medium print:text-black">
+                              <span className="text-green-400 font-medium">
                                 {data.earnedPoints > data.targetPoints ? `${(data.earnedPoints - data.targetPoints).toFixed(1)} ahead` : 'Target Met'}
                               </span>
                            ) : (
-                              <span className="text-orange-400 font-medium print:text-black">{(data.targetPoints - data.earnedPoints).toFixed(1)} to go</span>
+                              <span className="text-orange-400 font-medium">{(data.targetPoints - data.earnedPoints).toFixed(1)} to go</span>
                            )}
                         </td>
                       </tr>
