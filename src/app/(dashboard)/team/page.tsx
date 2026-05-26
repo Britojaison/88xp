@@ -17,6 +17,7 @@ export default function TeamPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showTeamReportModal, setShowTeamReportModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [reportEmployee, setReportEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
@@ -120,12 +121,20 @@ export default function TeamPage() {
           <div className="h-1 w-full bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 rounded-full"></div>
         </div>
 
-        <button
-          onClick={() => router.push('/team/add-user')}
-          className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-[20px] transition-colors text-sm sm:text-base border border-white/20 sm:mt-8 flex items-center gap-2"
-        >
-          <span className="text-xl leading-none">+</span> Add Employee
-        </button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:mt-8">
+          <button
+            onClick={() => setShowTeamReportModal(true)}
+            className="bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 px-4 py-2 rounded-[20px] transition-colors text-sm sm:text-base border border-purple-500/30 flex items-center justify-center gap-2"
+          >
+            Team Report
+          </button>
+          <button
+            onClick={() => router.push('/team/add-user')}
+            className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-[20px] transition-colors text-sm sm:text-base border border-white/20 flex items-center justify-center gap-2"
+          >
+            <span className="text-xl leading-none">+</span> Add Employee
+          </button>
+        </div>
       </div>
 
       <div className="rounded-[20px] sm:rounded-[25px] border border-[#424242] overflow-hidden bg-[#1E1E1E]">
@@ -207,6 +216,13 @@ export default function TeamPage() {
         <EmployeeReportModal
           employee={reportEmployee}
           onClose={() => { setShowReportModal(false); setReportEmployee(null); }}
+        />
+      )}
+
+      {showTeamReportModal && (
+        <TeamReportModal
+          employees={employees}
+          onClose={() => setShowTeamReportModal(false)}
         />
       )}
     </div>
@@ -330,16 +346,26 @@ function EmployeeReportModal({
   onClose: () => void;
 }) {
   const now = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const currentMonthIdx = now.getMonth();
+  const currentYearVal = now.getFullYear();
+  const defaultYear = currentMonthIdx === 0 ? currentYearVal - 1 : currentYearVal;
+  const defaultMonth = currentMonthIdx === 0 ? 12 : currentMonthIdx;
+
+  const [selectedMonth, setSelectedMonth] = useState(defaultMonth);
+  const [selectedYear, setSelectedYear] = useState(defaultYear);
   const [loading, setLoading] = useState(true);
   const [targetPoints, setTargetPoints] = useState(100);
   const [earnedPoints, setEarnedPoints] = useState(0);
-  const [projects, setProjects] = useState<any[]>([]);
   const supabase = createClient();
 
   const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const availableYears = Array.from({ length: 5 }, (_, i) => now.getFullYear() - i);
+  const availableYears = Array.from({ length: 5 }, (_, i) => currentYearVal - i);
+
+  useEffect(() => {
+    if (selectedYear === currentYearVal && selectedMonth > currentMonthIdx) {
+      setSelectedMonth(defaultMonth);
+    }
+  }, [selectedYear, currentYearVal, currentMonthIdx, selectedMonth, defaultMonth]);
 
   useEffect(() => {
     fetchReportData();
@@ -367,20 +393,6 @@ function EmployeeReportModal({
       .eq('year', selectedYear)
       .single();
 
-    // 3. Fetch Projects created or completed in this month
-    const { data: projectsData } = await supabase
-      .from('projects')
-      .select('id, name, status, created_at, completed_at, points_override, type:project_types(name, points)')
-      .eq('assigned_to', employee.id)
-      .or(`and(completed_at.gte.${startDate},completed_at.lte.${endDate}),and(status.in.(pending,in_progress),created_at.lte.${endDate},created_at.gte.${startDate})`)
-      .order('created_at', { ascending: false });
-
-    // Ensure type relates properly since project_types might return an array if improperly joined in postgrest
-    const transformedProjects = (projectsData || []).map(p => ({
-      ...p,
-      type: Array.isArray(p.type) ? p.type[0] : p.type,
-    }));
-
     // RPC returns scalar or object depending on definition, handle gracefully
     const tPoints = targetData && typeof targetData === 'object' && 'target_points' in targetData 
         ? Number((targetData as any).target_points) 
@@ -388,14 +400,11 @@ function EmployeeReportModal({
 
     setTargetPoints(tPoints);
     setEarnedPoints(scoreData?.total_points ?? 0);
-    setProjects(transformedProjects);
     setLoading(false);
   };
 
   const progressPercentage = Math.min(100, targetPoints > 0 ? (earnedPoints / targetPoints) * 100 : 0);
   const isTargetMet = earnedPoints >= targetPoints;
-
-  const getPoints = (project: any) => project.points_override ?? project.type?.points ?? 0;
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] px-4 py-8">
@@ -411,9 +420,15 @@ function EmployeeReportModal({
               onChange={(e) => setSelectedMonth(Number(e.target.value))}
               className="bg-[#2A2A2A] border border-[#424242] text-white rounded-lg px-3 py-1.5 text-sm focus:outline-none"
             >
-              {MONTH_NAMES.map((m, i) => (
-                <option key={i} value={i + 1}>{m}</option>
-              ))}
+              {MONTH_NAMES.map((m, i) => {
+                const monthNum = i + 1;
+                const isDisabled = selectedYear === currentYearVal && monthNum > currentMonthIdx;
+                return (
+                  <option key={i} value={monthNum} disabled={isDisabled}>
+                    {m}
+                  </option>
+                );
+              })}
             </select>
             <select
               value={selectedYear}
@@ -447,7 +462,9 @@ function EmployeeReportModal({
               <div className="bg-[#2A2A2A] rounded-xl p-4 border border-[#424242]">
                 <p className="text-sm text-gray-400 mb-1">Status</p>
                 {isTargetMet ? (
-                  <p className="text-2xl font-bold text-green-400">Target Met</p>
+                  <p className="text-2xl font-bold text-green-400">
+                    {earnedPoints > targetPoints ? `${(earnedPoints - targetPoints).toFixed(1)} ahead` : 'Target Met'}
+                  </p>
                 ) : (
                   <p className="text-2xl font-bold text-orange-400">{(targetPoints - earnedPoints).toFixed(1)} to go</p>
                 )}
@@ -467,56 +484,171 @@ function EmployeeReportModal({
                  ></div>
                </div>
             </div>
+      </div>
+    </div>
+  );
+}
 
-            {/* Projects Table */}
-            <div className="bg-[#2A2A2A] rounded-xl border border-[#424242] flex flex-col min-h-[300px]">
-              <div className="px-4 py-3 border-b border-[#424242] shrink-0">
-                <h3 className="text-white font-semibold">Projects Worked On</h3>
-              </div>
-              <div className="overflow-x-auto flex-1">
-                <table className="w-full text-left text-sm text-white">
-                  <thead className="bg-[#1A1A1A] text-gray-400 text-xs uppercase sticky top-0">
-                    <tr>
-                      <th className="px-4 py-3 font-semibold whitespace-nowrap">Project Name</th>
-                      <th className="px-4 py-3 font-semibold whitespace-nowrap">Type</th>
-                      <th className="px-4 py-3 font-semibold whitespace-nowrap">Status</th>
-                      <th className="px-4 py-3 font-semibold whitespace-nowrap">Points</th>
-                      <th className="px-4 py-3 font-semibold whitespace-nowrap">Date</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#424242]">
-                    {projects.length === 0 ? (
-                      <tr>
-                        <td colSpan={5} className="px-4 py-8 text-center text-gray-500">No projects found for this month</td>
+function TeamReportModal({
+  employees,
+  onClose,
+}: {
+  employees: Employee[];
+  onClose: () => void;
+}) {
+  const now = new Date();
+  const currentMonthIdx = now.getMonth();
+  const currentYearVal = now.getFullYear();
+  const defaultYear = currentMonthIdx === 0 ? currentYearVal - 1 : currentYearVal;
+  const defaultMonth = currentMonthIdx === 0 ? 12 : currentMonthIdx;
+
+  const [selectedMonth, setSelectedMonth] = useState(defaultMonth);
+  const [selectedYear, setSelectedYear] = useState(defaultYear);
+  const [loading, setLoading] = useState(true);
+  const [reportData, setReportData] = useState<any[]>([]);
+  const supabase = createClient();
+
+  const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const availableYears = Array.from({ length: 5 }, (_, i) => currentYearVal - i);
+
+  useEffect(() => {
+    if (selectedYear === currentYearVal && selectedMonth > currentMonthIdx) {
+      setSelectedMonth(defaultMonth);
+    }
+  }, [selectedYear, currentYearVal, currentMonthIdx, selectedMonth, defaultMonth]);
+
+  useEffect(() => {
+    fetchTeamReport();
+  }, [selectedMonth, selectedYear, employees]);
+
+  const fetchTeamReport = async () => {
+    setLoading(true);
+
+    const dataPromises = employees.map(async (emp) => {
+      // 1. Fetch Target Points
+      const { data: targetData } = await supabase
+        .rpc('get_or_create_monthly_target', {
+          p_employee_id: emp.id,
+          p_month: selectedMonth,
+          p_year: selectedYear,
+        });
+
+      // 2. Fetch Earned Points
+      const { data: scoreData } = await supabase
+        .from('monthly_scores')
+        .select('total_points')
+        .eq('employee_id', emp.id)
+        .eq('month', selectedMonth)
+        .eq('year', selectedYear)
+        .single();
+
+      const tPoints = targetData && typeof targetData === 'object' && 'target_points' in targetData 
+          ? Number((targetData as any).target_points) 
+          : Number(targetData) || 100;
+
+      const earned = scoreData?.total_points ?? 0;
+
+      return {
+        ...emp,
+        targetPoints: tPoints,
+        earnedPoints: earned,
+      };
+    });
+
+    const results = await Promise.all(dataPromises);
+    setReportData(results);
+    setLoading(false);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] px-4 py-8">
+      <div className="bg-[#1E1E1E] border border-[#424242] rounded-[20px] p-6 w-full max-w-4xl mx-auto max-h-[90vh] flex flex-col">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 shrink-0 gap-4">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">Team Report</h2>
+            <p className="text-sm text-gray-400">Overall Monthly Performance</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              className="bg-[#2A2A2A] border border-[#424242] text-white rounded-lg px-3 py-1.5 text-sm focus:outline-none"
+            >
+              {MONTH_NAMES.map((m, i) => {
+                const monthNum = i + 1;
+                const isDisabled = selectedYear === currentYearVal && monthNum > currentMonthIdx;
+                return (
+                  <option key={i} value={monthNum} disabled={isDisabled}>
+                    {m}
+                  </option>
+                );
+              })}
+            </select>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className="bg-[#2A2A2A] border border-[#424242] text-white rounded-lg px-3 py-1.5 text-sm focus:outline-none"
+            >
+              {availableYears.map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+            <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl ml-2">✕</button>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center flex-1 min-h-[200px]">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+          </div>
+        ) : (
+          <div className="overflow-x-auto flex-1 custom-scrollbar">
+            <table className="w-full text-left text-sm text-white">
+              <thead className="bg-[#1A1A1A] text-gray-400 text-xs uppercase sticky top-0">
+                <tr>
+                  <th className="px-4 py-3 font-semibold whitespace-nowrap">Employee</th>
+                  <th className="px-4 py-3 font-semibold whitespace-nowrap text-center">Target Points</th>
+                  <th className="px-4 py-3 font-semibold whitespace-nowrap text-center">Earned Points</th>
+                  <th className="px-4 py-3 font-semibold whitespace-nowrap">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#424242]">
+                {reportData.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-8 text-center text-gray-500">No data found</td>
+                  </tr>
+                ) : (
+                  reportData.map((data) => {
+                    const isTargetMet = data.earnedPoints >= data.targetPoints;
+                    return (
+                      <tr key={data.id} className="hover:bg-[#333]/50 transition-colors">
+                        <td className="px-4 py-4 font-medium flex items-center gap-3">
+                          <div className="w-[28px] h-[28px] bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
+                            <img 
+                              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}&background=random&size=28`}
+                              alt={data.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          {data.name}
+                        </td>
+                        <td className="px-4 py-4 text-center">{data.targetPoints}</td>
+                        <td className="px-4 py-4 text-emerald-400 font-medium text-center">{data.earnedPoints.toFixed(1)}</td>
+                        <td className="px-4 py-4">
+                           {isTargetMet ? (
+                              <span className="text-green-400 font-medium">
+                                {data.earnedPoints > data.targetPoints ? `${(data.earnedPoints - data.targetPoints).toFixed(1)} ahead` : 'Target Met'}
+                              </span>
+                           ) : (
+                              <span className="text-orange-400 font-medium">{(data.targetPoints - data.earnedPoints).toFixed(1)} to go</span>
+                           )}
+                        </td>
                       </tr>
-                    ) : (
-                      projects.map((project) => {
-                        const isCompleted = project.status === 'completed' || project.status === 'approved';
-                        return (
-                          <tr key={project.id} className="hover:bg-[#333]/50 transition-colors">
-                            <td className="px-4 py-3 max-w-[200px] sm:max-w-[300px] truncate">{project.name}</td>
-                            <td className="px-4 py-3 text-gray-400 whitespace-nowrap">{project.type?.name || '-'}</td>
-                            <td className="px-4 py-3 whitespace-nowrap">
-                               {isCompleted ? (
-                                  <span className="text-emerald-400">Completed</span>
-                               ) : (
-                                  <span className="text-purple-400 capitalize">{project.status.replace('_', ' ')}</span>
-                               )}
-                            </td>
-                            <td className="px-4 py-3 font-medium text-blue-400 whitespace-nowrap">+{getPoints(project).toFixed(1)}</td>
-                            <td className="px-4 py-3 text-gray-400 whitespace-nowrap">
-                               {isCompleted && project.completed_at 
-                                 ? new Date(project.completed_at).toLocaleDateString()
-                                 : new Date(project.created_at).toLocaleDateString()}
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
