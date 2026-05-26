@@ -591,6 +591,9 @@ function TeamReportModal({
     if (!pdfRef.current) return;
     setIsGeneratingPdf(true);
     
+    // Wait for React to apply styles (e.g., removing scrollbars)
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     try {
       // Dynamic imports for PDF libraries
       const html2canvas = (await import('html2canvas')).default;
