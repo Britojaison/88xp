@@ -42,7 +42,58 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  const [showAddBrand, setShowAddBrand] = useState(false);
+  const [newBrandName, setNewBrandName] = useState('');
+  const [isAddingBrand, setIsAddingBrand] = useState(false);
+
+  const [showAddType, setShowAddType] = useState(false);
+  const [newTypeName, setNewTypeName] = useState('');
+  const [newTypePoints, setNewTypePoints] = useState('');
+  const [isAddingType, setIsAddingType] = useState(false);
+
   const supabase = createClient();
+
+  const handleAddBrand = async () => {
+    if (!newBrandName.trim()) return;
+    setIsAddingBrand(true);
+    const { data, error } = await supabase.from('brands').insert({ name: newBrandName.trim() }).select().single();
+    setIsAddingBrand(false);
+    if (!error && data) {
+      setBrands([...brands, data].sort((a, b) => a.name.localeCompare(b.name)));
+      setBrandId(data.id);
+      setShowAddBrand(false);
+      setNewBrandName('');
+    } else {
+      setError(error?.message || 'Failed to add brand');
+    }
+  };
+
+  const handleAddType = async () => {
+    if (!newTypeName.trim() || !newTypePoints) return;
+    setIsAddingType(true);
+    const { data, error } = await supabase.from('project_types').insert({ 
+      name: newTypeName.trim(),
+      points: parseFloat(newTypePoints)
+    }).select().single();
+    setIsAddingType(false);
+    if (!error && data) {
+      const newTypes = [...types, data].sort((a: any, b: any) => {
+        if (a.name === 'Story') return -1;
+        if (b.name === 'Story') return 1;
+        if (a.name === 'Other') return 1;
+        if (b.name === 'Other') return -1;
+        return a.points - b.points;
+      });
+      setTypes(newTypes);
+      setTypeId(data.id);
+      setShowAddType(false);
+      setNewTypeName('');
+      setNewTypePoints('');
+    } else {
+      setError(error?.message || 'Failed to add content type');
+    }
+  };
 
   useEffect(() => {
     fetchData();
@@ -214,7 +265,27 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
 
             {/* Brand Name */}
             <div>
-              <label className="block text-white text-[13px] font-medium mb-1">Brand Name</label>
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-white text-[13px] font-medium">Brand Name</label>
+                {currentUserRank === 1 && (
+                  <button type="button" onClick={() => setShowAddBrand(!showAddBrand)} className="text-white hover:text-green-400 font-bold text-lg leading-none">
+                    +
+                  </button>
+                )}
+              </div>
+              
+              {showAddBrand && (
+                <div className="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={newBrandName}
+                    onChange={(e) => setNewBrandName(e.target.value)}
+                    placeholder="New Brand Name"
+                    className="flex-1 h-[30px] rounded-[5px] px-2 bg-white text-black text-[12px]"
+                  />
+                  <button type="button" onClick={handleAddBrand} disabled={isAddingBrand} className="bg-green-600 text-white px-2 rounded-[5px] text-[12px]">Add</button>
+                </div>
+              )}
               <select
                 value={brandId}
                 onChange={(e) => setBrandId(e.target.value)}
@@ -234,7 +305,36 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
 
             {/* Content Type */}
             <div>
-              <label className="block text-white text-[13px] font-medium mb-1">Content Type</label>
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-white text-[13px] font-medium">Content Type</label>
+                {currentUserRank === 1 && (
+                  <button type="button" onClick={() => setShowAddType(!showAddType)} className="text-white hover:text-green-400 font-bold text-lg leading-none">
+                    +
+                  </button>
+                )}
+              </div>
+
+              {showAddType && (
+                <div className="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={newTypeName}
+                    onChange={(e) => setNewTypeName(e.target.value)}
+                    placeholder="Type Name"
+                    className="flex-[2] h-[30px] rounded-[5px] px-2 bg-white text-black text-[12px]"
+                  />
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    value={newTypePoints}
+                    onChange={(e) => setNewTypePoints(e.target.value)}
+                    placeholder="Pts"
+                    className="flex-[1] w-12 h-[30px] rounded-[5px] px-2 bg-white text-black text-[12px]"
+                  />
+                  <button type="button" onClick={handleAddType} disabled={isAddingType} className="bg-green-600 text-white px-2 rounded-[5px] text-[12px]">Add</button>
+                </div>
+              )}
               <select
                 value={typeId}
                 onChange={(e) => setTypeId(e.target.value)}
