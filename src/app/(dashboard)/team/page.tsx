@@ -548,17 +548,29 @@ function TeamReportModal({
 
       const earned = scoreData?.total_points ?? 0;
 
+      const percentage = tPoints > 0 ? (earned / tPoints) * 100 : 0;
+      let category = 3; // underachiever
+      if (percentage > 102) category = 1; // overachiever
+      else if (percentage >= 98) category = 2; // achiever
+
       return {
         ...emp,
         targetPoints: tPoints,
         earnedPoints: earned,
+        percentage,
+        category
       };
     });
 
     const results = await Promise.all(dataPromises);
     
-    // Sort alphabetically by name
-    results.sort((a, b) => a.name.localeCompare(b.name));
+    // Sort by category (overachievers first), then by earned points descending
+    results.sort((a, b) => {
+      if (a.category !== b.category) {
+        return a.category - b.category;
+      }
+      return b.earnedPoints - a.earnedPoints;
+    });
     
     setReportData(results);
     setLoading(false);
@@ -616,7 +628,18 @@ function TeamReportModal({
       pdf.setFontSize(10);
       pdf.setFont('helvetica', 'normal');
 
-      reportData.forEach((data, index) => {
+      // Sort reportData before printing
+      const sortedPrintData = [...reportData].sort((a, b) => {
+        const aPercent = a.targetPoints > 0 ? (a.earnedPoints / a.targetPoints) * 100 : 0;
+        const bPercent = b.targetPoints > 0 ? (b.earnedPoints / b.targetPoints) * 100 : 0;
+        const getCat = (p: number) => p > 102 ? 1 : (p >= 98 ? 2 : 3);
+        const aCat = getCat(aPercent);
+        const bCat = getCat(bPercent);
+        if (aCat !== bCat) return aCat - bCat;
+        return b.earnedPoints - a.earnedPoints;
+      });
+
+      sortedPrintData.forEach((data, index) => {
         // Check if we need a new page
         if (y + rowHeight > pageHeight - margin) {
           pdf.addPage();
@@ -643,30 +666,31 @@ function TeamReportModal({
         pdf.setDrawColor(66, 66, 66); // #424242
         pdf.line(margin, y, margin + usableWidth, y);
 
+        // Determine color based on category
+        const percentage = data.targetPoints > 0 ? (data.earnedPoints / data.targetPoints) * 100 : 0;
+        let r = 248, g = 113, b = 113; // red-400 (underachievers)
+        if (percentage > 102) {
+          r = 74; g = 222; b = 128; // green-400 (overachievers)
+        } else if (percentage >= 98) {
+          r = 250; g = 204; b = 21; // yellow-400 (gold/achievers)
+        }
+
         // Name
-        pdf.setTextColor(255, 255, 255);
+        pdf.setTextColor(r, g, b);
         pdf.text(data.name, colX[0] + 3, y + 7);
 
         // Target Points
-        pdf.setTextColor(255, 255, 255);
         pdf.text(String(data.targetPoints), colX[1] + 3, y + 7);
 
         // Earned Points
-        pdf.setTextColor(52, 211, 153); // emerald-400
         pdf.text(data.earnedPoints.toFixed(1), colX[2] + 3, y + 7);
 
         // Status
         const isTargetMet = data.earnedPoints >= data.targetPoints;
-        if (isTargetMet) {
-          pdf.setTextColor(74, 222, 128); // green-400
-          const statusText = data.earnedPoints > data.targetPoints 
-            ? `${(data.earnedPoints - data.targetPoints).toFixed(1)} ahead` 
-            : 'Target Met';
-          pdf.text(statusText, colX[3] + 3, y + 7);
-        } else {
-          pdf.setTextColor(251, 146, 60); // orange-400
-          pdf.text(`${(data.targetPoints - data.earnedPoints).toFixed(1)} to go`, colX[3] + 3, y + 7);
-        }
+        const statusText = isTargetMet
+          ? (data.earnedPoints > data.targetPoints ? `${(data.earnedPoints - data.targetPoints).toFixed(1)} ahead` : 'Target Met')
+          : `${(data.targetPoints - data.earnedPoints).toFixed(1)} to go`;
+        pdf.text(statusText, colX[3] + 3, y + 7);
 
         y += rowHeight;
       });
@@ -751,10 +775,26 @@ function TeamReportModal({
                     <td colSpan={4} className="px-4 py-8 text-center text-gray-500">No data found</td>
                   </tr>
                 ) : (
-                  reportData.map((data) => {
+                  [...reportData].sort((a, b) => {
+                    const aPercent = a.targetPoints > 0 ? (a.earnedPoints / a.targetPoints) * 100 : 0;
+                    const bPercent = b.targetPoints > 0 ? (b.earnedPoints / b.targetPoints) * 100 : 0;
+                    
+                    const getCat = (p: number) => p > 102 ? 1 : (p >= 98 ? 2 : 3);
+                    const aCat = getCat(aPercent);
+                    const bCat = getCat(bPercent);
+                    
+                    if (aCat !== bCat) return aCat - bCat;
+                    return b.earnedPoints - a.earnedPoints;
+                  }).map((data) => {
                     const isTargetMet = data.earnedPoints >= data.targetPoints;
+                    const percentage = data.targetPoints > 0 ? (data.earnedPoints / data.targetPoints) * 100 : 0;
+                    
+                    let colorClass = 'text-red-400';
+                    if (percentage > 102) colorClass = 'text-green-400';
+                    else if (percentage >= 98) colorClass = 'text-yellow-400';
+
                     return (
-                      <tr key={data.id} className="hover:bg-[#333]/50 transition-colors">
+                      <tr key={data.id} className={`hover:bg-[#333]/50 transition-colors ${colorClass}`}>
                         <td className="px-4 py-4 font-medium flex items-center gap-3">
                           <div className="w-[28px] h-[28px] bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
                             <img 
@@ -766,15 +806,11 @@ function TeamReportModal({
                           {data.name}
                         </td>
                         <td className="px-4 py-4 text-center">{data.targetPoints}</td>
-                        <td className="px-4 py-4 text-emerald-400 font-medium text-center">{data.earnedPoints.toFixed(1)}</td>
+                        <td className="px-4 py-4 font-medium text-center">{data.earnedPoints.toFixed(1)}</td>
                         <td className="px-4 py-4">
-                           {isTargetMet ? (
-                              <span className="text-green-400 font-medium">
-                                {data.earnedPoints > data.targetPoints ? `${(data.earnedPoints - data.targetPoints).toFixed(1)} ahead` : 'Target Met'}
-                              </span>
-                           ) : (
-                              <span className="text-orange-400 font-medium">{(data.targetPoints - data.earnedPoints).toFixed(1)} to go</span>
-                           )}
+                           <span className="font-medium">
+                             {isTargetMet ? (data.earnedPoints > data.targetPoints ? `${(data.earnedPoints - data.targetPoints).toFixed(1)} ahead` : 'Target Met') : `${(data.targetPoints - data.earnedPoints).toFixed(1)} to go`}
+                           </span>
                         </td>
                       </tr>
                     );
