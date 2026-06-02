@@ -578,6 +578,47 @@ function TeamReportModal({
 
   const MONTH_NAMES_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
+  const handleExcelExport = () => {
+    // Sort reportData before printing
+    const sortedPrintData = [...reportData].sort((a, b) => {
+      const aPercent = a.targetPoints > 0 ? (a.earnedPoints / a.targetPoints) * 100 : 0;
+      const bPercent = b.targetPoints > 0 ? (b.earnedPoints / b.targetPoints) * 100 : 0;
+      const getCat = (p: number) => p > 102 ? 1 : (p >= 98 ? 2 : 3);
+      const aCat = getCat(aPercent);
+      const bCat = getCat(bPercent);
+      if (aCat !== bCat) return aCat - bCat;
+      return b.earnedPoints - a.earnedPoints;
+    });
+
+    const headers = ['Employee', 'Target Points', 'Earned Points', 'Status'];
+    const csvRows = [headers.join(',')];
+    
+    sortedPrintData.forEach(data => {
+      const isTargetMet = data.earnedPoints >= data.targetPoints;
+      const statusText = isTargetMet
+        ? (data.earnedPoints > data.targetPoints ? `${(data.earnedPoints - data.targetPoints).toFixed(1)} ahead` : 'Target Met')
+        : `${(data.targetPoints - data.earnedPoints).toFixed(1)} to go`;
+        
+      const row = [
+        `"${data.name.replace(/"/g, '""')}"`,
+        data.targetPoints,
+        data.earnedPoints.toFixed(1),
+        `"${statusText.replace(/"/g, '""')}"`
+      ];
+      csvRows.push(row.join(','));
+    });
+    
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Team_Report_${selectedMonth}_${selectedYear}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handlePrint = async () => {
     setIsGeneratingPdf(true);
     
@@ -743,6 +784,12 @@ function TeamReportModal({
                 <option key={y} value={y}>{y}</option>
               ))}
             </select>
+            <button 
+              onClick={handleExcelExport} 
+              className="bg-green-600/20 hover:bg-green-600/30 text-green-300 px-4 py-2 rounded-lg border border-green-500/30 text-sm"
+            >
+              Export Excel
+            </button>
             <button 
               onClick={handlePrint} 
               disabled={isGeneratingPdf}
