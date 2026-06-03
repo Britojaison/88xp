@@ -57,17 +57,33 @@ serve(async (req) => {
       throw new Error('Missing employeeId')
     }
 
-    // Delete employee record first
+    // Get the employee email to release it for future registrations
+    const { data: targetEmployee, error: fetchError } = await supabaseAdmin
+      .from('employees')
+      .select('email')
+      .eq('id', employeeId)
+      .single()
+
+    if (fetchError || !targetEmployee) {
+      throw new Error(`Failed to find employee record: ${fetchError?.message || 'Not found'}`)
+    }
+
+    const archivedEmail = `${targetEmployee.email}_deleted_${Date.now()}`
+
+    // Soft-delete employee record by setting is_deleted to true and renaming their email
     const { error: employeeError } = await supabaseAdmin
       .from('employees')
-      .delete()
+      .update({ 
+        is_deleted: true,
+        email: archivedEmail
+      })
       .eq('id', employeeId)
 
     if (employeeError) {
-      throw new Error(`Failed to delete employee record: ${employeeError.message}`)
+      throw new Error(`Failed to update employee record: ${employeeError.message}`)
     }
 
-    // Delete auth user
+    // Delete auth user so they can no longer log in
     const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(employeeId)
 
     if (authError) {

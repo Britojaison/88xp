@@ -70,7 +70,9 @@ export default function YearlyScoreboard() {
                       )}
                     </div>
                     <div>
-                      <span className="text-white text-[14px] sm:text-[16px] font-semibold">{entry.employee_name}</span>
+                      <span className="text-white text-[14px] sm:text-[16px] font-semibold">
+                        {entry.is_deleted ? `${entry.employee_name} (Archived)` : entry.employee_name}
+                      </span>
                       <span className="text-gray-400 text-[11px] sm:text-[13px] ml-1">({entry.project_count} projects)</span>
                     </div>
                   </div>

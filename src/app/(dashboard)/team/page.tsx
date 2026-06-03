@@ -68,6 +68,7 @@ export default function TeamPage() {
       .from('employees')
       .select('*')
       .eq('is_admin', false)
+      .eq('is_deleted', false)
       .order('rank');
     setEmployees(data || []);
     setLoading(false);
@@ -524,7 +525,19 @@ function TeamReportModal({
   const fetchTeamReport = async () => {
     setLoading(true);
 
-    const dataPromises = employees.map(async (emp) => {
+    // Fetch all non-admin employees (both active and deleted)
+    const { data: allDbEmployees, error: empDbError } = await supabase
+      .from('employees')
+      .select('id, name, email, rank, is_deleted')
+      .eq('is_admin', false);
+
+    if (empDbError) {
+      console.error('Error fetching database employees for report:', empDbError);
+      setLoading(false);
+      return;
+    }
+
+    const dataPromises = (allDbEmployees || []).map(async (emp: any) => {
       // 1. Fetch Target Points
       const { data: targetData } = await supabase
         .rpc('get_or_create_monthly_target', {
@@ -564,15 +577,34 @@ function TeamReportModal({
 
     const results = await Promise.all(dataPromises);
     
+    // Filter out deleted employees who have no targets AND no scores for this month
+    const filteredResults = results.filter((data) => {
+      if (!data.is_deleted) return true; // keep all active employees
+      // For deleted employees, only keep them if they had earned points or a non-default/active target in that month
+      return data.earnedPoints > 0 || data.targetPoints > 0;
+    });
+
+    // Clean up renamed emails for deleted employees in the display
+    const cleanResults = filteredResults.map((data) => {
+      if (data.is_deleted && data.email.includes('_deleted_')) {
+        return {
+          ...data,
+          email: data.email.split('_deleted_')[0],
+          name: `${data.name} (Archived)`
+        };
+      }
+      return data;
+    });
+    
     // Sort by category (overachievers first), then by earned points descending
-    results.sort((a, b) => {
+    cleanResults.sort((a, b) => {
       if (a.category !== b.category) {
         return a.category - b.category;
       }
       return b.earnedPoints - a.earnedPoints;
     });
     
-    setReportData(results);
+    setReportData(cleanResults);
     setLoading(false);
   };
 

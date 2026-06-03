@@ -33,6 +33,7 @@ export default function AdminPage() {
       .from('employees')
       .select('*')
       .eq('is_admin', false)
+      .eq('is_deleted', false)
       .order('rank');
     setEmployees(data || []);
     setLoading(false);

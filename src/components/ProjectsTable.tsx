@@ -62,7 +62,7 @@ export default function ProjectsTable({ filterMonth = 0, filterYear = 0 }: Proje
                   <div className="text-white text-[12px] font-medium mb-1">{project.name}</div>
                   <div className="flex flex-wrap gap-2 text-[10px] text-gray-400">
                     <span>{project.brand?.name || '-'}</span>
-                    <span>• {project.assignee?.name || 'Unassigned'}</span>
+                    <span>• {project.assignee?.name ? (project.assignee.is_deleted ? `${project.assignee.name} (Archived)` : project.assignee.name) : 'Unassigned'}</span>
                     <span>• {formatDate(project.created_at)}</span>
                     <span>• {project.type?.name || '-'}</span>
                   </div>
@@ -77,7 +77,7 @@ export default function ProjectsTable({ filterMonth = 0, filterYear = 0 }: Proje
                     {project.name}
                   </div>
                   <div className="text-white text-[11px] sm:text-[13px] font-medium break-words">
-                    {project.assignee?.name || 'Unassigned'}
+                    {project.assignee?.name ? (project.assignee.is_deleted ? `${project.assignee.name} (Archived)` : project.assignee.name) : 'Unassigned'}
                   </div>
                   <div className="text-white text-[11px] sm:text-[13px] font-medium">
                     {formatDate(project.created_at)}

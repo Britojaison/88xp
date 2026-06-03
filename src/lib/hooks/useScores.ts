@@ -8,6 +8,7 @@ interface ScoreEntry {
   total_points: number;
   project_count: number;
   profile_photo?: string | null;
+  is_deleted?: boolean;
 }
 
 export function useMonthlyScores(month: number, year: number) {
@@ -20,7 +21,7 @@ export function useMonthlyScores(month: number, year: number) {
         .from('monthly_scores')
         .select(`
           *,
-          employee:employees!employee_id(profile_photo)
+          employee:employees!employee_id(profile_photo, is_deleted)
         `)
         .eq('month', month)
         .eq('year', year)
@@ -30,6 +31,7 @@ export function useMonthlyScores(month: number, year: number) {
 
       return (data || []).map((score: any) => ({
         ...score,
+        is_deleted: score.employee?.is_deleted || false,
         profile_photo: score.employee?.profile_photo || null
       })) as ScoreEntry[];
     },
@@ -47,7 +49,7 @@ export function useYearlyScores(year: number) {
         .from('yearly_scores')
         .select(`
           *,
-          employee:employees!employee_id(profile_photo)
+          employee:employees!employee_id(profile_photo, is_deleted)
         `)
         .eq('year', year)
         .order('total_points', { ascending: false });
@@ -56,6 +58,7 @@ export function useYearlyScores(year: number) {
 
       return (data || []).map((score: any) => ({
         ...score,
+        is_deleted: score.employee?.is_deleted || false,
         profile_photo: score.employee?.profile_photo || null
       })) as ScoreEntry[];
     },
@@ -85,7 +88,7 @@ export function useLastMonthScores() {
           employee_id,
           employee_name,
           total_points,
-          employee:employees!employee_id(profile_photo)
+          employee:employees!employee_id(profile_photo, is_deleted)
         `)
         .eq('month', lastMonth)
         .eq('year', year)
@@ -96,6 +99,7 @@ export function useLastMonthScores() {
 
       return (data || []).map((score: any) => ({
         ...score,
+        is_deleted: score.employee?.is_deleted || false,
         profile_photo: score.employee?.profile_photo || null
       })) as ScoreEntry[];
     },

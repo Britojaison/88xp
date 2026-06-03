@@ -5,7 +5,7 @@ interface Project {
   id: string;
   name: string;
   created_at: string;
-  assignee: { name: string } | null;
+  assignee: { name: string; is_deleted?: boolean } | null;
   brand: { name: string } | null;
   type: { name: string } | null;
 }
@@ -18,7 +18,7 @@ export function useProjects(filterMonth?: number, filterYear?: number) {
     queryFn: async () => {
       let query = supabase
         .from('projects')
-        .select('id, name, created_at, assignee:employees!assigned_to(name), brand:brands(name), type:project_types(name)')
+        .select('id, name, created_at, assignee:employees!assigned_to(name, is_deleted), brand:brands(name), type:project_types(name)')
         .order('created_at', { ascending: false });
 
       // Apply date filters if specified

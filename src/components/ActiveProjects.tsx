@@ -8,7 +8,7 @@ interface Task {
   id: string;
   name: string;
   status: string;
-  assignee: { name: string } | null;
+  assignee: { name: string; is_deleted?: boolean } | null;
   type: { name: string; points: number } | null;
   points_override: number | null;
   completed_at: string | null;
@@ -118,7 +118,9 @@ export default function ActiveProjects() {
                 {ongoingTasks.map((task) => (
                   <div key={task.id} className="grid grid-cols-12 gap-4 p-3 bg-gray-50 rounded-lg items-center hover:bg-gray-100 transition-colors">
                     <div className="col-span-4 font-medium text-gray-900 truncate">{task.name}</div>
-                    <div className="col-span-3 text-gray-600">{task.assignee?.name || 'Unassigned'}</div>
+                    <div className="col-span-3 text-gray-600">
+                      {task.assignee?.name ? (task.assignee.is_deleted ? `${task.assignee.name} (Archived)` : task.assignee.name) : 'Unassigned'}
+                    </div>
                     <div className="col-span-2">{getStatusBadge(task.status)}</div>
                     <div className="col-span-2">
                       <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-1 rounded">
@@ -157,7 +159,9 @@ export default function ActiveProjects() {
                 {completedTasks.map((task) => (
                   <div key={task.id} className="grid grid-cols-12 gap-4 p-3 bg-gray-50 rounded-lg items-center hover:bg-gray-100 transition-colors">
                     <div className="col-span-3 font-medium text-gray-900 truncate">{task.name}</div>
-                    <div className="col-span-3 text-gray-600">{task.assignee?.name || 'Unassigned'}</div>
+                    <div className="col-span-3 text-gray-600">
+                      {task.assignee?.name ? (task.assignee.is_deleted ? `${task.assignee.name} (Archived)` : task.assignee.name) : 'Unassigned'}
+                    </div>
                     <div className="col-span-2 text-sm text-gray-500">
                       {task.completed_at
                         ? new Date(task.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })

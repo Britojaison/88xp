@@ -151,7 +151,7 @@ export default function CreateProjectModal({ onClose, onCreated, currentUserId, 
   const fetchData = async () => {
     const [typesRes, employeesRes, brandsRes, lastProjectRes] = await Promise.all([
       supabase.from('project_types').select('*').order('points'),
-      supabase.from('employees').select('id, name, rank').eq('is_admin', false).order('rank'),
+      supabase.from('employees').select('id, name, rank').eq('is_admin', false).eq('is_deleted', false).order('rank'),
       supabase.from('brands').select('id, name').order('name'),
       // Fetch the user's last created project to get their last used brand
       supabase

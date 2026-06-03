@@ -110,7 +110,7 @@ export default function EditTaskModal({
   const fetchData = async () => {
     const [typesRes, employeesRes, brandsRes] = await Promise.all([
       supabase.from('project_types').select('*').order('points'),
-      supabase.from('employees').select('id, name, rank').eq('is_admin', false).order('rank'),
+      supabase.from('employees').select('id, name, rank, is_deleted').eq('is_admin', false).order('rank'),
       supabase.from('brands').select('id, name').order('name'),
     ]);
 
@@ -126,10 +126,21 @@ export default function EditTaskModal({
     setTypes(sortedTypes);
     setBrands(brandsRes.data || []);
     
-    // Filter employees that can be assigned to using centralized logic
-    const assignable = (employeesRes.data || []).filter(
-      (e: any) => canAssignTo(currentUserRank, e.rank, currentUserId, e.id)
-    );
+    // Filter active employees that can be assigned to using centralized logic
+    const assignable = (employeesRes.data || [])
+      .filter((e: any) => !e.is_deleted && canAssignTo(currentUserRank, e.rank, currentUserId, e.id))
+      .map((e: any) => ({ id: e.id, name: e.name, rank: e.rank }));
+
+    // If the task is currently assigned to a deleted employee, add them to options so it displays correctly
+    const currentAssignee = (employeesRes.data || []).find((e: any) => e.id === task.assigned_to);
+    if (currentAssignee && currentAssignee.is_deleted) {
+      assignable.push({
+        id: currentAssignee.id,
+        name: `${currentAssignee.name} (Archived)`,
+        rank: currentAssignee.rank
+      });
+    }
+
     setEmployees(assignable);
   };
 

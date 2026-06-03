@@ -73,6 +73,7 @@ export default function TargetsPage() {
       .from('employees')
       .select('id, name, rank')
       .eq('is_admin', false)
+      .eq('is_deleted', false)
       .order('name');
 
     if (!employees) {

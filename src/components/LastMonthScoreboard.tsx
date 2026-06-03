@@ -103,7 +103,7 @@ export default function LastMonthScoreboard() {
                 </div>
 
                 <p className="text-white text-[11px] sm:text-[12px] lg:text-[13px] font-medium text-center w-[90px] sm:w-[100px] lg:w-[110px] truncate">
-                  {entry?.employee_name || '—'}
+                  {entry ? (entry.is_deleted ? `${entry.employee_name} (Archived)` : entry.employee_name) : '—'}
                 </p>
 
                 <p className="text-center mt-0.5 sm:mt-1">

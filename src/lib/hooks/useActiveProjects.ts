@@ -5,7 +5,7 @@ interface Task {
     id: string;
     name: string;
     status: string;
-    assignee: { name: string } | null;
+    assignee: { name: string; is_deleted?: boolean } | null;
     type: { name: string; points: number } | null;
     points_override: number | null;
     completed_at: string | null;
@@ -37,7 +37,7 @@ export function useActiveProjects(selectedMonth: number, selectedYear: number) {
                 // Ongoing tasks (filter by created_at)
                 supabase
                     .from('projects')
-                    .select('id, name, status, points_override, completed_at, created_at, assignee:employees!assigned_to(name), type:project_types(name, points)')
+                    .select('id, name, status, points_override, completed_at, created_at, assignee:employees!assigned_to(name, is_deleted), type:project_types(name, points)')
                     .in('status', ['pending', 'in_progress'])
                     .gte('created_at', startDateStr)
                     .lte('created_at', endDateStr)
@@ -46,7 +46,7 @@ export function useActiveProjects(selectedMonth: number, selectedYear: number) {
                 // Completed tasks (filter by completed_at)
                 supabase
                     .from('projects')
-                    .select('id, name, status, points_override, completed_at, created_at, assignee:employees!assigned_to(name), type:project_types(name, points)')
+                    .select('id, name, status, points_override, completed_at, created_at, assignee:employees!assigned_to(name, is_deleted), type:project_types(name, points)')
                     .in('status', ['completed', 'approved'])
                     .not('completed_at', 'is', null)
                     .gte('completed_at', startDateStr)

@@ -24,8 +24,8 @@ interface Task {
   remarks?: string | null;
   type: { id: string; name: string; points: number } | null;
   brand?: { id: string; name: string } | null;
-  creator: { id: string; name: string; rank: number | null } | null;
-  assignee: { id: string; name: string; rank: number | null } | null;
+  creator: { id: string; name: string; rank: number | null; is_deleted?: boolean } | null;
+  assignee: { id: string; name: string; rank: number | null; is_deleted?: boolean } | null;
 }
 
 interface EmployeeOption {
@@ -150,15 +150,21 @@ export default function TasksPage() {
 
     const { data: employeeRows } = await supabase
       .from('employees')
-      .select('id, name, rank')
+      .select('id, name, rank, is_deleted')
       .eq('is_admin', false)
       .order('rank', { ascending: true });
-    setEmployees((employeeRows || []) as EmployeeOption[]);
+    
+    const mappedEmployees = (employeeRows || []).map((e: any) => ({
+      id: e.id,
+      name: e.is_deleted ? `${e.name} (Archived)` : e.name,
+      rank: e.rank
+    }));
+    setEmployees(mappedEmployees as EmployeeOption[]);
 
     // Build the query
     let query = supabase
       .from('projects')
-      .select('id, name, status, deadline, remarks, points_override, created_at, completed_at, created_by, assigned_to, type_id, brand_id, type:project_types(id, name, points), brand:brands(id, name), creator:employees!created_by(id, name, rank), assignee:employees!assigned_to(id, name, rank)');
+      .select('id, name, status, deadline, remarks, points_override, created_at, completed_at, created_by, assigned_to, type_id, brand_id, type:project_types(id, name, points), brand:brands(id, name), creator:employees!created_by(id, name, rank, is_deleted), assignee:employees!assigned_to(id, name, rank, is_deleted)');
 
     // If a specific employee is selected, filter by it at the server level
     if (employeeFilter !== 'all') {
@@ -641,8 +647,12 @@ export default function TasksPage() {
                         )}
                       </td>
                       <td className="px-2 py-3 sm:py-4 text-[11px] sm:text-[13px]" style={{ color: 'rgb(170, 130, 174)' }}>{task.brand?.name || '-'}</td>
-                      <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">{task.assignee?.name || '-'}</td>
-                      <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">{task.creator?.name || '-'}</td>
+                      <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">
+                        {task.assignee?.name ? (task.assignee.is_deleted ? `${task.assignee.name} (Archived)` : task.assignee.name) : '-'}
+                      </td>
+                      <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">
+                        {task.creator?.name ? (task.creator.is_deleted ? `${task.creator.name} (Archived)` : task.creator.name) : '-'}
+                      </td>
                       <td className="px-2 py-3 sm:py-4">
                         <span className="text-purple-400 text-[11px] sm:text-[13px] font-medium">Pending</span>
                       </td>
@@ -726,8 +736,12 @@ export default function TasksPage() {
                       )}
                     </td>
                     <td className="px-2 py-3 sm:py-4 text-[11px] sm:text-[13px]" style={{ color: 'rgb(170, 130, 174)' }}>{task.brand?.name || '-'}</td>
-                    <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">{task.assignee?.name || '-'}</td>
-                    <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">{task.creator?.name || '-'}</td>
+                    <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">
+                      {task.assignee?.name ? (task.assignee.is_deleted ? `${task.assignee.name} (Archived)` : task.assignee.name) : '-'}
+                    </td>
+                    <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">
+                      {task.creator?.name ? (task.creator.is_deleted ? `${task.creator.name} (Archived)` : task.creator.name) : '-'}
+                    </td>
                     <td className="px-2 py-3 sm:py-4">
                       <span className="text-white text-[11px] sm:text-[13px] font-medium">Completed</span>
                     </td>

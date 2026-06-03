@@ -509,8 +509,12 @@ export default async function PublicProfilePage({ params }: Props) {
 
             {/* Name & Info */}
             <div className="text-center mb-3 sm:mb-4">
-              <h2 className="text-[16px] sm:text-[18px] font-semibold text-white">{employee.name}</h2>
-              <p className="text-[10px] sm:text-[11px] text-cyan-400 mt-1">{employee.email}</p>
+              <h2 className="text-[16px] sm:text-[18px] font-semibold text-white">
+                {employee.is_deleted ? `${employee.name} (Archived)` : employee.name}
+              </h2>
+              <p className="text-[10px] sm:text-[11px] text-cyan-400 mt-1">
+                {employee.is_deleted && employee.email.includes('_deleted_') ? employee.email.split('_deleted_')[0] : employee.email}
+              </p>
               <p className="text-[9px] sm:text-[10px] text-gray-400">
                 Member Since: {new Date(employee.created_at).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
               </p>
