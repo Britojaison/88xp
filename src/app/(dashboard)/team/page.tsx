@@ -380,7 +380,8 @@ function EmployeeReportModal({
         p_employee_id: employee.id,
         p_month: selectedMonth,
         p_year: selectedYear,
-      });
+      })
+      .single();
 
     // 2. Fetch Earned Points
     const { data: scoreData } = await supabase
@@ -544,7 +545,8 @@ function TeamReportModal({
           p_employee_id: emp.id,
           p_month: selectedMonth,
           p_year: selectedYear,
-        });
+        })
+        .single();
 
       // 2. Fetch Earned Points
       const { data: scoreData } = await supabase
@@ -577,11 +579,32 @@ function TeamReportModal({
 
     const results = await Promise.all(dataPromises);
     
-    // Filter out deleted employees who have no targets AND no scores for this month
+    // Filter out deleted employees based on their deletion date
     const filteredResults = results.filter((data) => {
-      if (!data.is_deleted) return true; // keep all active employees
-      // For deleted employees, only keep them if they had earned points or a non-default/active target in that month
-      return data.earnedPoints > 0 || data.targetPoints > 0;
+      if (!data.is_deleted || !data.email || !data.email.includes('_deleted_')) return true; // keep all active employees
+      
+      const timestampStr = data.email.split('_deleted_')[1];
+      const timestamp = parseInt(timestampStr, 10);
+      if (isNaN(timestamp)) {
+        // Fallback to original logic if parsing fails
+        return data.earnedPoints > 0 || data.targetPoints > 100;
+      }
+
+      const deletedDate = new Date(timestamp);
+      const deletedYear = deletedDate.getFullYear();
+      const deletedMonth = deletedDate.getMonth() + 1;
+
+      if (selectedYear > deletedYear || (selectedYear === deletedYear && selectedMonth > deletedMonth)) {
+        return false; // exclude for strictly upcoming months
+      }
+
+      if (selectedYear === deletedYear && selectedMonth === deletedMonth) {
+        // For the month they were deleted, only include if they earned points
+        return data.earnedPoints > 0;
+      }
+
+      // For months before deletion, keep them
+      return true;
     });
 
     // Clean up renamed emails for deleted employees in the display

@@ -150,11 +150,39 @@ export default function TasksPage() {
 
     const { data: employeeRows } = await supabase
       .from('employees')
-      .select('id, name, rank, is_deleted')
+      .select('id, name, rank, is_deleted, email')
       .eq('is_admin', false)
       .order('rank', { ascending: true });
     
-    const mappedEmployees = (employeeRows || []).map((e: any) => ({
+    // Filter employees based on deletion date and selected month/year filter
+    const filteredEmployeeRows = (employeeRows || []).filter((e: any) => {
+      if (!e.is_deleted || !e.email || !e.email.includes('_deleted_')) return true;
+      
+      const timestampStr = e.email.split('_deleted_')[1];
+      const timestamp = parseInt(timestampStr, 10);
+      if (isNaN(timestamp)) return true;
+      
+      const deletedDate = new Date(timestamp);
+      const deletedYear = deletedDate.getFullYear();
+      const deletedMonth = deletedDate.getMonth() + 1;
+      
+      if (yearFilter !== 'all' && monthFilter !== 'all') {
+        const filterYear = Number(yearFilter);
+        const filterMonth = Number(monthFilter);
+        if (filterYear > deletedYear || (filterYear === deletedYear && filterMonth > deletedMonth)) {
+          return false;
+        }
+      } else if (yearFilter !== 'all') {
+        const filterYear = Number(yearFilter);
+        if (filterYear > deletedYear) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+
+    const mappedEmployees = filteredEmployeeRows.map((e: any) => ({
       id: e.id,
       name: e.is_deleted ? `${e.name} (Archived)` : e.name,
       rank: e.rank
