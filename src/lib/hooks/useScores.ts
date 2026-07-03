@@ -22,7 +22,7 @@ export function useMonthlyScores(month: number, year: number) {
         .select(`
           *,
           *,
-          employee:employees!employee_id(profile_photo, is_deleted, email)
+          employee:employees!monthly_scores_employee_id_fkey(profile_photo, is_deleted, email)
         `)
         .eq('month', month)
         .eq('year', year)
@@ -74,12 +74,17 @@ export function useYearlyScores(year: number) {
         .select(`
           *,
           *,
-          employee:employees!employee_id(profile_photo, is_deleted, email)
+          employee:employees!yearly_scores_employee_id_fkey(profile_photo, is_deleted, email)
         `)
         .eq('year', year)
         .order('total_points', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Yearly Query Error:', error);
+        throw error;
+      }
+
+      console.log('Yearly Query Data for year', year, ':', data?.length);
 
       const processedData = (data || []).map((score: any) => ({
         ...score,
@@ -136,7 +141,7 @@ export function useLastMonthScores() {
           employee_name,
           total_points,
           project_count,
-          employee:employees!employee_id(profile_photo, is_deleted, email)
+          employee:employees!monthly_scores_employee_id_fkey(profile_photo, is_deleted, email)
         `)
         .eq('month', lastMonth)
         .eq('year', year)

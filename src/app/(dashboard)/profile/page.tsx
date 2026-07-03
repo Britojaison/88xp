@@ -21,6 +21,13 @@ export default function ProfilePage() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Password update state
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+
   const supabase = createClient();
   const POINTS_REQUIRED_FOR_PHOTO = 250;
 
@@ -641,6 +648,38 @@ export default function ProfilePage() {
       setUploading(false);
     }
   };
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError('');
+    setPasswordSuccess('');
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Passwords do not match');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordError('Password must be at least 6 characters');
+      return;
+    }
+
+    setUpdatingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      
+      if (error) {
+        setPasswordError(error.message);
+      } else {
+        setPasswordSuccess('Password updated successfully!');
+        setNewPassword('');
+        setConfirmPassword('');
+      }
+    } catch (err: any) {
+      setPasswordError(err.message || 'An error occurred while updating password');
+    } finally {
+      setUpdatingPassword(false);
+    }
+  };
 
   if (loading) {
     return <ProfileSkeleton />;
@@ -912,6 +951,53 @@ export default function ProfilePage() {
 
       {/* Points History */}
       <ProfilePointsSection employeeId={employee?.id || ''} />
+
+      {/* Security Settings */}
+      <div className="mt-8 rounded-[20px] sm:rounded-[25px] border border-[#424242] p-5 sm:p-6" style={{ backgroundColor: '#141415' }}>
+        <h2 className="text-white text-[16px] sm:text-[18px] font-semibold mb-6 flex items-center gap-2">
+          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          Security Settings
+        </h2>
+        
+        <form onSubmit={handlePasswordUpdate} className="max-w-md space-y-4">
+          <div>
+            <label className="block text-[12px] text-gray-400 mb-1">New Password</label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="w-full bg-[#1C1C1C] border border-[#424242] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-purple-400 transition-colors"
+              placeholder="Enter new password"
+            />
+          </div>
+          <div>
+            <label className="block text-[12px] text-gray-400 mb-1">Confirm New Password</label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full bg-[#1C1C1C] border border-[#424242] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-purple-400 transition-colors"
+              placeholder="Confirm new password"
+            />
+          </div>
+          
+          {passwordError && <p className="text-red-400 text-xs">{passwordError}</p>}
+          {passwordSuccess && <p className="text-green-400 text-xs">{passwordSuccess}</p>}
+          
+          <button
+            type="submit"
+            disabled={updatingPassword || !newPassword || !confirmPassword}
+            className="px-6 py-2.5 bg-gradient-to-r from-blue-400 to-purple-500 hover:from-blue-500 hover:to-purple-600 text-white text-sm font-medium rounded-xl transition-all disabled:opacity-50 flex items-center gap-2"
+          >
+            {updatingPassword ? (
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : null}
+            Update Password
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
