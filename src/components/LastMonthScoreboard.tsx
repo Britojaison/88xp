@@ -36,7 +36,7 @@ export default function LastMonthScoreboard() {
   if (loading) {
     return (
       <div
-        className="w-[480px] h-[220px] p-5 relative overflow-hidden"
+        className="w-full max-w-[480px] h-[180px] sm:h-[200px] lg:h-[220px] p-4 sm:p-5 relative overflow-hidden"
         style={{ borderRadius: '30px 10px 30px 10px' }}
       >
         <div
@@ -44,12 +44,12 @@ export default function LastMonthScoreboard() {
           style={{ backgroundImage: 'url(/Rectangle%20391.png)' }}
         />
         <div className="relative z-10">
-          <h3 className="text-white text-lg font-semibold mb-4">Last Month Scoreboard</h3>
-          <div className="flex justify-center gap-5">
+          <h3 className="text-white text-base sm:text-lg font-semibold mb-3 sm:mb-4">Last Month Scoreboard</h3>
+          <div className="flex justify-center gap-3 sm:gap-5">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="animate-pulse">
-                <div className="w-[60px] h-[60px] mx-auto rounded-full bg-gray-500/50 mb-2"></div>
-                <div className="h-3 bg-gray-500/50 rounded w-16 mx-auto"></div>
+              <div key={i} className="animate-pulse flex-1 max-w-[100px] text-center">
+                <div className="w-10 h-10 sm:w-14 sm:h-14 mx-auto rounded-full bg-gray-500/50 mb-2"></div>
+                <div className="h-2.5 sm:h-3 bg-gray-500/50 rounded w-14 mx-auto"></div>
               </div>
             ))}
           </div>
@@ -60,7 +60,7 @@ export default function LastMonthScoreboard() {
 
   return (
     <div
-      className="w-full sm:w-[380px] lg:w-[480px] h-[180px] sm:h-[200px] lg:h-[220px] px-3 sm:px-4 lg:px-5 py-3 sm:py-4 relative overflow-hidden"
+      className="w-full max-w-[480px] min-h-[175px] sm:h-[200px] lg:h-[220px] px-3 sm:px-4 lg:px-5 py-3 sm:py-4 relative overflow-hidden"
       style={{ borderRadius: '30px 10px 30px 10px' }}
     >
       <div
@@ -69,28 +69,29 @@ export default function LastMonthScoreboard() {
       />
 
       <div className="relative z-10">
-        <h3 className="text-white text-base sm:text-lg font-semibold mb-2 sm:mb-4">Last Month Scoreboard</h3>
+        <h3 className="text-white text-sm sm:text-base lg:text-lg font-semibold mb-2 sm:mb-3">Last Month Scoreboard</h3>
 
-        <div className="flex justify-center gap-2 sm:gap-3 lg:gap-4">
+        <div className="flex justify-center items-center gap-2 sm:gap-3 lg:gap-4 w-full">
           {placeholderSlots.map((slot, displayIndex) => {
             const entry = orderedScores[displayIndex];
 
             const CardContent = (
               <div
-                className={`w-[100px] sm:w-[115px] lg:w-[130px] h-[120px] sm:h-[130px] lg:h-[140px] rounded-[15px] sm:rounded-[20px] flex flex-col items-center justify-center relative ${entry ? 'cursor-pointer hover:scale-105 transition-transform duration-200' : ''
-                  }`}
+                className={`w-full h-[115px] sm:h-[130px] lg:h-[140px] rounded-[15px] sm:rounded-[20px] flex flex-col items-center justify-center relative px-1 py-1.5 ${
+                  entry ? 'cursor-pointer hover:scale-105 active:scale-95 transition-transform duration-200' : ''
+                }`}
                 style={{
                   backgroundColor: 'rgba(199, 199, 199, 0.41)',
                   border: '1px solid rgba(199, 199, 199, 0.10)'
                 }}
               >
-                <div className="relative mb-1 sm:mb-2">
-                  <div className={`absolute -top-1 -right-2 ${slot.badgeColor} ${slot.badgeTextColor} text-[8px] sm:text-[10px] font-bold w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center z-10`}>
+                <div className="relative mb-1">
+                  <div className={`absolute -top-1 -right-1.5 ${slot.badgeColor} ${slot.badgeTextColor} text-[8px] sm:text-[10px] font-bold w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center z-10 shadow-sm`}>
                     #{slot.rank}
                   </div>
 
                   {entry ? (
-                    <div className="w-[45px] h-[45px] sm:w-[50px] sm:h-[50px] lg:w-[60px] lg:h-[60px] rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white font-semibold text-sm sm:text-base border border-white/30 overflow-hidden">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white font-semibold text-xs sm:text-sm border border-white/30 overflow-hidden shadow-inner">
                       {entry.profile_photo ? (
                         <img src={entry.profile_photo} alt={entry.employee_name} className="w-full h-full object-cover" />
                       ) : (
@@ -98,16 +99,16 @@ export default function LastMonthScoreboard() {
                       )}
                     </div>
                   ) : (
-                    <div className="w-[45px] h-[45px] sm:w-[50px] sm:h-[50px] lg:w-[60px] lg:h-[60px] rounded-full bg-gray-600/50 border border-gray-500/50"></div>
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full bg-gray-600/50 border border-gray-500/50"></div>
                   )}
                 </div>
 
-                <p className="text-white text-[11px] sm:text-[12px] lg:text-[13px] font-medium text-center w-[90px] sm:w-[100px] lg:w-[110px] truncate">
+                <p className="text-white text-[10px] sm:text-[12px] lg:text-[13px] font-medium text-center w-full px-1 truncate">
                   {entry ? (entry.is_deleted ? `${entry.employee_name} (Archived)` : entry.employee_name) : '—'}
                 </p>
 
-                <p className="text-center mt-0.5 sm:mt-1">
-                  <span className="text-purple-300 font-bold text-sm sm:text-base">
+                <p className="text-center mt-0.5">
+                  <span className="text-purple-300 font-bold text-xs sm:text-sm lg:text-base">
                     {entry ? Number(entry.total_points).toFixed(1) : '—'}
                   </span>
                   <span className="text-gray-300 text-[8px] sm:text-[10px] ml-0.5">pts</span>
@@ -120,11 +121,12 @@ export default function LastMonthScoreboard() {
                 key={displayIndex}
                 href={`/user/${entry.employee_id}`}
                 prefetch={true}
+                className="flex-1 min-w-0 max-w-[135px]"
               >
                 {CardContent}
               </Link>
             ) : (
-              <div key={displayIndex}>
+              <div key={displayIndex} className="flex-1 min-w-0 max-w-[135px]">
                 {CardContent}
               </div>
             );

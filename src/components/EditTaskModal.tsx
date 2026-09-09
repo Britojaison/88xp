@@ -216,23 +216,34 @@ export default function EditTaskModal({
 
   return (
     <div 
-      className="fixed inset-0 flex items-start justify-end z-50 pt-[20px] pr-[40px] pointer-events-none"
+      className="fixed inset-0 flex items-end sm:items-start justify-center sm:justify-end z-50 p-0 sm:pt-[20px] sm:pr-[40px] bg-black/60 backdrop-blur-xs"
       onClick={onClose}
     >
       <div 
-        className="rounded-[25px] w-[365px] flex flex-col relative pointer-events-auto overflow-visible"
+        className="w-full sm:w-[385px] max-h-[85vh] sm:max-h-[92vh] overflow-y-auto rounded-t-[28px] sm:rounded-[25px] flex flex-col relative pointer-events-auto shadow-2xl animate-in slide-in-from-bottom sm:slide-in-from-top duration-200"
         onClick={(e) => e.stopPropagation()}
         style={{
-          backgroundColor: 'rgba(40, 40, 40, 0.95)',
-          border: '1px solid rgba(110, 110, 110, 0.3)',
+          backgroundColor: '#1E1E1E',
+          border: '1px solid rgba(255, 255, 255, 0.15)',
         }}
       >
-        {/* Title */}
-        <div className="px-6 pt-4 pb-2">
-          <h2 className="text-white text-[18px] font-bold">Edit Task</h2>
+        {/* Mobile Drag Indicator */}
+        <div className="sm:hidden w-12 h-1.5 bg-white/20 rounded-full mx-auto mt-3 mb-1" />
+
+        {/* Title & Close */}
+        <div className="px-5 sm:px-6 pt-3 sm:pt-4 pb-2 flex items-center justify-between border-b border-white/10 sm:border-none">
+          <h2 className="text-white text-[17px] sm:text-[18px] font-bold">Edit Task</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white flex items-center justify-center text-sm cursor-pointer transition-colors"
+            aria-label="Close"
+          >
+            ✕
+          </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col px-6 pb-4">
+        <form onSubmit={handleSubmit} className="flex flex-col px-5 sm:px-6 py-3 pb-8 sm:pb-4">
           <div className="space-y-2.5">
             {/* Task Title */}
             <div>

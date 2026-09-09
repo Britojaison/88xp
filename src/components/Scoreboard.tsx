@@ -90,25 +90,27 @@ export default function Scoreboard() {
                   }`}
                   style={bgImage ? { backgroundImage: `url(${bgImage})` } : undefined}
                 >
-                  <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                     {/* Profile Photo */}
-                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white text-[10px] sm:text-xs font-bold overflow-hidden flex-shrink-0">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white text-[10px] sm:text-xs font-bold overflow-hidden flex-shrink-0 shadow-sm">
                       {entry.profile_photo ? (
                         <img src={entry.profile_photo} alt={entry.employee_name} className="w-full h-full object-cover" />
                       ) : (
                         entry.employee_name?.charAt(0).toUpperCase()
                       )}
                     </div>
-                    <div>
-                      <span className="text-white text-[14px] sm:text-[16px] font-semibold">
-                        {entry.is_deleted ? `${entry.employee_name} (Archived)` : entry.employee_name}
-                      </span>
-                      <span className="text-gray-400 text-[11px] sm:text-[13px] ml-1">({entry.project_count} projects)</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-white text-[13px] sm:text-[15px] font-semibold truncate">
+                          {entry.is_deleted ? `${entry.employee_name} (Archived)` : entry.employee_name}
+                        </span>
+                        <span className="text-gray-400 text-[10px] sm:text-[12px] whitespace-nowrap">({entry.project_count} projects)</span>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center">
-                    <span className="text-white text-[14px] sm:text-[16px] font-bold">{Number(entry.total_points).toFixed(1)}</span>
-                    <span className="text-gray-500 text-[11px] sm:text-[13px] ml-1">pts</span>
+                  <div className="flex items-center flex-shrink-0 pl-2">
+                    <span className="text-white text-[13px] sm:text-[16px] font-bold">{Number(entry.total_points).toFixed(1)}</span>
+                    <span className="text-gray-500 text-[10px] sm:text-[12px] ml-1">pts</span>
                   </div>
                 </Link>
               );

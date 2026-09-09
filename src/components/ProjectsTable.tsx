@@ -58,13 +58,25 @@ export default function ProjectsTable({ filterMonth = 0, filterYear = 0 }: Proje
                 }`}
               >
                 {/* Mobile Card View */}
-                <div className="sm:hidden">
-                  <div className="text-white text-[12px] font-medium mb-1">{project.name}</div>
-                  <div className="flex flex-wrap gap-2 text-[10px] text-gray-400">
-                    <span>{project.brand?.name || '-'}</span>
-                    <span>• {project.assignee?.name ? (project.assignee.is_deleted ? `${project.assignee.name} (Archived)` : project.assignee.name) : 'Unassigned'}</span>
-                    <span>• {formatDate(project.created_at)}</span>
-                    <span>• {project.type?.name || '-'}</span>
+                <div className="sm:hidden space-y-1.5 py-1">
+                  <div className="text-white text-[13px] font-semibold leading-snug break-words">{project.name}</div>
+                  <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
+                    {project.brand?.name && (
+                      <span className="px-1.5 py-0.5 rounded bg-purple-900/30 text-purple-300 border border-purple-700/30 font-medium">
+                        {project.brand.name}
+                      </span>
+                    )}
+                    {project.type?.name && (
+                      <span className="px-1.5 py-0.5 rounded bg-white/5 text-gray-300 border border-white/10">
+                        {project.type.name}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-gray-400 pt-1">
+                    <span className="text-gray-300 truncate max-w-[160px]">
+                      {project.assignee?.name ? (project.assignee.is_deleted ? `${project.assignee.name} (Archived)` : project.assignee.name) : 'Unassigned'}
+                    </span>
+                    <span className="text-gray-500 text-[10px]">{formatDate(project.created_at)}</span>
                   </div>
                 </div>
                 

@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Manrope } from "next/font/google";
 import "./globals.css";
+import PwaInstaller from "@/components/PwaInstaller";
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -8,9 +9,29 @@ const manrope = Manrope({
   variable: "--font-manrope",
 });
 
+export const viewport: Viewport = {
+  themeColor: "#000509",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+};
+
 export const metadata: Metadata = {
-  title: "Employee Dashboard",
-  description: "Employee project management and scoreboard",
+  title: "88XP",
+  description: "88XP Employee Performance, Projects & Scoreboard Dashboard",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icons/icon-192x192.png",
+    shortcut: "/icons/icon-192x192.png",
+    apple: "/icons/apple-touch-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "88XP",
+  },
 };
 
 export default function RootLayout({
@@ -20,7 +41,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${manrope.variable} font-manrope antialiased`} suppressHydrationWarning>{children}</body>
+      <body className={`${manrope.variable} font-manrope antialiased`} suppressHydrationWarning>
+        <PwaInstaller />
+        {children}
+      </body>
     </html>
   );
 }
+

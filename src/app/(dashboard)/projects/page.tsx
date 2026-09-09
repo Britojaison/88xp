@@ -644,29 +644,333 @@ export default function TasksPage() {
       {/* Ongoing Tasks Table - Only show when filter is 'all' or 'ongoing' */}
       {(statusFilter === 'all' || statusFilter === 'ongoing') && (
         <div className="rounded-[20px] sm:rounded-[25px] border border-[#424242] overflow-hidden" style={{ backgroundColor: ' #141415ff' }}>
-          <div className="px-4 sm:px-6 py-3 sm:py-4">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-[#424242]/30">
             <h2 className="text-white text-[16px] sm:text-[20px] font-bold">Ongoing Task</h2>
+            <span className="text-xs text-purple-400 font-medium bg-purple-500/10 px-2.5 py-1 rounded-full border border-purple-500/20">
+              {ongoingTasks.length} Active
+            </span>
           </div>
+
           {ongoingTasks.length === 0 ? (
             <div className="p-6 sm:p-8 text-center text-gray-400 text-sm">No ongoing tasks</div>
           ) : (
-            <div className="px-4 sm:px-6 overflow-x-auto">
+            <>
+              {/* Mobile Card View (< md) */}
+              <div className="md:hidden p-3 space-y-3">
+                {ongoingTasks.map((task) => (
+                  <div 
+                    key={task.id} 
+                    className="p-3.5 bg-[#1C1C1E] border border-white/10 rounded-2xl space-y-2.5 shadow-sm"
+                  >
+                    {/* Header: Title + Points */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <h4 className="text-white font-semibold text-sm leading-snug break-words">{task.name}</h4>
+                        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                          {task.brand?.name && (
+                            <span className="text-[10px] px-2 py-0.5 rounded-md bg-purple-900/30 text-purple-300 border border-purple-700/30 font-medium">
+                              {task.brand.name}
+                            </span>
+                          )}
+                          {task.type?.name && (
+                            <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-gray-300 border border-white/10">
+                              {task.type.name}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end flex-shrink-0">
+                        <span className="text-blue-400 font-bold text-xs bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-500/20">
+                          {getPoints(task).toFixed(1)} pts
+                        </span>
+                        <span className="text-[10px] text-purple-400 font-medium mt-1">Pending</span>
+                      </div>
+                    </div>
+
+                    {/* Remarks if any */}
+                    {task.remarks && (isRank1 || currentUser?.id === task.assigned_to) && (
+                      <div className="text-gray-400 text-xs bg-black/40 p-2.5 rounded-xl border border-white/5 break-words">
+                        {renderRemarks(task.remarks)}
+                      </div>
+                    )}
+
+                    {/* Footer: Assignee, Date & Action Buttons */}
+                    <div className="flex items-center justify-between pt-2 border-t border-white/5 text-xs text-gray-400">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white text-[9px] font-bold overflow-hidden flex-shrink-0">
+                          {task.assignee?.name?.charAt(0).toUpperCase() || '?'}
+                        </div>
+                        <span className="truncate max-w-[110px] text-gray-300">
+                          {task.assignee?.name ? (task.assignee.is_deleted ? `${task.assignee.name} (Archived)` : task.assignee.name) : 'Unassigned'}
+                        </span>
+                        <span>•</span>
+                        <span className="text-[11px] text-gray-400">{formatDateShort(task.created_at)}</span>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {canEdit(task) && (
+                          <button
+                            onClick={() => setEditingTask(task)}
+                            className="p-1.5 text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+                            title="Edit"
+                          >
+                            <img src="/pencil.png" alt="Edit" className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        {canMarkComplete(task) && (
+                          <button
+                            onClick={() => setCompletingTask(task)}
+                            className="p-1.5 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-lg transition-colors"
+                            title="Complete"
+                          >
+                            <img src="/tick.png" alt="Complete" className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        {canDelete(task) && (
+                          <button
+                            onClick={() => handleDelete(task.id)}
+                            className="p-1.5 text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors"
+                            title="Delete"
+                          >
+                            <img src="/trash.png" alt="Delete" className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table View (>= md) */}
+              <div className="hidden md:block px-4 sm:px-6 overflow-x-auto">
+                <table className="w-full min-w-[800px]">
+                  <thead>
+                    <tr>
+                      <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">PROJECT TITLE</th>
+                      <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">BRAND</th>
+                      <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">ASSIGNED TO</th>
+                      <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">CREATED BY</th>
+                      <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">STATUS</th>
+                      <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">TYPE</th>
+                      <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">POINTS</th>
+                      <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">ASSIGNED DATE</th>
+                      <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">ACTION</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ongoingTasks.map((task, index) => (
+                      <tr key={task.id}>
+                        <td className="px-2 py-3 sm:py-4">
+                          <div className="text-white text-[11px] sm:text-[13px] font-medium break-words max-w-[150px] sm:max-w-none">{task.name}</div>
+                          {task.remarks && (isRank1 || currentUser?.id === task.assigned_to) && (
+                            <div className="text-gray-400 text-[9px] sm:text-[11px] mt-1 break-words">{renderRemarks(task.remarks)}</div>
+                          )}
+                        </td>
+                        <td className="px-2 py-3 sm:py-4 text-[11px] sm:text-[13px]" style={{ color: 'rgb(170, 130, 174)' }}>{task.brand?.name || '-'}</td>
+                        <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">
+                          {task.assignee?.name ? (task.assignee.is_deleted ? `${task.assignee.name} (Archived)` : task.assignee.name) : '-'}
+                        </td>
+                        <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">
+                          {task.creator?.name ? (task.creator.is_deleted ? `${task.creator.name} (Archived)` : task.creator.name) : '-'}
+                        </td>
+                        <td className="px-2 py-3 sm:py-4">
+                          <span className="text-purple-400 text-[11px] sm:text-[13px] font-medium">Pending</span>
+                        </td>
+                        <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">{task.type?.name || '-'}</td>
+                        <td className="px-2 py-3 sm:py-4 text-blue-400 text-[11px] sm:text-[13px] font-medium">{getPoints(task).toFixed(1)} pts</td>
+                        <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">{formatDateShort(task.created_at)}</td>
+                        <td className="px-2 py-3 sm:py-4">
+                          <div className="flex items-center gap-2 sm:gap-3">
+                            {canEdit(task) && (
+                              <button
+                                onClick={() => setEditingTask(task)}
+                                className="hover:opacity-80 transition-opacity"
+                                title="Edit"
+                              >
+                                <img src="/pencil.png" alt="Edit" className="w-3 h-3 sm:w-4 sm:h-4" />
+                              </button>
+                            )}
+                            {canMarkComplete(task) && (
+                              <button
+                                onClick={() => setCompletingTask(task)}
+                                className="hover:opacity-80 transition-opacity"
+                                title="Complete"
+                              >
+                                <img src="/tick.png" alt="Complete" className="w-3 h-3 sm:w-4 sm:h-4" />
+                              </button>
+                            )}
+                            {canDelete(task) && (
+                              <button
+                                onClick={() => handleDelete(task.id)}
+                                className="hover:opacity-80 transition-opacity"
+                                title="Delete"
+                              >
+                                <img src="/trash.png" alt="Delete" className="w-3 h-4" />
+                              </button>
+                            )}
+                            {!canEdit(task) && !canMarkComplete(task) && !canDelete(task) && (
+                              <span className="text-gray-500 text-[12px]">-</span>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Completed Tasks Table - Only show when filter is 'all' or 'completed' */}
+      {(statusFilter === 'all' || statusFilter === 'completed') && (
+      <div className="rounded-[20px] sm:rounded-[25px] border border-[#424242] bg-black overflow-hidden">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-[#424242]/30">
+          <h2 className="text-white text-[16px] sm:text-[20px] font-bold">Completed</h2>
+          <span className="text-xs text-emerald-400 font-medium bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+            {completedTasks.length} Done
+          </span>
+        </div>
+
+        {completedTasks.length === 0 ? (
+          <div className="p-6 sm:p-8 text-center text-gray-400 text-sm">No completed tasks</div>
+        ) : (
+          <>
+            {/* Mobile Card View (< md) */}
+            <div className="md:hidden p-3 space-y-3">
+              {completedTasks.map((task) => (
+                <div 
+                  key={task.id} 
+                  className="p-3.5 bg-[#141415] border border-white/10 rounded-2xl space-y-2.5 shadow-sm"
+                >
+                  {/* Header: Title + Points */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h4 className="text-white font-semibold text-sm leading-snug break-words">{task.name}</h4>
+                      <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                        {task.brand?.name && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-purple-900/30 text-purple-300 border border-purple-700/30 font-medium">
+                            {task.brand.name}
+                          </span>
+                        )}
+                        {task.type?.name && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-gray-300 border border-white/10">
+                            {task.type.name}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end flex-shrink-0">
+                      {editingTaskId === task.id ? (
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={overridePoints}
+                            onChange={(e) => setOverridePoints(parseFloat(e.target.value) || 0)}
+                            className="w-14 border border-[#424242] rounded px-1.5 py-0.5 text-center text-xs bg-black text-white"
+                            min="0"
+                            autoFocus
+                          />
+                          <button
+                            onClick={() => handleOverridePoints(task.id)}
+                            disabled={saving}
+                            className="p-1 text-white hover:opacity-80"
+                          >
+                            {saving ? '...' : <CheckIcon className="w-3.5 h-3.5" />}
+                          </button>
+                          <button
+                            onClick={cancelEditing}
+                            className="p-1 text-white hover:opacity-80"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-emerald-400 font-bold text-xs bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                          +{getPoints(task).toFixed(1)} pts
+                        </span>
+                      )}
+                      <span className="text-[10px] text-emerald-400 font-medium mt-1">Completed</span>
+                    </div>
+                  </div>
+
+                  {/* Remarks if any */}
+                  {task.remarks && (isRank1 || currentUser?.id === task.assigned_to) && (
+                    <div className="text-gray-400 text-xs bg-white/5 p-2.5 rounded-xl border border-white/5 break-words">
+                      {renderRemarks(task.remarks)}
+                    </div>
+                  )}
+
+                  {/* Footer: Completed by, Finished on & Actions */}
+                  <div className="flex items-center justify-between pt-2 border-t border-white/5 text-xs text-gray-400">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white text-[9px] font-bold overflow-hidden flex-shrink-0">
+                        {task.assignee?.name?.charAt(0).toUpperCase() || '?'}
+                      </div>
+                      <span className="truncate max-w-[110px] text-gray-300">
+                        {task.assignee?.name ? (task.assignee.is_deleted ? `${task.assignee.name} (Archived)` : task.assignee.name) : 'Unassigned'}
+                      </span>
+                      <span>•</span>
+                      <span className="text-[11px] text-gray-400">
+                        {task.completed_at ? formatDateShort(task.completed_at) : '-'}
+                      </span>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {(isRank1 || currentUser?.id === task.assigned_to) && (
+                        <button
+                          onClick={() => handleStatusChange(task.id, 'pending')}
+                          className="relative w-8 h-4.5 rounded-full bg-emerald-500 transition-colors flex-shrink-0"
+                          title="Move back to pending"
+                        >
+                          <div className="absolute right-0.5 top-0.5 w-3.5 h-3.5 rounded-full bg-white transition-transform" />
+                        </button>
+                      )}
+                      {isRank1 && editingTaskId !== task.id && (
+                        <button
+                          onClick={() => startEditing(task)}
+                          className="text-blue-400 hover:text-blue-300 text-[11px] font-medium px-1.5 py-0.5 rounded bg-blue-500/10"
+                        >
+                          Override
+                        </button>
+                      )}
+                      {canDelete(task) && (
+                        <button
+                          onClick={() => handleDelete(task.id)}
+                          className="p-1.5 text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors"
+                          title="Delete"
+                        >
+                          <img src="/trash.png" alt="Delete" className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View (>= md) */}
+            <div className="hidden md:block px-4 sm:px-6 overflow-x-auto">
               <table className="w-full min-w-[800px]">
                 <thead>
                   <tr>
                     <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">PROJECT TITLE</th>
                     <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">BRAND</th>
-                    <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">ASSIGNED TO</th>
+                    <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">COMPLETED BY</th>
                     <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">CREATED BY</th>
                     <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">STATUS</th>
                     <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">TYPE</th>
                     <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">POINTS</th>
-                    <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">ASSIGNED DATE</th>
+                    <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">FINISHED ON</th>
                     <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">ACTION</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {ongoingTasks.map((task, index) => (
+                  {completedTasks.map((task, index) => (
                     <tr key={task.id}>
                       <td className="px-2 py-3 sm:py-4">
                         <div className="text-white text-[11px] sm:text-[13px] font-medium break-words max-w-[150px] sm:max-w-none">{task.name}</div>
@@ -682,41 +986,74 @@ export default function TasksPage() {
                         {task.creator?.name ? (task.creator.is_deleted ? `${task.creator.name} (Archived)` : task.creator.name) : '-'}
                       </td>
                       <td className="px-2 py-3 sm:py-4">
-                        <span className="text-purple-400 text-[11px] sm:text-[13px] font-medium">Pending</span>
+                        <span className="text-white text-[11px] sm:text-[13px] font-medium">Completed</span>
                       </td>
                       <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">{task.type?.name || '-'}</td>
-                      <td className="px-2 py-3 sm:py-4 text-blue-400 text-[11px] sm:text-[13px] font-medium">{getPoints(task).toFixed(1)} pts</td>
-                      <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">{formatDateShort(task.created_at)}</td>
                       <td className="px-2 py-3 sm:py-4">
-                        <div className="flex items-center gap-2 sm:gap-3">
-                          {canEdit(task) && (
+                        {editingTaskId === task.id ? (
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={overridePoints}
+                              onChange={(e) => setOverridePoints(parseFloat(e.target.value) || 0)}
+                              className="w-12 sm:w-14 border border-[#424242] rounded px-1 py-1 text-center text-[10px] sm:text-[12px] bg-black text-white"
+                              min="0"
+                              autoFocus
+                            />
                             <button
-                              onClick={() => setEditingTask(task)}
-                              className="hover:opacity-80 transition-opacity"
-                              title="Edit"
+                              onClick={() => handleOverridePoints(task.id)}
+                              disabled={saving}
+                              className="text-white hover:opacity-80 transition-opacity"
                             >
-                              <img src="/pencil.png" alt="Edit" className="w-3 h-3 sm:w-4 sm:h-4" />
+                              {saving ? '...' : <CheckIcon className="w-3 h-3" />}
+                            </button>
+                            <button
+                              onClick={cancelEditing}
+                              className="text-white hover:opacity-80 transition-opacity"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-emerald-400 text-[11px] sm:text-[13px] font-medium">
+                            +{getPoints(task).toFixed(1)} pts
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px] whitespace-nowrap">
+                        {task.completed_at ? formatDateShort(task.completed_at) : '-'}
+                      </td>
+                      <td className="px-2 py-3 sm:py-4">
+                        <div className="flex items-center gap-1 sm:gap-2">
+                          {/* Toggle to move back to pending */}
+                          {(isRank1 || currentUser?.id === task.assigned_to) && (
+                            <button
+                              onClick={() => handleStatusChange(task.id, 'pending')}
+                              className="relative w-9 h-5 rounded-full bg-emerald-500 transition-colors flex-shrink-0"
+                              title="Move back to pending"
+                            >
+                              <div className="absolute right-0.5 top-0.5 w-4 h-4 rounded-full bg-white transition-transform" />
                             </button>
                           )}
-                          {canMarkComplete(task) && (
+                          {isRank1 && editingTaskId !== task.id && (
                             <button
-                              onClick={() => setCompletingTask(task)}
-                              className="hover:opacity-80 transition-opacity"
-                              title="Complete"
+                              onClick={() => startEditing(task)}
+                              className="text-blue-400 hover:text-blue-300 text-[11px] font-medium"
                             >
-                              <img src="/tick.png" alt="Complete" className="w-3 h-3 sm:w-4 sm:h-4" />
+                              Override
                             </button>
                           )}
                           {canDelete(task) && (
                             <button
                               onClick={() => handleDelete(task.id)}
-                              className="hover:opacity-80 transition-opacity"
+                              className="hover:opacity-80 transition-opacity flex-shrink-0"
                               title="Delete"
                             >
                               <img src="/trash.png" alt="Delete" className="w-3 h-4" />
                             </button>
                           )}
-                          {!canEdit(task) && !canMarkComplete(task) && !canDelete(task) && (
+                          {!isRank1 && !canDelete(task) && !(currentUser?.id === task.assigned_to) && (
                             <span className="text-gray-500 text-[12px]">-</span>
                           )}
                         </div>
@@ -726,128 +1063,7 @@ export default function TasksPage() {
                 </tbody>
               </table>
             </div>
-          )}
-        </div>
-      )}
-
-      {/* Completed Tasks Table - Only show when filter is 'all' or 'completed' */}
-      {(statusFilter === 'all' || statusFilter === 'completed') && (
-      <div className="rounded-[20px] sm:rounded-[25px] border border-[#424242] bg-black overflow-hidden">
-        <div className="px-4 sm:px-6 py-3 sm:py-4">
-          <h2 className="text-white text-[16px] sm:text-[20px] font-bold">Completed</h2>
-        </div>
-        {completedTasks.length === 0 ? (
-          <div className="p-6 sm:p-8 text-center text-gray-400 text-sm">No completed tasks</div>
-        ) : (
-          <div className="px-4 sm:px-6 overflow-x-auto">
-            <table className="w-full min-w-[800px]">
-              <thead>
-                <tr>
-                  <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">PROJECT TITLE</th>
-                  <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">BRAND</th>
-                  <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">COMPLETED BY</th>
-                  <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">CREATED BY</th>
-                  <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">STATUS</th>
-                  <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">TYPE</th>
-                  <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">POINTS</th>
-                  <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">FINISHED ON</th>
-                  <th className="px-2 py-2 sm:py-3 text-left text-[#747474] text-[10px] sm:text-[12px] font-medium whitespace-nowrap">ACTION</th>
-                </tr>
-              </thead>
-              <tbody>
-                {completedTasks.map((task, index) => (
-                  <tr key={task.id}>
-                    <td className="px-2 py-3 sm:py-4">
-                      <div className="text-white text-[11px] sm:text-[13px] font-medium break-words max-w-[150px] sm:max-w-none">{task.name}</div>
-                      {task.remarks && (isRank1 || currentUser?.id === task.assigned_to) && (
-                        <div className="text-gray-400 text-[9px] sm:text-[11px] mt-1 break-words">{renderRemarks(task.remarks)}</div>
-                      )}
-                    </td>
-                    <td className="px-2 py-3 sm:py-4 text-[11px] sm:text-[13px]" style={{ color: 'rgb(170, 130, 174)' }}>{task.brand?.name || '-'}</td>
-                    <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">
-                      {task.assignee?.name ? (task.assignee.is_deleted ? `${task.assignee.name} (Archived)` : task.assignee.name) : '-'}
-                    </td>
-                    <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">
-                      {task.creator?.name ? (task.creator.is_deleted ? `${task.creator.name} (Archived)` : task.creator.name) : '-'}
-                    </td>
-                    <td className="px-2 py-3 sm:py-4">
-                      <span className="text-white text-[11px] sm:text-[13px] font-medium">Completed</span>
-                    </td>
-                    <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px]">{task.type?.name || '-'}</td>
-                    <td className="px-2 py-3 sm:py-4">
-                      {editingTaskId === task.id ? (
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={overridePoints}
-                            onChange={(e) => setOverridePoints(parseFloat(e.target.value) || 0)}
-                            className="w-12 sm:w-14 border border-[#424242] rounded px-1 py-1 text-center text-[10px] sm:text-[12px] bg-black text-white"
-                            min="0"
-                            autoFocus
-                          />
-                          <button
-                            onClick={() => handleOverridePoints(task.id)}
-                            disabled={saving}
-                            className="text-white hover:opacity-80 transition-opacity"
-                          >
-                            {saving ? '...' : <CheckIcon className="w-3 h-3" />}
-                          </button>
-                          <button
-                            onClick={cancelEditing}
-                            className="text-white hover:opacity-80 transition-opacity"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-emerald-400 text-[11px] sm:text-[13px] font-medium">
-                          +{getPoints(task).toFixed(1)} pts
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-2 py-3 sm:py-4 text-white text-[11px] sm:text-[13px] whitespace-nowrap">
-                      {task.completed_at ? formatDateShort(task.completed_at) : '-'}
-                    </td>
-                    <td className="px-2 py-3 sm:py-4">
-                      <div className="flex items-center gap-1 sm:gap-2">
-                        {/* Toggle to move back to pending */}
-                        {(isRank1 || currentUser?.id === task.assigned_to) && (
-                          <button
-                            onClick={() => handleStatusChange(task.id, 'pending')}
-                            className="relative w-9 h-5 rounded-full bg-emerald-500 transition-colors flex-shrink-0"
-                            title="Move back to pending"
-                          >
-                            <div className="absolute right-0.5 top-0.5 w-4 h-4 rounded-full bg-white transition-transform" />
-                          </button>
-                        )}
-                        {isRank1 && editingTaskId !== task.id && (
-                          <button
-                            onClick={() => startEditing(task)}
-                            className="text-blue-400 hover:text-blue-300 text-[11px] font-medium"
-                          >
-                            Override
-                          </button>
-                        )}
-                        {canDelete(task) && (
-                          <button
-                            onClick={() => handleDelete(task.id)}
-                            className="hover:opacity-80 transition-opacity flex-shrink-0"
-                            title="Delete"
-                          >
-                            <img src="/trash.png" alt="Delete" className="w-3 h-4" />
-                          </button>
-                        )}
-                        {!isRank1 && !canDelete(task) && !(currentUser?.id === task.assigned_to) && (
-                          <span className="text-gray-500 text-[12px]">-</span>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          </>
         )}
       </div>
       )}
