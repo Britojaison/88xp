@@ -10,6 +10,8 @@ const manrope = Manrope({
   variable: "--font-manrope",
 });
 
+
+
 export const viewport: Viewport = {
   themeColor: "#000509",
   width: "device-width",
