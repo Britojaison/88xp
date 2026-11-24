@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Manrope } from "next/font/google";
 import "./globals.css";
 import PwaInstaller from "@/components/PwaInstaller";
+import FallingLeavesEffect from "@/components/FallingLeavesEffect";
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -43,6 +44,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${manrope.variable} font-manrope antialiased`} suppressHydrationWarning>
         <PwaInstaller />
+        <FallingLeavesEffect />
         {children}
       </body>
     </html>

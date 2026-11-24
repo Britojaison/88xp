@@ -17,6 +17,7 @@
     "@supabase/supabase-js": "^2.88.0",
     "@tanstack/react-query": "^5.90.19",
     "dotenv": "^17.4.2",
+    "falling-leaves": "^0.1.0",
     "html-to-image": "^1.11.13",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
@@ -35,7 +36,7 @@
     "eslint-config-next": "16.0.10",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vercel": "^59.13.1"
+    "vercel": "^65.15.0"
   },
   "overrides": {
     "postcss": "^8.5.15",
