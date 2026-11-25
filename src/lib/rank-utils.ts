@@ -100,6 +100,23 @@ export function canApproveProject(
 }
 
 /**
+ * Check whether a user can return an approved project to Waiting for Approval.
+ * The project creator or a higher-ranked user may send it back.
+ */
+export function canReturnProjectToApproval(
+  currentUserId: string | undefined,
+  currentUserRank: number | null,
+  creatorId: string,
+  assigneeRank: number | null,
+  projectStatus: string
+): boolean {
+  if (projectStatus !== 'approved') return false;
+  if (currentUserId && currentUserId === creatorId) return true;
+  if (currentUserRank === null || assigneeRank === null) return false;
+  return currentUserRank < assigneeRank;
+}
+
+/**
  * Check if a project is in a completed state (completed or approved).
  * 
  * @param status - The project status

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CheckIcon, CheckCircleIcon, PencilIcon, TrashIcon } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { canApproveProject, canDeleteProject, canEditTask, canMarkComplete, canOverridePoints } from '@/lib/rank-utils';
+import { canApproveProject, canDeleteProject, canEditTask, canMarkComplete, canOverridePoints, canReturnProjectToApproval } from '@/lib/rank-utils';
 import CreateProjectModal from '@/components/CreateProjectModal';
 import CompletionModal from '@/components/CompletionModal';
 import EditTaskModal from '@/components/EditTaskModal';
@@ -178,6 +178,22 @@ export default function ProjectsPage() {
     await fetchData();
   };
 
+  const returnTaskToApproval = async (task: Task) => {
+    if (!currentUser || !canReturnProjectToApproval(currentUser.id, currentUser.rank, task.created_by, task.assignee?.rank ?? null, task.status)) return;
+    setBusyTaskId(task.id);
+    const { data, error } = await supabase.from('projects')
+      .update({ status: 'completed', updated_at: new Date().toISOString() })
+      .eq('id', task.id)
+      .eq('status', 'approved')
+      .select('id')
+      .maybeSingle();
+    setBusyTaskId(null);
+    if (error) { notify(`Could not send project back for approval: ${error.message}`, 'error'); return; }
+    if (!data) { notify('Could not send project back: it may have changed or you may not have permission', 'error'); return; }
+    setTasks((currentTasks) => currentTasks.map((item) => item.id === task.id ? { ...item, status: 'completed' } : item));
+    notify('Project moved back to Waiting for Approval');
+  };
+
   const deleteTask = async (task: Task) => {
     if (!currentUser || !canDeleteProject(currentUser.id, currentUser.rank, task.created_by, task.assignee?.rank ?? null, task.status)) return;
     if (!confirm('Are you sure you want to delete this project?')) return;
@@ -242,16 +258,17 @@ export default function ProjectsPage() {
             {column.tasks.length === 0 ? <div className="rounded-xl border border-dashed border-[#424242] px-3 py-8 text-center text-sm text-gray-500">No projects here</div> : column.tasks.map((task) => {
               const mayComplete = !!currentUser && canMarkComplete(currentUser.id, task.assigned_to, task.status);
               const mayApprove = !!currentUser && canApproveProject(currentUser.id, currentUser.rank, task.created_by, task.assignee?.rank ?? null, task.status);
+              const mayReturnToApproval = !!currentUser && canReturnProjectToApproval(currentUser.id, currentUser.rank, task.created_by, task.assignee?.rank ?? null, task.status);
               const mayOverride = !!currentUser && canOverridePoints(currentUser.rank, task.assignee?.rank ?? null, task.status);
               const mayEdit = !!currentUser && canEditTask(currentUser.rank, currentUser.id, task.creator?.rank ?? null, task.created_by, task.status, currentUser.is_admin);
               const mayDelete = !!currentUser && canDeleteProject(currentUser.id, currentUser.rank, task.created_by, task.assignee?.rank ?? null, task.status);
               const date = isWip(task) ? task.deadline : task.completed_at;
               return <article key={task.id} className={`border-b border-[#424242]/40 last:border-b-0 ${viewMode === 'compact' ? 'px-3 py-2' : 'space-y-3 p-3.5'}`}>
-                {viewMode === 'compact' ? <h3 className="break-words text-sm font-medium leading-snug text-white">{task.name}</h3> : <>
+                {viewMode === 'compact' ? <div className="flex items-center justify-between gap-2"><h3 className="break-words text-sm font-medium leading-snug text-white">{task.name}</h3>{mayReturnToApproval && <button disabled={busyTaskId === task.id} onClick={() => void returnTaskToApproval(task)} className="shrink-0 rounded-lg bg-amber-500/10 px-2.5 py-1.5 text-xs font-semibold text-amber-200 hover:bg-amber-500/20 disabled:opacity-50">{busyTaskId === task.id ? 'Sending…' : 'Send Back'}</button>}</div> : <>
                 <div className="flex items-start justify-between gap-2"><div className="min-w-0 flex-1"><h3 className="break-words font-semibold leading-snug">{task.name}</h3><div className="mt-2 flex flex-wrap gap-1.5">{task.brand?.name && <span className="rounded-md border border-violet-500/20 bg-violet-500/10 px-2 py-0.5 text-[11px] text-violet-200">{task.brand.name}</span>}{task.type?.name && <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-gray-300">{task.type.name}</span>}</div></div>{mayDelete && <button onClick={() => void deleteTask(task)} className="shrink-0 rounded-lg p-2 text-red-400 hover:bg-red-500/10" title="Delete project" aria-label="Delete project"><TrashIcon size={15} /></button>}</div>
                 <div className="grid grid-cols-2 gap-2 text-xs"><div><p className="text-gray-500">Assignee</p><p className="mt-0.5 truncate text-gray-200">{task.assignee?.name ? `${task.assignee.name}${task.assignee.is_deleted ? ' (Archived)' : ''}` : 'Unassigned'}</p></div><div><p className="text-gray-500">{isWip(task) ? 'Deadline' : 'Finished'}</p><p className="mt-0.5 text-gray-200">{formatDate(date)}</p></div></div>
                 {task.remarks && (currentUser?.rank === 1 || currentUser?.id === task.assigned_to) && <div className="break-words rounded-lg border border-white/5 bg-black/30 p-2.5 text-xs text-gray-400">{renderRemarks(task.remarks)}</div>}
-                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/5 pt-2">
+                <div className="space-y-2 border-t border-white/5 pt-2">
                   <div className="flex items-center gap-1.5">
                     <span className="shrink-0 rounded-md border border-blue-500/20 bg-blue-500/10 px-2 py-1 text-xs font-bold text-blue-300">{getPoints(task).toFixed(1)} pts</span>
                     {task.points_override !== null && <span className="rounded border border-amber-500/20 bg-amber-500/10 px-1.5 py-1 text-[10px] font-medium text-amber-300">Override</span>}
@@ -259,9 +276,10 @@ export default function ProjectsPage() {
                   <div className="flex flex-wrap items-center gap-2">
                   {mayComplete && <button onClick={() => setCompletingTask(task)} className="rounded-lg bg-emerald-600/20 px-3 py-2 text-xs font-semibold text-emerald-300 hover:bg-emerald-600/30">Send for Approval</button>}
                   {mayApprove && <button disabled={busyTaskId === task.id} onClick={() => void approveTask(task)} className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-500 disabled:opacity-50">{busyTaskId === task.id ? 'Approving…' : 'Move to Client Approved'}</button>}
+                  {mayReturnToApproval && <button disabled={busyTaskId === task.id} onClick={() => void returnTaskToApproval(task)} className="rounded-lg bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-200 hover:bg-amber-500/20 disabled:opacity-50">{busyTaskId === task.id ? 'Sending…' : 'Send Back for Approval'}</button>}
                   {mayOverride && (editingTaskId === task.id ? <div className="flex items-center gap-1"><input aria-label="Override points" type="number" min="0" step="0.01" value={overridePoints} onChange={(event) => setOverridePoints(Number(event.target.value))} className="w-20 rounded border border-[#424242] bg-black px-2 py-1.5 text-xs text-white" /><button disabled={saving} onClick={() => void saveOverride(task.id)} className="rounded p-1.5 text-emerald-300 hover:bg-white/10" aria-label="Save points override">{saving ? '…' : <CheckIcon size={15} />}</button><button onClick={() => setEditingTaskId(null)} className="rounded px-1.5 py-1 text-xs text-gray-400 hover:bg-white/10">Cancel</button></div> : <button onClick={() => { setEditingTaskId(task.id); setOverridePoints(task.points_override ?? task.type?.points ?? 0); }} className="rounded-lg bg-blue-500/10 px-3 py-2 text-xs font-semibold text-blue-300 hover:bg-blue-500/20">Override points</button>)}
                   {mayEdit && <button onClick={() => setEditingTask(task)} className="rounded-lg p-2 text-gray-300 hover:bg-white/10 hover:text-white" title="Edit project" aria-label="Edit project"><PencilIcon size={15} /></button>}
-                  {!mayComplete && !mayApprove && !mayOverride && !mayEdit && !mayDelete && <span className="text-xs text-gray-500">No actions available</span>}
+                  {!mayComplete && !mayApprove && !mayReturnToApproval && !mayOverride && !mayEdit && !mayDelete && <span className="text-xs text-gray-500">No actions available</span>}
                   </div>
                 </div>
                 </>}
