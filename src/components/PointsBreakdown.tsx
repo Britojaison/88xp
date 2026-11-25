@@ -69,7 +69,12 @@ export default function PointsBreakdown({ employeeId, month, year }: Props) {
     const { data, error } = await query;
 
     if (error) {
-      console.error('Error fetching projects:', error);
+      console.error('Error fetching projects:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
       setLoading(false);
       return;
     }

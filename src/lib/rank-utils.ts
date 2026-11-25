@@ -81,6 +81,25 @@ export function canMarkComplete(
 }
 
 /**
+ * Check whether a user can approve a completed project.
+ * The project creator may approve work they assigned. A higher-ranked user
+ * may also approve work from a lower-ranked assignee. Assignees cannot approve
+ * their own work unless they are also the creator (self-assigned project).
+ */
+export function canApproveProject(
+  currentUserId: string | undefined,
+  currentUserRank: number | null,
+  creatorId: string,
+  assigneeRank: number | null,
+  projectStatus: string
+): boolean {
+  if (projectStatus !== 'completed') return false;
+  if (currentUserId && currentUserId === creatorId) return true;
+  if (currentUserRank === null || assigneeRank === null) return false;
+  return currentUserRank < assigneeRank;
+}
+
+/**
  * Check if a project is in a completed state (completed or approved).
  * 
  * @param status - The project status
