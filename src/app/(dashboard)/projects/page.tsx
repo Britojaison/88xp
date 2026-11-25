@@ -236,7 +236,7 @@ export default function ProjectsPage() {
       </div>
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {columns.map((column) => <div key={column.id} className="flex min-h-[300px] flex-col rounded-2xl border border-[#424242] bg-[#141415]">
+        {columns.map((column) => <div key={column.id} className="flex min-h-[300px] flex-col rounded-2xl border border-b-0 border-[#424242] bg-[#141415]">
           <div className="flex items-center justify-between border-b border-[#424242] px-4 py-3"><div><h2 className={`font-bold ${column.color}`}>{column.title}</h2><p className="text-xs text-gray-500">{column.hint}</p></div><span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${column.badge}`}>{column.tasks.length}</span></div>
           <div className="p-3">
             {column.tasks.length === 0 ? <div className="rounded-xl border border-dashed border-[#424242] px-3 py-8 text-center text-sm text-gray-500">No projects here</div> : column.tasks.map((task) => {
