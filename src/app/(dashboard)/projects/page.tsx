@@ -267,7 +267,7 @@ export default function ProjectsPage() {
               const mayReturnToApproval = !!currentUser && canReturnProjectToApproval(currentUser.id, currentUser.rank, task.created_by, task.assignee?.rank ?? null, task.status);
               const mayOverride = !!currentUser && canOverridePoints(currentUser.rank, task.assignee?.rank ?? null, task.status);
               const mayEdit = !!currentUser && canEditTask(currentUser.rank, currentUser.id, task.creator?.rank ?? null, task.created_by, task.status, currentUser.is_admin);
-              const mayDelete = !!currentUser && canDeleteProject(currentUser.id, currentUser.rank, task.created_by, task.assignee?.rank ?? null, task.status);
+              const mayDelete = task.status !== 'completed' && !!currentUser && canDeleteProject(currentUser.id, currentUser.rank, task.created_by, task.assignee?.rank ?? null, task.status);
               const date = isWip(task) ? task.deadline : task.completed_at;
               return <article key={task.id} className={`border-b border-[#424242]/40 last:border-b-0 ${viewMode === 'compact' ? 'px-3 py-2' : 'space-y-3 p-3.5'}`}>
                 {viewMode === 'compact' ? <div className="flex items-center justify-between gap-2"><h3 className="break-words text-sm font-medium leading-snug text-white">{task.name}</h3>{mayReturnToApproval && <button disabled={busyTaskId === task.id} onClick={() => void returnTaskToApproval(task)} className="shrink-0 rounded-lg bg-amber-500/10 px-2.5 py-1.5 text-xs font-semibold text-amber-200 hover:bg-amber-500/20 disabled:opacity-50">{busyTaskId === task.id ? 'Sending…' : 'Send Back'}</button>}</div> : <>
@@ -284,7 +284,11 @@ export default function ProjectsPage() {
                   {mayApprove && <button disabled={busyTaskId === task.id} onClick={() => void approveTask(task)} className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-500 disabled:opacity-50">{busyTaskId === task.id ? 'Approving…' : 'Move to Client Approved'}</button>}
                   {mayReturnToApproval && <button disabled={busyTaskId === task.id} onClick={() => void returnTaskToApproval(task)} className="rounded-lg bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-200 hover:bg-amber-500/20 disabled:opacity-50">{busyTaskId === task.id ? 'Sending…' : 'Send Back for Approval'}</button>}
                   {mayOverride && (editingTaskId === task.id ? <div className="flex items-center gap-1"><input aria-label="Override points" type="number" min="0" step="0.01" value={overridePoints} onChange={(event) => setOverridePoints(Number(event.target.value))} className="w-20 rounded border border-[#424242] bg-black px-2 py-1.5 text-xs text-white" /><button disabled={saving} onClick={() => void saveOverride(task.id)} className="rounded p-1.5 text-emerald-300 hover:bg-white/10" aria-label="Save points override">{saving ? '…' : <CheckIcon size={15} />}</button><button onClick={() => setEditingTaskId(null)} className="rounded px-1.5 py-1 text-xs text-gray-400 hover:bg-white/10">Cancel</button></div> : <button onClick={() => { setEditingTaskId(task.id); setOverridePoints(task.points_override ?? task.type?.points ?? 0); }} className="rounded-lg bg-blue-500/10 px-3 py-2 text-xs font-semibold text-blue-300 hover:bg-blue-500/20">Override points</button>)}
-                  {mayEdit && <button onClick={() => setEditingTask(task)} className="rounded-lg p-2 text-gray-300 hover:bg-white/10 hover:text-white" title="Edit project" aria-label="Edit project"><PencilIcon size={15} /></button>}
+                  {mayEdit && <button onClick={() => {
+                    if (currentUser && canEditTask(currentUser.rank, currentUser.id, task.creator?.rank ?? null, task.created_by, task.status, currentUser.is_admin)) {
+                      setEditingTask(task);
+                    }
+                  }} className="rounded-lg p-2 text-gray-300 hover:bg-white/10 hover:text-white" title="Edit project" aria-label="Edit project"><PencilIcon size={15} /></button>}
                   {!mayComplete && !mayApprove && !mayReturnToApproval && !mayOverride && !mayEdit && !mayDelete && <span className="text-xs text-gray-500">No actions available</span>}
                   </div>
                 </div>
@@ -297,7 +301,7 @@ export default function ProjectsPage() {
 
       {showModal && currentUser && <CreateProjectModal onClose={() => setShowModal(false)} onCreated={() => void fetchData()} currentUserId={currentUser.id} currentUserRank={currentUser.rank ?? 999} />}
       {completingTask && <CompletionModal projectId={completingTask.id} projectName={completingTask.name} currentTypeId={completingTask.type?.id || null} currentTypeName={completingTask.type?.name || null} currentPoints={getPoints(completingTask)} onClose={() => setCompletingTask(null)} onComplete={() => void fetchData()} />}
-      {editingTask && currentUser && <EditTaskModal task={editingTask} onClose={() => setEditingTask(null)} onUpdated={() => { void fetchData(); notify('Project updated'); }} currentUserId={currentUser.id} currentUserRank={currentUser.rank ?? 999} isAdmin={currentUser.is_admin} isRank1={currentUser.rank === 1} />}
+      {editingTask && currentUser && canEditTask(currentUser.rank, currentUser.id, editingTask.creator?.rank ?? null, editingTask.created_by, editingTask.status, currentUser.is_admin) && <EditTaskModal task={editingTask} onClose={() => setEditingTask(null)} onUpdated={() => { void fetchData(); notify('Project updated'); }} currentUserId={currentUser.id} currentUserRank={currentUser.rank ?? 999} isAdmin={currentUser.is_admin} isRank1={currentUser.rank === 1} />}
       {toast && <div role="status" className={`fixed right-4 top-4 z-50 flex items-center gap-2 rounded-lg px-5 py-3 shadow-lg ${toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>{toast.type === 'success' && <CheckCircleIcon size={16} />}{toast.message}</div>}
     </div>
   );
