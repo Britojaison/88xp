@@ -114,8 +114,14 @@ export default function ProjectsPage() {
     }).map((item: any) => ({ id: item.id, name: `${item.name}${item.is_deleted ? ' (Archived)' : ''}`, rank: item.rank }));
     setEmployees(activeEmployees);
     if (taskResult.error) {
-      console.error('Error fetching projects:', taskResult.error);
-      setToast({ message: 'Could not load projects', type: 'error' });
+      console.error('Error fetching projects:', {
+        code: taskResult.error.code,
+        message: taskResult.error.message,
+        details: taskResult.error.details,
+        hint: taskResult.error.hint,
+        status: taskResult.status,
+      });
+      setToast({ message: `Could not load projects: ${taskResult.error.message}`, type: 'error' });
       setTasks([]);
     } else {
       setTasks((taskResult.data || []).map((item: any) => ({
