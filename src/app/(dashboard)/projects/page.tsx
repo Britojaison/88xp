@@ -236,9 +236,9 @@ export default function ProjectsPage() {
       </div>
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {columns.map((column) => <div key={column.id} className="flex min-h-[300px] max-h-[70vh] flex-col overflow-hidden rounded-2xl border border-[#424242] bg-[#141415]">
+        {columns.map((column) => <div key={column.id} className="flex min-h-[300px] flex-col rounded-2xl border border-[#424242] bg-[#141415]">
           <div className="flex items-center justify-between border-b border-[#424242] px-4 py-3"><div><h2 className={`font-bold ${column.color}`}>{column.title}</h2><p className="text-xs text-gray-500">{column.hint}</p></div><span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${column.badge}`}>{column.tasks.length}</span></div>
-          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
+          <div className="p-3">
             {column.tasks.length === 0 ? <div className="rounded-xl border border-dashed border-[#424242] px-3 py-8 text-center text-sm text-gray-500">No projects here</div> : column.tasks.map((task) => {
               const mayComplete = !!currentUser && canMarkComplete(currentUser.id, task.assigned_to, task.status);
               const mayApprove = !!currentUser && canApproveProject(currentUser.id, currentUser.rank, task.created_by, task.assignee?.rank ?? null, task.status);
@@ -246,7 +246,7 @@ export default function ProjectsPage() {
               const mayEdit = !!currentUser && canEditTask(currentUser.rank, currentUser.id, task.creator?.rank ?? null, task.created_by, task.status, currentUser.is_admin);
               const mayDelete = !!currentUser && canDeleteProject(currentUser.id, currentUser.rank, task.created_by, task.assignee?.rank ?? null, task.status);
               const date = isWip(task) ? task.deadline : task.completed_at;
-              return <article key={task.id} className={`rounded-xl border border-[#424242] bg-[#1b1b1d] shadow-sm ${viewMode === 'compact' ? 'px-3 py-2' : 'space-y-3 p-3.5'}`}>
+              return <article key={task.id} className={`border-b border-[#424242]/40 last:border-b-0 ${viewMode === 'compact' ? 'px-3 py-2' : 'space-y-3 p-3.5'}`}>
                 {viewMode === 'compact' ? <h3 className="break-words text-sm font-medium leading-snug text-white">{task.name}</h3> : <>
                 <div className="flex items-start justify-between gap-2"><div className="min-w-0 flex-1"><h3 className="break-words font-semibold leading-snug">{task.name}</h3><div className="mt-2 flex flex-wrap gap-1.5">{task.brand?.name && <span className="rounded-md border border-violet-500/20 bg-violet-500/10 px-2 py-0.5 text-[11px] text-violet-200">{task.brand.name}</span>}{task.type?.name && <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-gray-300">{task.type.name}</span>}</div></div>{mayDelete && <button onClick={() => void deleteTask(task)} className="shrink-0 rounded-lg p-2 text-red-400 hover:bg-red-500/10" title="Delete project" aria-label="Delete project"><TrashIcon size={15} /></button>}</div>
                 <div className="grid grid-cols-2 gap-2 text-xs"><div><p className="text-gray-500">Assignee</p><p className="mt-0.5 truncate text-gray-200">{task.assignee?.name ? `${task.assignee.name}${task.assignee.is_deleted ? ' (Archived)' : ''}` : 'Unassigned'}</p></div><div><p className="text-gray-500">{isWip(task) ? 'Deadline' : 'Finished'}</p><p className="mt-0.5 text-gray-200">{formatDate(date)}</p></div></div>
