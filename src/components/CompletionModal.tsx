@@ -9,8 +9,9 @@ interface Props {
   projectName: string;
   currentTypeId: string | null;
   currentTypeName: string | null;
+  currentPoints?: number;
   onClose: () => void;
-  onComplete: () => void;
+  onComplete: (project: { id: string; status: 'completed'; completed_at: string; remarks: string | null; updated_at: string }) => void;
 }
 
 export default function CompletionModal({ 
@@ -18,6 +19,7 @@ export default function CompletionModal({
   projectName, 
   currentTypeId, 
   currentTypeName,
+  currentPoints = 0,
   onClose, 
   onComplete 
 }: Props) {
@@ -60,10 +62,13 @@ export default function CompletionModal({
       updates.remarks = remarks.trim();
     }
 
-    const { error: updateError } = await supabase
+    const { data, error: updateError } = await supabase
       .from('projects')
       .update(updates)
-      .eq('id', projectId);
+      .eq('id', projectId)
+      .in('status', ['pending', 'in_progress'])
+      .select('id, status, completed_at, remarks, updated_at')
+      .maybeSingle();
 
     setLoading(false);
 
@@ -73,7 +78,12 @@ export default function CompletionModal({
       return;
     }
 
-    onComplete();
+    if (!data) {
+      setError('The project could not be completed. It may have changed or you may not have permission.');
+      return;
+    }
+
+    onComplete(data);
     onClose();
   };
 
@@ -89,11 +99,15 @@ export default function CompletionModal({
             backgroundPosition: 'center'
           }}
         >
-          <h2 className="text-xl font-bold text-white">Complete Task</h2>
+          <h2 className="text-xl font-bold text-white">Send for Approval</h2>
           <p className="text-white/70 text-sm mt-1 truncate">{projectName}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm">
+            <div><p className="text-xs text-gray-400">Project type</p><p className="mt-1 font-medium text-white">{currentTypeName || 'No type selected'}</p></div>
+            <div className="text-right"><p className="text-xs text-gray-400">Points</p><p className="mt-1 font-semibold text-blue-300">{currentPoints.toFixed(1)} pts</p></div>
+          </div>
           {/* Completion Date */}
           <div>
             <label className="block text-sm font-semibold text-white mb-2">
@@ -168,7 +182,7 @@ export default function CompletionModal({
               ) : (
                 <>
                   <CheckIcon className="w-4 h-4" />
-                  Complete Task
+                  Send for Approval
                 </>
               )}
             </button>

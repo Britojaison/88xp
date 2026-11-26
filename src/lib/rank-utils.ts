@@ -81,6 +81,42 @@ export function canMarkComplete(
 }
 
 /**
+ * Check whether a user can approve a completed project.
+ * The project creator may approve work they assigned. A higher-ranked user
+ * may also approve work from a lower-ranked assignee. Assignees cannot approve
+ * their own work unless they are also the creator (self-assigned project).
+ */
+export function canApproveProject(
+  currentUserId: string | undefined,
+  currentUserRank: number | null,
+  creatorId: string,
+  assigneeRank: number | null,
+  projectStatus: string
+): boolean {
+  if (projectStatus !== 'completed') return false;
+  if (currentUserId && currentUserId === creatorId) return true;
+  if (currentUserRank === null || assigneeRank === null) return false;
+  return currentUserRank < assigneeRank;
+}
+
+/**
+ * Check whether a user can return an approved project to Waiting for Approval.
+ * The project creator or a higher-ranked user may send it back.
+ */
+export function canReturnProjectToApproval(
+  currentUserId: string | undefined,
+  currentUserRank: number | null,
+  creatorId: string,
+  assigneeRank: number | null,
+  projectStatus: string
+): boolean {
+  if (projectStatus !== 'approved') return false;
+  if (currentUserId && currentUserId === creatorId) return true;
+  if (currentUserRank === null || assigneeRank === null) return false;
+  return currentUserRank < assigneeRank;
+}
+
+/**
  * Check if a project is in a completed state (completed or approved).
  * 
  * @param status - The project status
@@ -156,10 +192,9 @@ export function canDeleteProject(
  * Check if a user can edit a task.
  * 
  * Rules:
- * - Admin can always edit
- * - Creator can always edit their own task
- * - Higher-ranked users (lower rank number) can edit tasks created by lower-ranked users (only on completed tasks)
- * - Assigned users CANNOT edit tasks (only the creator can)
+ * - On completed/approved tasks, only the creator (created_by) can edit
+ * - On WIP tasks, preserve existing rules: admins and creators can edit
+ * - Assigned users cannot edit solely by being assigned
  * 
  * @param currentUserRank - The rank of the current user (lower = higher authority)
  * @param currentUserId - The ID of the current user
@@ -177,18 +212,17 @@ export function canEditTask(
   taskStatus: string,
   isAdmin: boolean = false
 ): boolean {
+  // Once completed, the creator is the sole owner allowed to edit. This
+  // intentionally takes precedence over admin/rank overrides.
+  const isCompleted = taskStatus === 'completed' || taskStatus === 'approved';
+  if (isCompleted) return currentUserId === creatorId;
+
   // Admin can always edit
   if (isAdmin) return true;
   
   // Creator can always edit their own task
   if (currentUserId === creatorId) return true;
-  
-  // For completed tasks, higher-ranked users (lower rank number) can edit tasks from lower-ranked users
-  const isCompleted = taskStatus === 'completed' || taskStatus === 'approved';
-  if (isCompleted && currentUserRank !== null && creatorRank !== null) {
-    return currentUserRank < creatorRank; // Strictly less than (higher authority)
-  }
-  
+
   // Otherwise, cannot edit
   return false;
 }

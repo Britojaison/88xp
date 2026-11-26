@@ -25,6 +25,7 @@ interface Task {
   id: string;
   name: string;
   status: string;
+  created_by: string;
   assigned_to: string;
   type: { id: string; name: string; points: number } | null;
   deadline: string | null;
@@ -146,6 +147,12 @@ export default function EditTaskModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const isCompleted = task.status === 'completed' || task.status === 'approved';
+    if (isCompleted && currentUserId !== task.created_by) {
+      setError('Only the task owner can edit a completed or approved task.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -170,7 +177,6 @@ export default function EditTaskModal({
     }
 
     // For completed tasks, only allow deadline changes if admin
-    const isCompleted = task.status === 'completed' || task.status === 'approved';
     const originalDeadline = task.deadline ? new Date(task.deadline).toISOString() : null;
     if (isCompleted && !isAdmin && deadlineValue !== originalDeadline) {
       setError('Cannot change deadline on completed tasks unless you are an admin');

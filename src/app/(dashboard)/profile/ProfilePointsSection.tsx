@@ -58,7 +58,12 @@ export default function ProfilePointsSection({ employeeId }: Props) {
       .order('completed_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching projects:', error);
+      console.error('Error fetching projects:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
       setLoading(false);
       return;
     }

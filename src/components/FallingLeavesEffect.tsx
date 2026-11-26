@@ -18,7 +18,7 @@ export interface FallingLeavesEffectProps {
    * Defaults to false so the effect is visible whenever desired.
    */
   onlyInFall?: boolean;
-  /** Number of leaves on screen at once. Default 30. */
+  /** Number of leaves on screen at once. Default 5. */
   count?: number;
   /** Built-in leaf shapes to mix: 'maple', 'oak', 'ginkgo', 'birch', 'oval'. Default: ['maple', 'oak', 'ginkgo', 'birch'] */
   shapes?: LeafShape[];
@@ -42,7 +42,7 @@ export interface FallingLeavesEffectProps {
 
 export default function FallingLeavesEffect({
   onlyInFall = false,
-  count = 32,
+  count = 5,
   shapes = ['maple', 'oak', 'ginkgo', 'birch'],
   colors,
   wind = [-0.3, 0.8],

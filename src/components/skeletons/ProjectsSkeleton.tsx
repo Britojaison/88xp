@@ -1,65 +1,19 @@
 export default function ProjectsSkeleton() {
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="space-y-2">
-        <div className="h-[14px] bg-gray-700/50 rounded w-48 animate-pulse"></div>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
-          <div>
-            <div className="h-[32px] sm:h-[36px] bg-gray-600/50 rounded w-24 animate-pulse"></div>
-            <div className="h-1 w-full bg-gradient-to-r from-blue-400/30 via-purple-500/30 to-pink-500/30 rounded-full mt-2"></div>
-          </div>
-          <div className="h-[40px] sm:h-[50px] w-[140px] sm:w-[160px] rounded-[20px] sm:rounded-[25px] bg-gray-700/50 animate-pulse"></div>
-        </div>
+    <div className="space-y-5" aria-label="Loading projects">
+      <div className="flex items-center justify-between">
+        <div className="space-y-2"><div className="h-4 w-48 animate-pulse rounded bg-gray-700/60" /><div className="h-9 w-36 animate-pulse rounded bg-gray-600/60" /></div>
+        <div className="h-11 w-36 animate-pulse rounded-xl bg-gray-700/60" />
       </div>
-
-      {/* Filters */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 sm:gap-4">
-        {/* Left side - Employee Filter */}
-        <div className="flex items-center gap-2">
-          <div className="h-[14px] bg-gray-700/50 rounded w-16 animate-pulse"></div>
-          <div className="h-[40px] sm:h-[50px] w-[100px] sm:w-[122px] rounded-[12px] sm:rounded-[15px] bg-gray-700/50 animate-pulse"></div>
-        </div>
-
-        {/* Right side - Status and Year Filters */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-          <div className="flex items-center gap-2">
-            <div className="h-[14px] bg-gray-700/50 rounded w-12 animate-pulse"></div>
-            <div className="h-[40px] sm:h-[50px] w-[240px] sm:w-[300px] lg:w-[370px] rounded-[12px] sm:rounded-[15px] bg-gray-700/50 animate-pulse"></div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="h-[14px] bg-gray-700/50 rounded w-10 animate-pulse"></div>
-            <div className="h-[40px] sm:h-[50px] w-[100px] sm:w-[122px] rounded-[12px] sm:rounded-[15px] bg-gray-700/50 animate-pulse"></div>
-          </div>
-        </div>
+      <div className="space-y-3 rounded-2xl border border-[#424242] bg-[#141415] p-4">
+        <div className="flex flex-wrap gap-3">{[1, 2, 3, 4].map((item) => <div key={item} className="h-10 w-36 animate-pulse rounded-lg bg-gray-700/50" />)}</div>
+        <div className="h-10 w-full animate-pulse rounded-lg bg-gray-700/50" />
       </div>
-
-      {/* Ongoing Tasks Table */}
-      <div className="rounded-[20px] sm:rounded-[25px] border border-[#424242] overflow-hidden" style={{ backgroundColor: '#141415' }}>
-        <div className="px-4 sm:px-6 py-3 sm:py-4">
-          <div className="h-[20px] bg-gray-600/50 rounded w-32 animate-pulse"></div>
-        </div>
-        <div className="px-4 sm:px-6 pb-4">
-          <div className="space-y-3">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-[60px] bg-gray-800/30 rounded-lg animate-pulse"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Completed Tasks Table */}
-      <div className="rounded-[20px] sm:rounded-[25px] border border-[#424242] overflow-hidden" style={{ backgroundColor: '#141415' }}>
-        <div className="px-4 sm:px-6 py-3 sm:py-4">
-          <div className="h-[20px] bg-gray-600/50 rounded w-28 animate-pulse"></div>
-        </div>
-        <div className="px-4 sm:px-6 pb-4">
-          <div className="space-y-3">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-[60px] bg-gray-800/30 rounded-lg animate-pulse"></div>
-            ))}
-          </div>
-        </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        {[1, 2, 3].map((column) => <div key={column} className="flex max-h-[70vh] min-h-[300px] flex-col rounded-2xl border border-[#424242] bg-[#141415] p-4">
+          <div className="mb-4 flex items-center justify-between border-b border-[#424242] pb-3"><div className="h-5 w-36 animate-pulse rounded bg-gray-600/60" /><div className="h-6 w-8 animate-pulse rounded-full bg-gray-700/60" /></div>
+          <div className="space-y-3">{[1, 2, 3].map((card) => <div key={card} className="space-y-3 rounded-xl border border-[#424242] bg-[#1b1b1d] p-3"><div className="h-4 w-3/4 animate-pulse rounded bg-gray-600/50" /><div className="h-3 w-1/2 animate-pulse rounded bg-gray-700/50" /><div className="h-8 w-full animate-pulse rounded bg-gray-800/70" /></div>)}</div>
+        </div>)}
       </div>
     </div>
   );
