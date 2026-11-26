@@ -11,7 +11,7 @@ interface Props {
   currentTypeName: string | null;
   currentPoints?: number;
   onClose: () => void;
-  onComplete: () => void;
+  onComplete: (project: { id: string; status: 'completed'; completed_at: string; remarks: string | null; updated_at: string }) => void;
 }
 
 export default function CompletionModal({ 
@@ -62,10 +62,13 @@ export default function CompletionModal({
       updates.remarks = remarks.trim();
     }
 
-    const { error: updateError } = await supabase
+    const { data, error: updateError } = await supabase
       .from('projects')
       .update(updates)
-      .eq('id', projectId);
+      .eq('id', projectId)
+      .in('status', ['pending', 'in_progress'])
+      .select('id, status, completed_at, remarks, updated_at')
+      .maybeSingle();
 
     setLoading(false);
 
@@ -75,7 +78,12 @@ export default function CompletionModal({
       return;
     }
 
-    onComplete();
+    if (!data) {
+      setError('The project could not be completed. It may have changed or you may not have permission.');
+      return;
+    }
+
+    onComplete(data);
     onClose();
   };
 

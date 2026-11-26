@@ -17,6 +17,7 @@ interface Task {
   points_override: number | null;
   created_at: string;
   completed_at: string | null;
+  updated_at?: string;
   created_by: string;
   assigned_to: string;
   deadline: string | null;
@@ -174,14 +175,24 @@ export default function ProjectsPage() {
     { id: 'approved', title: 'Client Approved', hint: 'Final approval', tasks: sortTasks(visibleTasks.filter((task) => task.status === 'approved')), color: 'text-emerald-300', badge: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' },
   ];
 
+  const applyTaskUpdate = (project: Pick<Task, 'id' | 'status' | 'completed_at' | 'remarks' | 'updated_at'>) => {
+    setTasks((current) => current.map((task) => task.id === project.id ? { ...task, ...project } : task));
+  };
+
   const approveTask = async (task: Task) => {
     if (!currentUser || !canApproveProject(currentUser.id, currentUser.rank, task.created_by, task.assignee?.rank ?? null, task.status)) return;
     setBusyTaskId(task.id);
-    const { error } = await supabase.from('projects').update({ status: 'approved' }).eq('id', task.id).eq('status', 'completed');
+    const { data, error } = await supabase.from('projects')
+      .update({ status: 'approved' })
+      .eq('id', task.id)
+      .eq('status', 'completed')
+      .select('id, status, completed_at, remarks, updated_at')
+      .maybeSingle();
     setBusyTaskId(null);
     if (error) { notify(`Could not approve project: ${error.message}`, 'error'); return; }
+    if (!data) { notify('Could not approve project: it may have changed or you may not have permission', 'error'); return; }
+    applyTaskUpdate(data);
     notify('Project moved to Client Approved');
-    await fetchData();
   };
 
   const returnTaskToApproval = async (task: Task) => {
@@ -225,7 +236,7 @@ export default function ProjectsPage() {
     <div className="space-y-5 text-white">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div><p className="text-sm text-gray-400">Manage all projects in one place</p><h1 className="text-3xl font-bold">Tasks</h1><div className="mt-2 h-1 w-36 rounded-full bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500" /></div>
-        <button onClick={() => setShowModal(true)} className="h-11 rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 px-5 font-semibold hover:opacity-90">+ Create Task</button>
+        <button type="button" onClick={() => setShowModal(true)} className="h-11 rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 px-5 font-semibold hover:opacity-90">+ Create Task</button>
       </header>
 
       <section className="flex flex-col gap-3 rounded-2xl border border-[#424242] bg-[#141415] p-3 sm:p-4">
@@ -270,8 +281,8 @@ export default function ProjectsPage() {
               const mayDelete = task.status !== 'completed' && !!currentUser && canDeleteProject(currentUser.id, currentUser.rank, task.created_by, task.assignee?.rank ?? null, task.status);
               const date = isWip(task) ? task.deadline : task.completed_at;
               return <article key={task.id} className={`border-b border-[#424242]/40 last:border-b-0 ${viewMode === 'compact' ? 'px-3 py-2' : 'space-y-3 p-3.5'}`}>
-                {viewMode === 'compact' ? <div className="flex items-center justify-between gap-2"><h3 className="break-words text-sm font-medium leading-snug text-white">{task.name}</h3>{mayReturnToApproval && <button disabled={busyTaskId === task.id} onClick={() => void returnTaskToApproval(task)} className="shrink-0 rounded-lg bg-amber-500/10 px-2.5 py-1.5 text-xs font-semibold text-amber-200 hover:bg-amber-500/20 disabled:opacity-50">{busyTaskId === task.id ? 'Sending…' : 'Send Back'}</button>}</div> : <>
-                <div className="flex items-start justify-between gap-2"><div className="min-w-0 flex-1"><h3 className="break-words font-semibold leading-snug">{task.name}</h3><div className="mt-2 flex flex-wrap gap-1.5">{task.brand?.name && <span className="rounded-md border border-violet-500/20 bg-violet-500/10 px-2 py-0.5 text-[11px] text-violet-200">{task.brand.name}</span>}{task.type?.name && <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-gray-300">{task.type.name}</span>}</div></div>{mayDelete && <button onClick={() => void deleteTask(task)} className="shrink-0 rounded-lg p-2 text-red-400 hover:bg-red-500/10" title="Delete project" aria-label="Delete project"><TrashIcon size={15} /></button>}</div>
+                {viewMode === 'compact' ? <div className="flex items-center justify-between gap-2"><h3 className="break-words text-sm font-medium leading-snug text-white">{task.name}</h3>{mayReturnToApproval && <button type="button" disabled={busyTaskId === task.id} onClick={() => void returnTaskToApproval(task)} className="shrink-0 rounded-lg bg-amber-500/10 px-2.5 py-1.5 text-xs font-semibold text-amber-200 hover:bg-amber-500/20 disabled:opacity-50">{busyTaskId === task.id ? 'Sending…' : 'Send Back'}</button>}</div> : <>
+                <div className="flex items-start justify-between gap-2"><div className="min-w-0 flex-1"><h3 className="break-words font-semibold leading-snug">{task.name}</h3><div className="mt-2 flex flex-wrap gap-1.5">{task.brand?.name && <span className="rounded-md border border-violet-500/20 bg-violet-500/10 px-2 py-0.5 text-[11px] text-violet-200">{task.brand.name}</span>}{task.type?.name && <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-gray-300">{task.type.name}</span>}</div></div>{mayDelete && <button type="button" onClick={() => void deleteTask(task)} className="shrink-0 rounded-lg p-2 text-red-400 hover:bg-red-500/10" title="Delete project" aria-label="Delete project"><TrashIcon size={15} /></button>}</div>
                 <div className="grid grid-cols-2 gap-2 text-xs"><div><p className="text-gray-500">Assignee</p><p className="mt-0.5 truncate text-gray-200">{task.assignee?.name ? `${task.assignee.name}${task.assignee.is_deleted ? ' (Archived)' : ''}` : 'Unassigned'}</p></div><div><p className="text-gray-500">{isWip(task) ? 'Deadline' : 'Finished'}</p><p className="mt-0.5 text-gray-200">{formatDate(date)}</p></div></div>
                 {task.remarks && (currentUser?.rank === 1 || currentUser?.id === task.assigned_to) && <div className="break-words rounded-lg border border-white/5 bg-black/30 p-2.5 text-xs text-gray-400">{renderRemarks(task.remarks)}</div>}
                 <div className="space-y-2 border-t border-white/5 pt-2">
@@ -280,11 +291,11 @@ export default function ProjectsPage() {
                     {task.points_override !== null && <span className="rounded border border-amber-500/20 bg-amber-500/10 px-1.5 py-1 text-[10px] font-medium text-amber-300">Override</span>}
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                  {mayComplete && <button onClick={() => setCompletingTask(task)} className="rounded-lg bg-emerald-600/20 px-3 py-2 text-xs font-semibold text-emerald-300 hover:bg-emerald-600/30">Send for Approval</button>}
-                  {mayApprove && <button disabled={busyTaskId === task.id} onClick={() => void approveTask(task)} className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-500 disabled:opacity-50">{busyTaskId === task.id ? 'Approving…' : 'Move to Client Approved'}</button>}
-                  {mayReturnToApproval && <button disabled={busyTaskId === task.id} onClick={() => void returnTaskToApproval(task)} className="rounded-lg bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-200 hover:bg-amber-500/20 disabled:opacity-50">{busyTaskId === task.id ? 'Sending…' : 'Send Back for Approval'}</button>}
-                  {mayOverride && (editingTaskId === task.id ? <div className="flex items-center gap-1"><input aria-label="Override points" type="number" min="0" step="0.01" value={overridePoints} onChange={(event) => setOverridePoints(Number(event.target.value))} className="w-20 rounded border border-[#424242] bg-black px-2 py-1.5 text-xs text-white" /><button disabled={saving} onClick={() => void saveOverride(task.id)} className="rounded p-1.5 text-emerald-300 hover:bg-white/10" aria-label="Save points override">{saving ? '…' : <CheckIcon size={15} />}</button><button onClick={() => setEditingTaskId(null)} className="rounded px-1.5 py-1 text-xs text-gray-400 hover:bg-white/10">Cancel</button></div> : <button onClick={() => { setEditingTaskId(task.id); setOverridePoints(task.points_override ?? task.type?.points ?? 0); }} className="rounded-lg bg-blue-500/10 px-3 py-2 text-xs font-semibold text-blue-300 hover:bg-blue-500/20">Override points</button>)}
-                  {mayEdit && <button onClick={() => {
+                  {mayComplete && <button type="button" onClick={() => setCompletingTask(task)} className="rounded-lg bg-emerald-600/20 px-3 py-2 text-xs font-semibold text-emerald-300 hover:bg-emerald-600/30">Send for Approval</button>}
+                  {mayApprove && <button type="button" disabled={busyTaskId === task.id} onClick={() => void approveTask(task)} className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-500 disabled:opacity-50">{busyTaskId === task.id ? 'Approving…' : 'Move to Client Approved'}</button>}
+                  {mayReturnToApproval && <button type="button" disabled={busyTaskId === task.id} onClick={() => void returnTaskToApproval(task)} className="rounded-lg bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-200 hover:bg-amber-500/20 disabled:opacity-50">{busyTaskId === task.id ? 'Sending…' : 'Send Back for Approval'}</button>}
+                  {mayOverride && (editingTaskId === task.id ? <div className="flex items-center gap-1"><input aria-label="Override points" type="number" min="0" step="0.01" value={overridePoints} onChange={(event) => setOverridePoints(Number(event.target.value))} className="w-20 rounded border border-[#424242] bg-black px-2 py-1.5 text-xs text-white" /><button type="button" disabled={saving} onClick={() => void saveOverride(task.id)} className="rounded p-1.5 text-emerald-300 hover:bg-white/10" aria-label="Save points override">{saving ? '…' : <CheckIcon size={15} />}</button><button type="button" onClick={() => setEditingTaskId(null)} className="rounded px-1.5 py-1 text-xs text-gray-400 hover:bg-white/10">Cancel</button></div> : <button type="button" onClick={() => { setEditingTaskId(task.id); setOverridePoints(task.points_override ?? task.type?.points ?? 0); }} className="rounded-lg bg-blue-500/10 px-3 py-2 text-xs font-semibold text-blue-300 hover:bg-blue-500/20">Override points</button>)}
+                  {mayEdit && <button type="button" onClick={() => {
                     if (currentUser && canEditTask(currentUser.rank, currentUser.id, task.creator?.rank ?? null, task.created_by, task.status, currentUser.is_admin)) {
                       setEditingTask(task);
                     }
@@ -300,7 +311,7 @@ export default function ProjectsPage() {
       </section>
 
       {showModal && currentUser && <CreateProjectModal onClose={() => setShowModal(false)} onCreated={() => void fetchData()} currentUserId={currentUser.id} currentUserRank={currentUser.rank ?? 999} />}
-      {completingTask && <CompletionModal projectId={completingTask.id} projectName={completingTask.name} currentTypeId={completingTask.type?.id || null} currentTypeName={completingTask.type?.name || null} currentPoints={getPoints(completingTask)} onClose={() => setCompletingTask(null)} onComplete={() => void fetchData()} />}
+      {completingTask && <CompletionModal projectId={completingTask.id} projectName={completingTask.name} currentTypeId={completingTask.type?.id || null} currentTypeName={completingTask.type?.name || null} currentPoints={getPoints(completingTask)} onClose={() => setCompletingTask(null)} onComplete={applyTaskUpdate} />}
       {editingTask && currentUser && canEditTask(currentUser.rank, currentUser.id, editingTask.creator?.rank ?? null, editingTask.created_by, editingTask.status, currentUser.is_admin) && <EditTaskModal task={editingTask} onClose={() => setEditingTask(null)} onUpdated={() => { void fetchData(); notify('Project updated'); }} currentUserId={currentUser.id} currentUserRank={currentUser.rank ?? 999} isAdmin={currentUser.is_admin} isRank1={currentUser.rank === 1} />}
       {toast && <div role="status" className={`fixed right-4 top-4 z-50 flex items-center gap-2 rounded-lg px-5 py-3 shadow-lg ${toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>{toast.type === 'success' && <CheckCircleIcon size={16} />}{toast.message}</div>}
     </div>
