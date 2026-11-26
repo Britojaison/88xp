@@ -88,15 +88,19 @@ export function canMarkComplete(
  */
 export function canApproveProject(
   currentUserId: string | undefined,
-  currentUserRank: number | null,
+  currentUserRank: number | null | undefined,
   creatorId: string,
-  assigneeRank: number | null,
+  assigneeRank: number | null | undefined,
   projectStatus: string
 ): boolean {
-  if (projectStatus !== 'completed') return false;
-  if (currentUserId && currentUserId === creatorId) return true;
-  if (currentUserRank === null || assigneeRank === null) return false;
+  if (!currentUserId || projectStatus !== 'completed') return false;
+  if (currentUserId === creatorId) return true;
+  if (!isEmployeeRank(currentUserRank) || !isEmployeeRank(assigneeRank)) return false;
   return currentUserRank < assigneeRank;
+}
+
+function isEmployeeRank(rank: number | null | undefined): rank is number {
+  return typeof rank === 'number' && Number.isInteger(rank) && rank >= 1 && rank <= 10;
 }
 
 /**
